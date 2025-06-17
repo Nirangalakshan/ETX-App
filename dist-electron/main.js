@@ -101,6 +101,20 @@ ipcMain.handle("write-port", async (_event, data) => {
     });
   });
 });
+ipcMain.handle("close-port", async () => {
+  try {
+    if (serialPort && serialPort.isOpen) {
+      await serialPort.close();
+      serialPort = null;
+      console.log("Main: Port closed successfully");
+    } else {
+      console.log("Main: No open port to close");
+    }
+  } catch (error) {
+    console.error("Main: Error closing port:", error);
+    throw error;
+  }
+});
 process.env.APP_ROOT = path.join(__dirname, "..");
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
 const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
@@ -118,6 +132,8 @@ function createWindow() {
     // icon: path.join(process.env.VITE_PUBLIC, "icon.svg"),
     webPreferences: {
       preload: path.join(__dirname, "preload.mjs")
+      // nodeIntegration: true, // Enable Node.js integration
+      // contextIsolation: false, // Disable context isolation for easier access to Node.js APIs
     }
   });
   win.webContents.on("did-finish-load", () => {

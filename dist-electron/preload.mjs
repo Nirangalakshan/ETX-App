@@ -36,4 +36,3 @@ electron.contextBridge.exposeInMainWorld("serialAPI", {
     });
   }
 });
-electron.contextBridge.exposeInMainWorld("serialAPI", {});

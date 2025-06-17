@@ -1,32 +1,58 @@
-// import React, { useState } from "react";
+// import React, { useState, useEffect } from "react";
 // import MenuBar from "../components/MenuBar";
+// import { useNavigate } from "react-router-dom";
+// import { ToastContainer, toast } from "react-toastify";
+// import "react-toastify/dist/ReactToastify.css";
 
 // const Login = () => {
 //   const [username, setUsername] = useState("");
 //   const [password, setPassword] = useState("");
 //   const [error, setError] = useState<string | null>(null);
 //   const [isLoading, setIsLoading] = useState(false);
+//   const navigate = useNavigate();
+
+//   useEffect(() => {
+//     if (localStorage.getItem("isLoggedIn") === "true") {
+//       navigate("/dashboard", { replace: true });
+//     }
+//   }, [navigate]);
 
 //   const handleLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
 //     e.preventDefault();
 //     if (!username || !password) {
 //       setError("Please fill in all fields");
+//       toast.warning("Please fill in all fields", { position: "top-center" });
 //       return;
 //     }
+
 //     setIsLoading(true);
 //     setError(null);
 
 //     try {
 //       // @ts-ignore
 //       const result = await window.authAPI?.login(username, password);
+
 //       if (result?.success) {
-//         alert("Login successful!");
-//         // Redirect or update app state
+//         localStorage.setItem("isLoggedIn", "true");
+
+//         toast.success("Login successful! Redirecting...", {
+//           position: "top-center",
+//           autoClose: 2000,
+//         });
+
+//         setTimeout(() => {
+//           navigate("/dashboard");
+//         }, 2000);
 //       } else {
-//         setError(result?.error || "Invalid credentials");
+//         const message = result?.error || "Invalid credentials";
+//         setError(message);
+//         toast.warning(message, {
+//           position: "top-center",
+//         });
 //       }
 //     } catch (err) {
 //       setError("An unexpected error occurred");
+//       toast.error("Unexpected error occurred", { position: "top-center" });
 //     } finally {
 //       setIsLoading(false);
 //     }
@@ -35,6 +61,7 @@
 //   return (
 //     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100">
 //       <MenuBar />
+//       <ToastContainer />
 //       <div className="flex items-center justify-center min-h-[calc(100vh-64px)] px-4">
 //         <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-xl transform transition-all hover:scale-[1.02]">
 //           <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
@@ -44,17 +71,17 @@
 //             <div className="flex flex-col gap-4">
 //               <div>
 //                 <label className="block text-sm font-medium text-gray-700 mb-1">
-//                 Username
-//               </label>
-//               <input
-//                 type="text"
-//                 placeholder="Enter username"
-//                 value={username}
-//                 onChange={(e) => setUsername(e.target.value)}
-//                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-//                 disabled={isLoading}
-//                 required
-//               />
+//                   Username
+//                 </label>
+//                 <input
+//                   type="text"
+//                   placeholder="Enter username"
+//                   value={username}
+//                   onChange={(e) => setUsername(e.target.value)}
+//                   className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+//                   disabled={isLoading}
+//                   required
+//                 />
 //               </div>
 //               <div>
 //                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -134,9 +161,14 @@
 // export default Login;
 
 
+
+
+
 import React, { useState, useEffect } from "react";
 import MenuBar from "../components/MenuBar";
 import { useNavigate } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -145,7 +177,6 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Redirect to dashboard if already logged in
   useEffect(() => {
     if (localStorage.getItem("isLoggedIn") === "true") {
       navigate("/dashboard", { replace: true });
@@ -156,22 +187,36 @@ const Login = () => {
     e.preventDefault();
     if (!username || !password) {
       setError("Please fill in all fields");
+      toast.warning("Please fill in all fields", { position: "top-center" });
       return;
     }
+
     setIsLoading(true);
     setError(null);
 
     try {
-      // @ts-ignore
-      const result = await window.authAPI?.login(username, password);
-      if (result?.success) {
+      // Hardcoded credentials check
+      if (username === "vega" && password === "vega123") {
         localStorage.setItem("isLoggedIn", "true");
-        navigate("/dashboard");
+
+        toast.success("Login successful! Redirecting...", {
+          position: "top-center",
+          autoClose: 2000,
+        });
+
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 2000);
       } else {
-        setError(result?.error || "Invalid credentials");
+        const message = "Invalid credentials";
+        setError(message);
+        toast.warning(message, {
+          position: "top-center",
+        });
       }
     } catch (err) {
       setError("An unexpected error occurred");
+      toast.error("Unexpected error occurred", { position: "top-center" });
     } finally {
       setIsLoading(false);
     }
@@ -180,10 +225,11 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100">
       <MenuBar />
+      <ToastContainer />
       <div className="flex items-center justify-center min-h-[calc(100vh-64px)] px-4">
         <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-xl transform transition-all hover:scale-[1.02]">
           <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
-            Welcome Back
+            Hey! Welcome
           </h1>
           <div className="space-y-6">
             <div className="flex flex-col gap-4">
@@ -255,7 +301,7 @@ const Login = () => {
                 {error}
               </div>
             )}
-            <div className="text-center">
+            {/* <div className="text-center">
               <a
                 href="/forgot-password"
                 className="text-sm text-blue-600 hover:underline"
@@ -268,7 +314,7 @@ const Login = () => {
               <a href="/signup" className="text-blue-600 hover:underline">
                 Sign up
               </a>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

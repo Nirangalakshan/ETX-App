@@ -4,6 +4,8 @@
 // interface SetInstruction {
 //   id: number;
 //   command: string;
+//   param1: string;
+//   param2: string;
 //   cellNo: string;
 //   cycleNo: string;
 //   voltage: string;
@@ -11,11 +13,22 @@
 //   time: string;
 // }
 
+// const startStepOptions = [
+//   "Step 1",
+//   "Step 2",
+//   "Step 3",
+//   "Step 4",
+//   "Step 5",
+//   "Step 6",
+// ];
+
 // const Settings: React.FC = () => {
 //   const [instructions, setInstructions] = useState<SetInstruction[]>([
 //     {
 //       id: 1,
 //       command: "",
+//       param1: "",
+//       param2: "",
 //       cellNo: "",
 //       cycleNo: "",
 //       voltage: "",
@@ -31,7 +44,6 @@
 //     rowIndex: number;
 //   } | null>(null);
 
-//   // Hide context menu on click elsewhere
 //   useEffect(() => {
 //     const handleClick = () => setContextMenu(null);
 //     window.addEventListener("click", handleClick);
@@ -50,12 +62,13 @@
 //     });
 //   };
 
-//   // Insert a row after the given index, with unique id
 //   const insertRow = (index: number) => {
 //     const maxId = instructions.reduce((max, row) => Math.max(max, row.id), 0);
-//     const newRow = {
+//     const newRow: SetInstruction = {
 //       id: maxId + 1,
 //       command: "",
+//       param1: "",
+//       param2: "",
 //       cellNo: "",
 //       cycleNo: "",
 //       voltage: "",
@@ -69,7 +82,6 @@
 //     ]);
 //   };
 
-//   // Delete a row by index, but keep at least one row
 //   const deleteRow = (index: number) => {
 //     setInstructions((prev) => {
 //       if (prev.length === 1) return prev;
@@ -79,9 +91,11 @@
 
 //   const addRow = () => {
 //     const maxId = instructions.reduce((max, row) => Math.max(max, row.id), 0);
-//     const newRow = {
+//     const newRow: SetInstruction = {
 //       id: maxId + 1,
 //       command: "",
+//       param1: "",
+//       param2: "",
 //       cellNo: "",
 //       cycleNo: "",
 //       voltage: "",
@@ -109,6 +123,8 @@
 //             const validData = data.map((item, index) => ({
 //               id: index + 1,
 //               command: item.command || "",
+//               param1: item.param1 || "",
+//               param2: item.param2 || "",
 //               cellNo: item.cellNo || "",
 //               cycleNo: item.cycleNo || "",
 //               voltage: item.voltage || "",
@@ -164,8 +180,9 @@
 //                 <tr className="bg-gray-200">
 //                   <th className="border border-gray-300 p-2">No</th>
 //                   <th className="border border-gray-300 p-2">Command</th>
+//                   <th className="border border-gray-300 p-2">Param 1</th>
+//                   <th className="border border-gray-300 p-2">Param 2</th>
 //                   <th className="border border-gray-300 p-2">Cell No</th>
-//                   <th className="border border-gray-300 p-2">Cycle No</th>
 //                   <th className="border border-gray-300 p-2">Voltage</th>
 //                   <th className="border border-gray-300 p-2">Temperature</th>
 //                   <th className="border border-gray-300 p-2">Time</th>
@@ -196,36 +213,87 @@
 //                         title="Command"
 //                       >
 //                         <option value="">Select command</option>
-//                         <option value="set">SET</option>
+//                         <option value="set_temp">SET TEMPERATURE</option>
+//                         <option value="set_voltage">SET VOLTAGE</option>
 //                         <option value="end">END</option>
 //                         <option value="reset">RESET</option>
 //                         <option value="cycle">CYCLE</option>
 //                         <option value="delay">DELAY</option>
+//                         <option value="set_balance">SET BALANCE</option>
+//                         <option value="get">GET</option>
 //                       </select>
 //                     </td>
+//                     {/* Param 1 */}
 //                     <td className="border border-gray-300 p-2">
-//                       <input
-//                         type="text"
+//                       {row.command === "cycle" ? (
+//                         <select
+//                           value={row.param1}
+//                           onChange={(e) =>
+//                             handleInputChange(index, "param1", e.target.value)
+//                           }
+//                           className="w-full p-1 border rounded"
+//                           title="Start Step"
+//                         >
+//                           <option value="">Select start step</option>
+//                           {startStepOptions.map((step) => (
+//                             <option key={step} value={step}>
+//                               {step}
+//                             </option>
+//                           ))}
+//                         </select>
+//                       ) : (
+//                         <input
+//                           type="text"
+//                           value=""
+//                           disabled
+//                           className="w-full p-1 border rounded bg-gray-100 cursor-not-allowed"
+//                           title="Param 1 only available for cycle"
+//                           placeholder="Unavailable"
+//                           readOnly
+//                         />
+//                       )}
+//                     </td>
+//                     {/* Param 2 */}
+//                     <td className="border border-gray-300 p-2">
+//                       {row.command === "cycle" ? (
+//                         <input
+//                           type="text"
+//                           value={row.param2}
+//                           onChange={(e) =>
+//                             handleInputChange(index, "param2", e.target.value)
+//                           }
+//                           className="w-full p-1 border rounded"
+//                           title="Cycle Index"
+//                           placeholder="Enter cycle index"
+//                         />
+//                       ) : (
+//                         <input
+//                           type="text"
+//                           value=""
+//                           disabled
+//                           className="w-full p-1 border rounded bg-gray-100 cursor-not-allowed"
+//                           title="Param 2 only available for cycle"
+//                           placeholder="Unavailable"
+//                           readOnly
+//                         />
+//                       )}
+//                     </td>
+//                     <td className="border border-gray-300 p-2">
+//                       <select
 //                         value={row.cellNo}
 //                         onChange={(e) =>
 //                           handleInputChange(index, "cellNo", e.target.value)
 //                         }
 //                         className="w-full p-1 border rounded"
 //                         title="Cell No"
-//                         placeholder="Enter cell number"
-//                       />
-//                     </td>
-//                     <td className="border border-gray-300 p-2">
-//                       <input
-//                         type="text"
-//                         value={row.cycleNo}
-//                         onChange={(e) =>
-//                           handleInputChange(index, "cycleNo", e.target.value)
-//                         }
-//                         className="w-full p-1 border rounded"
-//                         title="Cycle No"
-//                         placeholder="Enter cycle number"
-//                       />
+//                       >
+//                         <option value="">Select cell</option>
+//                         {Array.from({ length: 24 }, (_, i) => (
+//                           <option key={i + 1} value={String(i + 1)}>
+//                             {i + 1}
+//                           </option>
+//                         ))}
+//                       </select>
 //                     </td>
 //                     <td className="border border-gray-300 p-2">
 //                       <input
@@ -363,6 +431,11 @@
 
 // export default Settings;
 
+
+
+
+
+
 import React, { useState, useRef, useEffect } from "react";
 import MenuBar from "../components/MenuBar";
 
@@ -377,15 +450,6 @@ interface SetInstruction {
   temperature: string;
   time: string;
 }
-
-const startStepOptions = [
-  "Step 1",
-  "Step 2",
-  "Step 3",
-  "Step 4",
-  "Step 5",
-  "Step 6",
-];
 
 const Settings: React.FC = () => {
   const [instructions, setInstructions] = useState<SetInstruction[]>([
@@ -420,6 +484,14 @@ const Settings: React.FC = () => {
     field: keyof SetInstruction,
     value: string
   ) => {
+    // Validate numeric inputs
+    if (
+      (field === "param2" || field === "voltage" || field === "temperature" || field === "time") &&
+      value &&
+      (isNaN(Number(value)) || Number(value) < 0)
+    ) {
+      return;
+    }
     setInstructions((prev) => {
       const newInstructions = [...prev];
       newInstructions[index] = { ...newInstructions[index], [field]: value };
@@ -450,7 +522,17 @@ const Settings: React.FC = () => {
   const deleteRow = (index: number) => {
     setInstructions((prev) => {
       if (prev.length === 1) return prev;
-      return prev.filter((_, i) => i !== index);
+      const newInstructions = prev.filter((_, i) => i !== index);
+      // Adjust param1 for cycle commands if step number is invalid
+      return newInstructions.map((instr) => {
+        if (instr.command === "cycle" && instr.param1) {
+          const stepNum = parseInt(instr.param1.replace("Step ", ""));
+          if (stepNum > newInstructions.length) {
+            return { ...instr, param1: "" };
+          }
+        }
+        return instr;
+      });
     });
   };
 
@@ -519,9 +601,7 @@ const Settings: React.FC = () => {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `instructions_${
-      new Date().toISOString().split("T")[0]
-    }.json`;
+    link.download = `instructions_${new Date().toISOString().split("T")[0]}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -529,10 +609,61 @@ const Settings: React.FC = () => {
     alert("Instructions saved successfully.");
   };
 
+  // Determine if a field should be enabled based on the command
+  const isFieldEnabled = (command: string, field: keyof SetInstruction) => {
+    if (command === "") return false; // Disable all fields if no command
+    switch (command) {
+      case "set_voltage":
+        return field === "cellNo" || field === "voltage";
+      case "set_temp":
+        return field === "cellNo" || field === "temperature";
+      case "cycle":
+        return field === "param1" || field === "param2" || field === "cycleNo";
+      case "delay":
+        return field === "time";
+      case "set_balance":
+      case "set_ow":
+      case "get_voltage":
+      case "get_current":
+      case "get_11_csu_volt":
+      case "get_12_csu_volt":
+      case "get_11_csu_ow":
+      case "get_12_csu_ow":
+      case "get_11_csu_balance":
+      case "get_12_csu_balance":
+        return field === "cellNo";
+      case "get_temperature":
+      case "get_11_csu_temp":
+      case "get_12_csu_temp":
+        return field === "cellNo";
+      case "end":
+      case "reset":
+        return false; // No fields enabled
+      default:
+        return false; // Unknown commands disable all fields
+    }
+  };
+
+  // Get cell number options based on command
+  const getCellOptions = (command: string) => {
+    const maxCells =
+      command === "set_temp" ||
+      command === "get_temperature" ||
+      command === "get_11_csu_temp" ||
+      command === "get_12_csu_temp"
+        ? 6
+        : 24;
+    return Array.from({ length: maxCells }, (_, i) => i + 1);
+  };
+
+  // Get step options for cycle's param1 based on number of instructions
+  const getStepOptions = () => {
+    return Array.from({ length: instructions.length }, (_, i) => `Step ${i + 1}`);
+  };
+
   return (
     <div className="flex flex-col h-screen bg-gray-100">
       <MenuBar />
-
       <div className="flex-1 p-4">
         <div className="bg-white p-4 rounded-lg shadow-lg">
           <h2 className="text-lg font-semibold mb-2">Set Instructions</h2>
@@ -545,8 +676,8 @@ const Settings: React.FC = () => {
                 <tr className="bg-gray-200">
                   <th className="border border-gray-300 p-2">No</th>
                   <th className="border border-gray-300 p-2">Command</th>
-                  <th className="border border-gray-300 p-2">Param 1</th>
-                  <th className="border border-gray-300 p-2">Param 2</th>
+                  <th className="border border-gray-300 p-2">Start Step</th>
+                  <th className="border border-gray-300 p-2">Cycle Index</th>
                   <th className="border border-gray-300 p-2">Cell No</th>
                   <th className="border border-gray-300 p-2">Voltage</th>
                   <th className="border border-gray-300 p-2">Temperature</th>
@@ -571,18 +702,61 @@ const Settings: React.FC = () => {
                     <td className="border border-gray-300 p-2">
                       <select
                         value={row.command}
-                        onChange={(e) =>
-                          handleInputChange(index, "command", e.target.value)
-                        }
+                        onChange={(e) => {
+                          handleInputChange(index, "command", e.target.value);
+                          // Clear irrelevant fields when command changes
+                          setInstructions((prev) => {
+                            const newInstructions = [...prev];
+                            newInstructions[index] = {
+                              ...newInstructions[index],
+                              param1: e.target.value === "cycle" ? row.param1 : "",
+                              param2: e.target.value === "cycle" ? row.param2 : "",
+                              cellNo:
+                                (e.target.value === "set_temp" ||
+                                 e.target.value === "get_temperature" ||
+                                 e.target.value === "get_11_csu_temp" ||
+                                 e.target.value === "get_12_csu_temp") &&
+                                parseInt(row.cellNo) > 6
+                                  ? ""
+                                  : ["delay", "end", "reset"].includes(e.target.value)
+                                  ? ""
+                                  : row.cellNo,
+                              cycleNo:
+                                e.target.value === "cycle" ? row.cycleNo : "",
+                              voltage:
+                                e.target.value === "set_voltage" ? row.voltage : "",
+                              temperature:
+                                e.target.value === "set_temp" ? row.temperature : "",
+                              time: e.target.value === "delay" ? row.time : "",
+                            };
+                            return newInstructions;
+                          });
+                        }}
                         className="w-full p-1 border rounded"
                         title="Command"
                       >
                         <option value="">Select command</option>
-                        <option value="set">SET</option>
-                        <option value="end">END</option>
+                        <option value="set_temp">SET TEMPERATURE</option>
+                        <option value="set_voltage">SET VOLTAGE</option>
+                        <option value="set_ow">SET OW</option>
+                        <option value="set_balance">SET BALANCE</option>
+                        <option value="daisy_chain">SET DAISY CHAIN</option>
+                        <option value="get_voltage">GET VOLTAGE</option>
+                        <option value="get_temperature">GET TEMPERATURE</option>
+                        <option value="get_current">GET CURRENT</option>
+                        <option value="get_11_csu_volt">GET 11 CSU VOLT</option>
+                        <option value="get_11_csu_temp">GET 11 CSU TEMP</option>
+                        <option value="get_11_csu_ow">GET 11 CSU OW</option>
+                        <option value="get_11_csu_balance">GET 11 CSU BALANCE</option>
+                        <option value="get_12_csu_volt">GET 12 CSU VOLT</option>
+                        <option value="get_12_csu_temp">GET 12 CSU TEMP</option>
+                        <option value="get_12_csu_ow">GET 12 CSU OW</option>
+                        <option value="get_12_csu_balance">GET 12 CSU BALANCE</option>
                         <option value="reset">RESET</option>
                         <option value="cycle">CYCLE</option>
                         <option value="delay">DELAY</option>
+                        <option value="cell_led">CELL LED</option>
+                        <option value="end">END</option>
                       </select>
                     </td>
                     {/* Param 1 */}
@@ -594,10 +768,10 @@ const Settings: React.FC = () => {
                             handleInputChange(index, "param1", e.target.value)
                           }
                           className="w-full p-1 border rounded"
-                          title="Start Step"
+                          title="Select starting step for cycle"
                         >
                           <option value="">Select start step</option>
-                          {startStepOptions.map((step) => (
+                          {getStepOptions().map((step) => (
                             <option key={step} value={step}>
                               {step}
                             </option>
@@ -609,7 +783,7 @@ const Settings: React.FC = () => {
                           value=""
                           disabled
                           className="w-full p-1 border rounded bg-gray-100 cursor-not-allowed"
-                          title="Param 1 only available for cycle"
+                          title="Start step only available for cycle"
                           placeholder="Unavailable"
                           readOnly
                         />
@@ -625,7 +799,7 @@ const Settings: React.FC = () => {
                             handleInputChange(index, "param2", e.target.value)
                           }
                           className="w-full p-1 border rounded"
-                          title="Cycle Index"
+                          title="Number of cycle iterations"
                           placeholder="Enter cycle index"
                         />
                       ) : (
@@ -634,29 +808,40 @@ const Settings: React.FC = () => {
                           value=""
                           disabled
                           className="w-full p-1 border rounded bg-gray-100 cursor-not-allowed"
-                          title="Param 2 only available for cycle"
+                          title="Cycle index only available for cycle"
                           placeholder="Unavailable"
                           readOnly
                         />
                       )}
                     </td>
+                    {/* Cell No */}
                     <td className="border border-gray-300 p-2">
                       <select
                         value={row.cellNo}
                         onChange={(e) =>
                           handleInputChange(index, "cellNo", e.target.value)
                         }
-                        className="w-full p-1 border rounded"
-                        title="Cell No"
+                        className={`w-full p-1 border rounded ${
+                          !isFieldEnabled(row.command, "cellNo")
+                            ? "bg-gray-100 cursor-not-allowed"
+                            : ""
+                        }`}
+                        disabled={!isFieldEnabled(row.command, "cellNo")}
+                        title={
+                          isFieldEnabled(row.command, "cellNo")
+                            ? "Select cell number"
+                            : "Disabled for this command"
+                        }
                       >
                         <option value="">Select cell</option>
-                        {Array.from({ length: 24 }, (_, i) => (
-                          <option key={i + 1} value={String(i + 1)}>
-                            {i + 1}
+                        {getCellOptions(row.command).map((cell) => (
+                          <option key={cell} value={String(cell)}>
+                            {cell}
                           </option>
                         ))}
                       </select>
                     </td>
+                    {/* Voltage */}
                     <td className="border border-gray-300 p-2">
                       <input
                         type="text"
@@ -664,27 +849,51 @@ const Settings: React.FC = () => {
                         onChange={(e) =>
                           handleInputChange(index, "voltage", e.target.value)
                         }
-                        className="w-full p-1 border rounded"
-                        title="Voltage"
-                        placeholder="Enter voltage"
+                        className={`w-full p-1 border rounded ${
+                          !isFieldEnabled(row.command, "voltage")
+                            ? "bg-gray-100 cursor-not-allowed"
+                            : ""
+                        }`}
+                        disabled={!isFieldEnabled(row.command, "voltage")}
+                        title={
+                          isFieldEnabled(row.command, "voltage")
+                            ? "Enter voltage"
+                            : "Disabled for this command"
+                        }
+                        placeholder={
+                          isFieldEnabled(row.command, "voltage")
+                            ? "Enter voltage"
+                            : "Unavailable"
+                        }
                       />
                     </td>
+                    {/* Temperature */}
                     <td className="border border-gray-300 p-2">
                       <input
                         type="text"
                         value={row.temperature}
                         onChange={(e) =>
-                          handleInputChange(
-                            index,
-                            "temperature",
-                            e.target.value
-                          )
+                          handleInputChange(index, "temperature", e.target.value)
                         }
-                        className="w-full p-1 border rounded"
-                        title="Temperature"
-                        placeholder="Enter temperature"
+                        className={`w-full p-1 border rounded ${
+                          !isFieldEnabled(row.command, "temperature")
+                            ? "bg-gray-100 cursor-not-allowed"
+                            : ""
+                        }`}
+                        disabled={!isFieldEnabled(row.command, "temperature")}
+                        title={
+                          isFieldEnabled(row.command, "temperature")
+                            ? "Enter temperature"
+                            : "Disabled for this command"
+                        }
+                        placeholder={
+                          isFieldEnabled(row.command, "temperature")
+                            ? "Enter temperature"
+                            : "Unavailable"
+                        }
                       />
                     </td>
+                    {/* Time */}
                     <td className="border border-gray-300 p-2">
                       <input
                         type="text"
@@ -692,9 +901,22 @@ const Settings: React.FC = () => {
                         onChange={(e) =>
                           handleInputChange(index, "time", e.target.value)
                         }
-                        className="w-full p-1 border rounded"
-                        title="Time"
-                        placeholder="Enter time"
+                        className={`w-full p-1 border rounded ${
+                          !isFieldEnabled(row.command, "time")
+                            ? "bg-gray-100 cursor-not-allowed"
+                            : ""
+                        }`}
+                        disabled={!isFieldEnabled(row.command, "time")}
+                        title={
+                          isFieldEnabled(row.command, "time")
+                            ? "Enter time"
+                            : "Disabled for this command"
+                        }
+                        placeholder={
+                          isFieldEnabled(row.command, "time")
+                            ? "Enter time"
+                            : "Unavailable"
+                        }
                       />
                     </td>
                   </tr>
