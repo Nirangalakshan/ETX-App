@@ -37,7 +37,10 @@ ipcMain.handle("login", async (_event, username, password) => {
 ipcMain.handle("list-ports", async () => {
   try {
     const ports = await SerialPort.list();
-    console.log("Ports found:", ports.map((port) => port.path));
+    console.log(
+      "Ports found:",
+      ports.map((port) => port.path)
+    );
     return ports.map((port) => port.path);
   } catch (error) {
     console.error("Error listing ports:", error);
@@ -45,58 +48,79 @@ ipcMain.handle("list-ports", async () => {
   }
 });
 let serialPort = null;
-ipcMain.handle("open-port", async (_event, portPath, baudRate = 9600) => {
-  return new Promise((resolve, reject) => {
-    if (serialPort && serialPort.isOpen) {
-      return resolve({ success: false, error: "Another port is already open" });
-    }
-    serialPort = new SerialPort({
-      path: portPath,
-      baudRate,
-      autoOpen: false
-    });
-    serialPort.open((err) => {
-      if (err) {
-        console.error("Error opening port:", err);
-        serialPort = null;
-        return reject({ success: false, error: err.message });
+ipcMain.handle(
+  "open-port",
+  async (_event, portPath, baudRate = 9600) => {
+    return new Promise((resolve, reject) => {
+      if (serialPort && serialPort.isOpen) {
+        return resolve({
+          success: false,
+          error: "Another port is already open"
+        });
       }
-      console.log(`Serial port ${portPath} opened at baud rate ${baudRate}`);
-      resolve({ success: true });
-      serialPort.on("data", (data) => {
-        const dataString = data.toString();
-        console.log("Serial data received:", dataString);
-        if (win && !win.isDestroyed()) {
-          win.webContents.send("serial-data", dataString);
-        }
+      serialPort = new SerialPort({
+        path: portPath,
+        baudRate,
+        autoOpen: false
       });
-      serialPort.on("error", (err2) => {
-        console.error("Serial port error:", err2);
-        if (win && !win.isDestroyed()) {
-          win.webContents.send("serial-error", err2.message);
+      serialPort.open((err) => {
+        if (err) {
+          console.error("Erroropening port:", err);
+          serialPort = null;
+          return reject({ success: false, error: err.message });
         }
-      });
-      serialPort.on("close", () => {
-        console.log("Serial port closed");
-        serialPort = null;
-        if (win && !win.isDestroyed()) {
-          win.webContents.send("serial-closed");
-        }
+        console.log(`Serial port ${portPath} opened at baud rate ${baudRate}`);
+        resolve({ success: true });
+        serialPort.on("data", (data) => {
+          const hexString = Array.from(data).map((b) => b.toString(16).padStart(2, "0")).join(" ");
+          const decimalString = Array.from(data).map((b) => b.toString(10).padStart(3, "0")).join(" ");
+          console.log("Serial HEX data received:", hexString.toUpperCase());
+          console.log("Serial DECIMAL data received:", decimalString);
+          let voltageVolts = void 0;
+          if (data.length >= 3 && data[0] === 7 && (data[2] === 166 || data[2] === 167)) {
+            const voltageLimit = data[2] << 8 | data[3];
+            voltageVolts = (voltageLimit / 1e4).toFixed(3);
+            console.log(`Voltage: ${voltageVolts} V`);
+          }
+          if (win && !win.isDestroyed()) {
+            win.webContents.send(
+              "serial-data",
+              {
+                hex: hexString.toUpperCase(),
+                parsed: voltageVolts
+              }
+            );
+          }
+        });
+        serialPort.on("error", (err2) => {
+          console.error("Serial port error:", err2);
+          if (win && !win.isDestroyed()) {
+            win.webContents.send("serial-error", err2.message);
+          }
+        });
+        serialPort.on("close", () => {
+          console.log("Serial port closed");
+          serialPort = null;
+          if (win && !win.isDestroyed()) {
+            win.webContents.send("serial-closed");
+          }
+        });
       });
     });
-  });
-});
-ipcMain.handle("write-port", async (_event, data) => {
+  }
+);
+ipcMain.handle("write-port-raw", async (_event, data) => {
   return new Promise((resolve, reject) => {
     if (!serialPort || !serialPort.isOpen) {
       return resolve({ success: false, error: "No port is open" });
     }
-    serialPort.write(data, (err) => {
+    const buffer = Buffer.from(data);
+    serialPort.write(buffer, (err) => {
       if (err) {
-        console.error("Error writing to port:", err);
+        console.error("Error writing raw data to port:", err);
         return reject({ success: false, error: err.message });
       }
-      console.log("Data written to port:", data);
+      console.log("Raw data written to port:", buffer);
       resolve({ success: true });
     });
   });
@@ -129,13 +153,11 @@ function createWindow() {
     frame: false,
     autoHideMenuBar: true,
     icon: path.join(__dirname, "public/icon.ico"),
-    // icon: path.join(process.env.VITE_PUBLIC, "icon.svg"),
     webPreferences: {
       preload: path.join(__dirname, "preload.mjs")
-      // nodeIntegration: true, // Enable Node.js integration
-      // contextIsolation: false, // Disable context isolation for easier access to Node.js APIs
     }
   });
+  win.webContents.openDevTools();
   win.webContents.on("did-finish-load", () => {
     if (win && !win.isDestroyed()) {
       win.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
@@ -169,7 +191,10 @@ app.whenReady().then(async () => {
   createWindow();
   try {
     const ports = await SerialPort.list();
-    console.log("Startup ports:", ports.map((port) => port.path));
+    console.log(
+      "Startup ports:",
+      ports.map((port) => port.path)
+    );
   } catch (error) {
     console.error("Error listing ports at startup:", error);
   }

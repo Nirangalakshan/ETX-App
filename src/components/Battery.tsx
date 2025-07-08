@@ -2,7 +2,7 @@
 
 // type CellStatus = 'normal' | 'warning' | 'critical';
 
-// interface BatteryCell {
+// export interface BatteryCell {
 //   id: number;
 //   voltage: number;
 //   temperature: number;
@@ -10,6 +10,7 @@
 //   setVoltage: number;
 //   balancing: boolean;
 //   openWire: boolean;
+//   data: string;
 // }
 
 // interface PopupInfo {
@@ -21,61 +22,33 @@
 //   cell: BatteryCell;
 //   onClick: (event: React.MouseEvent, cell: BatteryCell) => void;
 // }> = ({ cell, onClick }) => {
-//   let statusColor = 'bg-green-500';
-//   if (cell.status === 'warning') statusColor = 'bg-yellow-500';
-//   else if (cell.status === 'critical') statusColor = 'bg-red-500';
+//   let statusColor = 'bg-green-300/20 border-green-400';
+//   if (cell.status === 'warning') statusColor = 'bg-yellow-300/20 border-yellow-400';
+//   else if (cell.status === 'critical') statusColor = 'bg-red-300/20 border-red-400';
 
 //   return (
 //     <div
 //       onClick={(e) => onClick(e, cell)}
-//       className={`w-[110px] h-[50px] m-[3px] gap-5 border border-black p-1 rounded shadow text-center text-white text-xs cursor-pointer ${statusColor}`}
+//       className={`w-[110px] h-[50px] m-[3px] border p-1 rounded-lg shadow-sm backdrop-blur-sm ${statusColor} cursor-pointer flex flex-col items-center justify-center text-xs text-gray-800 hover:scale-[1.03] transition-transform duration-200`}
 //     >
 //       <div>V: {cell.voltage}V</div>
 //       <div>T: {cell.temperature}°C</div>
-//       <div className="italic">{cell.status}</div>
+//       <div>Data: {cell.data || 'N/A'}</div>
 //     </div>
 //   );
 // };
 
 // interface BatteryProps {
+//   cells: BatteryCell[];
 //   setSelectedCell: (cell: BatteryCell | null) => void;
-//   cells?: BatteryCell[]; // Optional prop for initial cells from serial data
 // }
 
-// const Battery: React.FC<BatteryProps> = ({ setSelectedCell, cells: initialCells }) => {
-//   const [cells, setCells] = useState<BatteryCell[]>(initialCells || 
-//     Array.from({ length: 24 }, (_, i) => ({
-//       id: i,
-//       voltage: 3.6,
-//       temperature: 25.0,
-//       status: 'normal' as CellStatus,
-//       setVoltage: 3.65,
-//       balancing: false,
-//       openWire: false,
-//     }))
-//   );
-
+// const Battery: React.FC<BatteryProps> = ({ cells, setSelectedCell }) => {
 //   const [popup, setPopup] = useState<PopupInfo | null>(null);
 //   const [popupHeight, setPopupHeight] = useState(180);
 //   const popupRef = useRef<HTMLDivElement>(null);
 //   const [setVoltageInput, setSetVoltageInput] = useState<number>(3.65);
 //   const [balancingActive, setBalancingActive] = useState<boolean>(false);
-
-//   useEffect(() => {
-//     const interval = setInterval(() => {
-//       setCells((prev) =>
-//         prev.map((cell) => {
-//           const voltage = +(Math.random() * 0.7 + 3.1).toFixed(2);
-//           const temperature = +(Math.random() * 20 + 20).toFixed(1);
-//           const status: CellStatus = voltage < 3.3 ? 'critical' : voltage < 3.5 ? 'warning' : 'normal';
-//           const openWire = Math.random() < 0.05;
-//           return { ...cell, voltage, temperature, status, openWire };
-//         })
-//       );
-//     }, 3000);
-
-//     return () => clearInterval(interval);
-//   }, []);
 
 //   useEffect(() => {
 //     if (popupRef.current) {
@@ -113,7 +86,6 @@
 
 //     setPopup({ cell, position: { top, left } });
 //     setSelectedCell(cell);
-
 //     setSetVoltageInput(cell.setVoltage);
 //     setBalancingActive(cell.balancing);
 //   };
@@ -122,12 +94,6 @@
 //     if (!popup) return;
 //     const newBalancing = !balancingActive;
 //     setBalancingActive(newBalancing);
-
-//     setCells((prev) =>
-//       prev.map((c) =>
-//         c.id === popup.cell.id ? { ...c, balancing: newBalancing } : c
-//       )
-//     );
 
 //     setPopup((p) =>
 //       p
@@ -144,14 +110,6 @@
 //     if (isNaN(val)) return;
 //     setSetVoltageInput(val);
 
-//     if (!popup) return;
-
-//     setCells((prev) =>
-//       prev.map((c) =>
-//         c.id === popup.cell.id ? { ...c, setVoltage: val } : c
-//       )
-//     );
-
 //     setPopup((p) =>
 //       p
 //         ? {
@@ -165,7 +123,7 @@
 //   return (
 //     <div className="relative">
 //       <div
-//         className="grid grid-cols-2 gap-1 bg-gray-100 border-2 border-black p-4 rounded-lg shadow-lg"
+//         className="grid grid-cols-2 gap-1 bg-white/60 border-2 border-gray-300 p-4 rounded-lg shadow-lg backdrop-blur-sm"
 //         style={{
 //           height: 'calc(100vh - 80px)',
 //           overflow: 'hidden',
@@ -184,56 +142,62 @@
 //       {popup && (
 //         <div
 //           ref={popupRef}
-//           className="absolute z-50 backdrop-blur-md bg-white/90 border border-gray-300 rounded shadow-md p-4 max-w-xs"
+//           className="absolute z-50 backdrop-blur-lg bg-white/90 border border-gray-300 rounded-lg shadow-xl p-4"
 //           style={{
 //             top: popup.position.top,
 //             left: popup.position.left,
-//             minWidth: 200,
+//             minWidth: 240,
 //           }}
 //         >
-//           <div className="mb-2 font-bold">Cell ID: {popup.cell.id}</div>
+//           <h3 className="text-gray-800 font-semibold mb-2 text-sm">
+//             Cell ID: <span className="text-blue-600">{popup.cell.id}</span>
+//           </h3>
 
-//           <div className="mb-1 text-sm">
-//             <label className="font-semibold mr-2">Set Voltage:</label>
-//             <input
-//               type="number"
-//               step="0.01"
-//               min="0"
-//               value={setVoltageInput}
-//               onChange={onSetVoltageChange}
-//               className="border rounded px-1 py-0.5 w-20"
-//               placeholder="Set voltage"
-//               title="Set voltage"
-//             />
-//             V
+//           <div className="space-y-1 text-sm text-gray-700">
+//             <div>
+//               <strong>Set Voltage:</strong>{' '}
+//               <input
+//                 placeholder='Set voltage'
+//                 title='Set voltage'
+//                 type="number"
+//                 step="0.01"
+//                 min="0"
+//                 value={setVoltageInput}
+//                 onChange={onSetVoltageChange}
+//                 className="border border-gray-300 rounded px-2 py-1 w-24 text-sm"
+//               />{' '}
+//               V
+//             </div>
+//             <div>
+//               <strong>Actual Voltage:</strong> {popup.cell.voltage.toFixed(2)} V
+//             </div>
+//             <div>
+//               <strong>Temperature:</strong> {popup.cell.temperature.toFixed(1)}°C
+//             </div>
+//             <div>
+//               <strong>Balancing:</strong>{' '}
+//               {balancingActive ? (
+//                 <span className="text-green-600 font-semibold">ON</span>
+//               ) : (
+//                 <span className="text-gray-500">OFF</span>
+//               )}
+//             </div>
+//             <div>
+//               <strong>Open Wire:</strong>{' '}
+//               {popup.cell.openWire ? (
+//                 <span className="text-red-500 font-semibold">Yes</span>
+//               ) : (
+//                 <span className="text-green-600">No</span>
+//               )}
+//             </div>
+//             <div>
+//               <strong>Raw Data:</strong> {popup.cell.data || 'N/A'}
+//             </div>
 //           </div>
 
-//           <div className="mb-1 text-sm">
-//             <span className="font-semibold mr-2">Actual Voltage:</span>
-//             {popup.cell.voltage.toFixed(2)} V
-//           </div>
-
-//           <div className="mb-1 text-sm">
-//             <span className="font-semibold mr-2">Balancing Status:</span>
-//             {balancingActive ? (
-//               <span className="text-green-600 font-semibold">Balancing Mode ON</span>
-//             ) : (
-//               <span className="text-gray-600">Idle</span>
-//             )}
-//           </div>
-
-//           <div className="mb-2 text-sm">
-//             <span className="font-semibold mr-2">Open Wire Status:</span>
-//             {popup.cell.openWire ? (
-//               <span className="text-red-600 font-semibold">Open Wire Detected</span>
-//             ) : (
-//               <span className="text-green-600">No Open Wire</span>
-//             )}
-//           </div>
-
-//           <div className="flex items-center">
-//             <label htmlFor="balancingToggle" className="mr-2 text-sm font-semibold">
-//               Set Balance:
+//           <div className="flex items-center mt-3">
+//             <label htmlFor="balancingToggle" className="mr-2 text-sm font-medium">
+//               Toggle Balancing:
 //             </label>
 //             <input
 //               type="checkbox"
@@ -246,7 +210,7 @@
 
 //           <button
 //             onClick={() => setPopup(null)}
-//             className="mt-3 text-xs text-blue-600 hover:underline"
+//             className="mt-4 text-xs text-blue-600 hover:underline"
 //           >
 //             Close
 //           </button>
@@ -262,19 +226,22 @@
 
 
 
+
+
 import React, { useEffect, useState, useRef } from 'react';
 
 type CellStatus = 'normal' | 'warning' | 'critical';
 
-interface BatteryCell {
+export interface BatteryCell {
   id: number;
-  voltage: number;
-  temperature: number;
+  voltage: number | null;
+  temperature: number | null;
   status: CellStatus;
   setVoltage: number;
   balancing: boolean;
   openWire: boolean;
-  data: string; // New field for raw letter data
+  data: string | null;
+  voltageLimits?: string | null;
 }
 
 interface PopupInfo {
@@ -286,18 +253,19 @@ const BatteryCellComponent: React.FC<{
   cell: BatteryCell;
   onClick: (event: React.MouseEvent, cell: BatteryCell) => void;
 }> = ({ cell, onClick }) => {
-  let statusColor = 'bg-green-500';
-  if (cell.status === 'warning') statusColor = 'bg-yellow-500';
-  else if (cell.status === 'critical') statusColor = 'bg-red-500';
+  let statusColor = 'bg-green-300/20 border-green-400';
+  if (cell.status === 'warning') statusColor = 'bg-yellow-300/20 border-yellow-400';
+  else if (cell.status === 'critical') statusColor = 'bg-red-300/20 border-red-400';
+
 
   return (
     <div
       onClick={(e) => onClick(e, cell)}
-      className={`w-[110px] h-[50px] m-[3px] gap-5 border border-black p-1 rounded shadow text-center text-white text-xs cursor-pointer ${statusColor}`}
+      className={`w-[110px] h-[50px] m-[3px] border p-1 rounded-lg shadow-sm backdrop-blur-sm ${statusColor} cursor-pointer flex flex-col items-center justify-center text-xs text-gray-800 hover:scale-[1.03] transition-transform duration-200`}
     >
-      <div>V: {cell.voltage}V</div>
-      <div>T: {cell.temperature}°C</div>
-      <div>Data: {cell.data || 'N/A'}</div>
+      <div>V: {cell.voltage != null ? cell.voltage.toFixed(2) : 'N/A'}V</div>
+      <div>T: {cell.temperature != null ? cell.temperature.toFixed(1) : 'N/A'}°C</div>
+      <div>Data: {cell.voltageLimits || cell.data || 'N/A'}</div>
     </div>
   );
 };
@@ -387,7 +355,7 @@ const Battery: React.FC<BatteryProps> = ({ cells, setSelectedCell }) => {
   return (
     <div className="relative">
       <div
-        className="grid grid-cols-2 gap-1 bg-gray-100 border-2 border-black p-4 rounded-lg shadow-lg"
+        className="grid grid-cols-2 gap-1 bg-white/60 border-2 border-gray-300 p-4 rounded-lg shadow-lg backdrop-blur-sm"
         style={{
           height: 'calc(100vh - 80px)',
           overflow: 'hidden',
@@ -406,55 +374,69 @@ const Battery: React.FC<BatteryProps> = ({ cells, setSelectedCell }) => {
       {popup && (
         <div
           ref={popupRef}
-          className="absolute z-50 backdrop-blur-md bg-white/90 border border-gray-300 rounded shadow-md p-4 max-w-xs"
+          className="absolute z-50 backdrop-blur-lg bg-white/90 border border-gray-300 rounded-lg shadow-xl p-4"
           style={{
             top: popup.position.top,
             left: popup.position.left,
-            minWidth: 200,
+            minWidth: 240,
           }}
         >
-          <div className="mb-2 font-bold">Cell ID: {popup.cell.id}</div>
-          <div className="mb-1 text-sm">
-            <label className="font-semibold mr-2">Set Voltage:</label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              value={setVoltageInput}
-              onChange={onSetVoltageChange}
-              className="border rounded px-1 py-0.5 w-20"
-              placeholder="Set voltage"
-              title="Set voltage"
-            />
-            V
+          <h3 className="text-gray-800 font-semibold mb-2 text-sm">
+            Cell ID: <span className="text-blue-600">{popup.cell.id}</span>
+          </h3>
+
+          <div className="space-y-1 text-sm text-gray-700">
+            <div>
+              <strong>Set Voltage:</strong>{' '}
+              <input
+                placeholder='Set voltage'
+                title='Set voltage'
+                type="number"
+                step="0.01"
+                min="0"
+                value={setVoltageInput}
+                onChange={onSetVoltageChange}
+                className="border border-gray-300 rounded px-2 py-1 w-24 text-sm"
+              />{' '}
+              V
+            </div>
+            <div>
+              <strong>Actual Voltage:</strong>{' '}
+              {popup.cell.voltage != null ? popup.cell.voltage.toFixed(2) : 'N/A'} V
+            </div>
+            <div>
+              <strong>Temperature:</strong>{' '}
+              {popup.cell.temperature != null ? popup.cell.temperature.toFixed(1) : 'N/A'}°C
+            </div>
+            <div>
+              <strong>Balancing:</strong>{' '}
+              {balancingActive ? (
+                <span className="text-green-600 font-semibold">ON</span>
+              ) : (
+                <span className="text-gray-500">OFF</span>
+              )}
+            </div>
+            <div>
+              <strong>Open Wire:</strong>{' '}
+              {popup.cell.openWire ? (
+                <span className="text-red-500 font-semibold">Yes</span>
+              ) : (
+                <span className="text-green-600">No</span>
+              )}
+            </div>
+            <div>
+              <strong>Voltage Limits:</strong>{' '}
+              {popup.cell.voltageLimits || 'N/A'}
+            </div>
+            <div>
+              <strong>Raw Data:</strong>{' '}
+              {popup.cell.data || 'N/A'}
+            </div>
           </div>
-          <div className="mb-1 text-sm">
-            <span className="font-semibold mr-2">Actual Voltage:</span>
-            {popup.cell.voltage.toFixed(2)} V
-          </div>
-          <div className="mb-1 text-sm">
-            <span className="font-semibold mr-2">Balancing Status:</span>
-            {balancingActive ? (
-              <span className="text-green-600 font-semibold">Balancing Mode ON</span>
-            ) : (
-              <span className="text-gray-600">Idle</span>
-            )}
-          </div>
-          <div className="mb-2 text-sm">
-            <span className="font-semibold mr-2">Open Wire Status:</span>
-            {popup.cell.openWire ? (
-              <span className="text-red-600 font-semibold">Open Wire Detected</span>
-            ) : (
-              <span className="text-green-600">No Open Wire</span>
-            )}
-          </div>
-          <div className="mb-2 text-sm">
-            <span className="font-semibold mr-2">Raw Data:</span>
-            {popup.cell.data || 'N/A'}
-          </div>
-          <div className="flex items-center">
-            <label htmlFor="balancingToggle" className="mr-2 text-sm font-semibold">
-              Set Balance:
+
+          <div className="flex items-center mt-3">
+            <label htmlFor="balancingToggle" className="mr-2 text-sm font-medium">
+              Toggle Balancing:
             </label>
             <input
               type="checkbox"
@@ -464,9 +446,10 @@ const Battery: React.FC<BatteryProps> = ({ cells, setSelectedCell }) => {
               className="cursor-pointer"
             />
           </div>
+
           <button
             onClick={() => setPopup(null)}
-            className="mt-3 text-xs text-blue-600 hover:underline"
+            className="mt-4 text-xs text-blue-600 hover:underline"
           >
             Close
           </button>

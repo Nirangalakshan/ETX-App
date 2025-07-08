@@ -60,6 +60,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Setting from "./pages/Setting.tsx";
 import Login from "./pages/Login.tsx";
 import { SerialProvider } from "./SerialContext.tsx";
+import Report from "./pages/Report.tsx";
 
 // Auth guard for protected routes
 function RequireAuth({ children }: { children: JSX.Element }) {
@@ -87,6 +88,14 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             element={
               <RequireAuth>
                 <Setting />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/report"
+            element={
+              <RequireAuth>
+                 <Report/>
               </RequireAuth>
             }
           />

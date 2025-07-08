@@ -29,10 +29,8 @@
 //     setError(null);
 
 //     try {
-//       // @ts-ignore
-//       const result = await window.authAPI?.login(username, password);
-
-//       if (result?.success) {
+//       // Hardcoded credentials check
+//       if (username === "vega" && password === "vega123") {
 //         localStorage.setItem("isLoggedIn", "true");
 
 //         toast.success("Login successful! Redirecting...", {
@@ -44,7 +42,7 @@
 //           navigate("/dashboard");
 //         }, 2000);
 //       } else {
-//         const message = result?.error || "Invalid credentials";
+//         const message = "Invalid credentials";
 //         setError(message);
 //         toast.warning(message, {
 //           position: "top-center",
@@ -64,9 +62,15 @@
 //       <ToastContainer />
 //       <div className="flex items-center justify-center min-h-[calc(100vh-64px)] px-4">
 //         <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-xl transform transition-all hover:scale-[1.02]">
+//           <img
+//             src="/icon.svg"
+//             alt="Logo"
+//             className="mx-auto mb-6 w-30 h-30"
+//           />
 //           <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
-//             Welcome Back
+//             Hey! Welcome
 //           </h1>
+
 //           <div className="space-y-6">
 //             <div className="flex flex-col gap-4">
 //               <div>
@@ -137,20 +141,6 @@
 //                 {error}
 //               </div>
 //             )}
-//             <div className="text-center">
-//               <a
-//                 href="/forgot-password"
-//                 className="text-sm text-blue-600 hover:underline"
-//               >
-//                 Forgot Password?
-//               </a>
-//             </div>
-//             <div className="text-center text-sm text-gray-600">
-//               Don't have an account?{" "}
-//               <a href="/signup" className="text-blue-600 hover:underline">
-//                 Sign up
-//               </a>
-//             </div>
 //           </div>
 //         </div>
 //       </div>
@@ -164,13 +154,14 @@
 
 
 
+
 import React, { useState, useEffect } from "react";
 import MenuBar from "../components/MenuBar";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const Login = () => {
+const Login: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -223,18 +214,35 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 flex flex-col">
       <MenuBar />
-      <ToastContainer />
-      <div className="flex items-center justify-center min-h-[calc(100vh-64px)] px-4">
-        <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-xl transform transition-all hover:scale-[1.02]">
-          <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
-            Hey! Welcome
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+      <div className="flex-1 flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-sm sm:max-w-md p-6 sm:p-8 bg-white/80 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 transition-all duration-300 hover:shadow-3xl">
+          <img
+            src="/icon.svg"
+            alt="Logo"
+            className="mx-auto mb-6 w-16 h-16 sm:w-20 sm:h-20 transition-transform duration-300 hover:scale-110"
+          />
+          <h1 className="text-2xl sm:text-3xl font-semibold text-center text-gray-900 mb-6 tracking-tight">
+            Welcome Back
           </h1>
-          <div className="space-y-6">
-            <div className="flex flex-col gap-4">
+
+          <div className="space-y-5">
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   Username
                 </label>
                 <input
@@ -242,13 +250,13 @@ const Login = () => {
                   placeholder="Enter username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white/50 transition-all duration-200"
                   disabled={isLoading}
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   Password
                 </label>
                 <input
@@ -256,7 +264,7 @@ const Login = () => {
                   placeholder="Enter password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white/50 transition-all duration-200"
                   disabled={isLoading}
                   required
                 />
@@ -265,12 +273,12 @@ const Login = () => {
                 type="button"
                 onClick={handleLogin}
                 disabled={isLoading}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-indigo-600 text-white py-2.5 rounded-xl hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-300 text-sm font-medium transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 {isLoading ? (
-                  <span className="flex items-center justify-center">
+                  <span className="flex items-center">
                     <svg
-                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
@@ -297,24 +305,10 @@ const Login = () => {
               </button>
             </div>
             {error && (
-              <div className="text-red-500 text-sm text-center animate-pulse">
+              <div className="text-red-500 text-sm text-center animate-fade-in">
                 {error}
               </div>
             )}
-            {/* <div className="text-center">
-              <a
-                href="/forgot-password"
-                className="text-sm text-blue-600 hover:underline"
-              >
-                Forgot Password?
-              </a>
-            </div>
-            <div className="text-center text-sm text-gray-600">
-              Don't have an account?{" "}
-              <a href="/signup" className="text-blue-600 hover:underline">
-                Sign up
-              </a>
-            </div> */}
           </div>
         </div>
       </div>

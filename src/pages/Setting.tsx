@@ -13,15 +13,6 @@
 //   time: string;
 // }
 
-// const startStepOptions = [
-//   "Step 1",
-//   "Step 2",
-//   "Step 3",
-//   "Step 4",
-//   "Step 5",
-//   "Step 6",
-// ];
-
 // const Settings: React.FC = () => {
 //   const [instructions, setInstructions] = useState<SetInstruction[]>([
 //     {
@@ -55,6 +46,13 @@
 //     field: keyof SetInstruction,
 //     value: string
 //   ) => {
+//     if (
+//       (field === "param2" || field === "voltage" || field === "temperature" || field === "time") &&
+//       value &&
+//       (isNaN(Number(value)) || Number(value) < 0)
+//     ) {
+//       return;
+//     }
 //     setInstructions((prev) => {
 //       const newInstructions = [...prev];
 //       newInstructions[index] = { ...newInstructions[index], [field]: value };
@@ -85,7 +83,16 @@
 //   const deleteRow = (index: number) => {
 //     setInstructions((prev) => {
 //       if (prev.length === 1) return prev;
-//       return prev.filter((_, i) => i !== index);
+//       const newInstructions = prev.filter((_, i) => i !== index);
+//       return newInstructions.map((instr) => {
+//         if (instr.command === "cycle" && instr.param1) {
+//           const stepNum = parseInt(instr.param1.replace("Step ", ""));
+//           if (stepNum > newInstructions.length) {
+//             return { ...instr, param1: "" };
+//           }
+//         }
+//         return instr;
+//       });
 //     });
 //   };
 
@@ -154,9 +161,7 @@
 //     const url = window.URL.createObjectURL(blob);
 //     const link = document.createElement("a");
 //     link.href = url;
-//     link.download = `instructions_${
-//       new Date().toISOString().split("T")[0]
-//     }.json`;
+//     link.download = `instructions_${new Date().toISOString().split("T")[0]}.json`;
 //     document.body.appendChild(link);
 //     link.click();
 //     document.body.removeChild(link);
@@ -164,263 +169,367 @@
 //     alert("Instructions saved successfully.");
 //   };
 
-//   return (
-//     <div className="flex flex-col h-screen bg-gray-100">
-//       <MenuBar />
+//   const isFieldEnabled = (command: string, field: keyof SetInstruction) => {
+//     if (command === "") return false;
+//     switch (command) {
+//       case "set_voltage":
+//         return field === "cellNo" || field === "voltage";
+//       case "set_temp":
+//         return field === "cellNo" || field === "temperature";
+//       case "cycle":
+//         return field === "param1" || field === "param2" || field === "cycleNo";
+//       case "delay":
+//         return field === "time";
+//       case "set_balance":
+//       case "set_ow":
+//       case "get_voltage":
+//       case "get_current":
+//       case "get_11_csu_volt":
+//       case "get_12_csu_volt":
+//       case "get_11_csu_ow":
+//       case "get_12_csu_ow":
+//       case "get_11_csu_balance":
+//       case "get_12_csu_balance":
+//         return field === "cellNo";
+//       case "get_temperature":
+//       case "get_11_csu_temp":
+//       case "get_12_csu_temp":
+//         return field === "cellNo";
+//       case "end":
+//       case "reset":
+//         return false;
+//       default:
+//         return false;
+//     }
+//   };
 
-//       <div className="flex-1 p-4">
-//         <div className="bg-white p-4 rounded-lg shadow-lg">
-//           <h2 className="text-lg font-semibold mb-2">Set Instructions</h2>
-//           <div
-//             className="mb-4 instructions-table-scroll"
-//             style={{ maxHeight: 320, overflowY: "auto", position: "relative" }}
-//           >
-//             <table className="w-full border-collapse border border-gray-300">
-//               <thead>
-//                 <tr className="bg-gray-200">
-//                   <th className="border border-gray-300 p-2">No</th>
-//                   <th className="border border-gray-300 p-2">Command</th>
-//                   <th className="border border-gray-300 p-2">Param 1</th>
-//                   <th className="border border-gray-300 p-2">Param 2</th>
-//                   <th className="border border-gray-300 p-2">Cell No</th>
-//                   <th className="border border-gray-300 p-2">Voltage</th>
-//                   <th className="border border-gray-300 p-2">Temperature</th>
-//                   <th className="border border-gray-300 p-2">Time</th>
-//                 </tr>
-//               </thead>
-//               <tbody>
-//                 {instructions.map((row, index) => (
-//                   <tr
-//                     key={`row-${row.id}-${index}`}
-//                     data-index={index}
-//                     onContextMenu={(e) => {
-//                       e.preventDefault();
-//                       setContextMenu({
-//                         x: e.clientX,
-//                         y: e.clientY,
-//                         rowIndex: index,
-//                       });
-//                     }}
-//                   >
-//                     <td className="border border-gray-300 p-2">{index + 1}</td>
-//                     <td className="border border-gray-300 p-2">
-//                       <select
-//                         value={row.command}
-//                         onChange={(e) =>
-//                           handleInputChange(index, "command", e.target.value)
-//                         }
-//                         className="w-full p-1 border rounded"
-//                         title="Command"
-//                       >
-//                         <option value="">Select command</option>
-//                         <option value="set_temp">SET TEMPERATURE</option>
-//                         <option value="set_voltage">SET VOLTAGE</option>
-//                         <option value="end">END</option>
-//                         <option value="reset">RESET</option>
-//                         <option value="cycle">CYCLE</option>
-//                         <option value="delay">DELAY</option>
-//                         <option value="set_balance">SET BALANCE</option>
-//                         <option value="get">GET</option>
-//                       </select>
-//                     </td>
-//                     {/* Param 1 */}
-//                     <td className="border border-gray-300 p-2">
-//                       {row.command === "cycle" ? (
+//   const getCellOptions = (command: string) => {
+//     const maxCells =
+//       command === "set_temp" ||
+//       command === "get_temperature" ||
+//       command === "get_11_csu_temp" ||
+//       command === "get_12_csu_temp"
+//         ? 6
+//         : 24;
+//     return Array.from({ length: maxCells }, (_, i) => i + 1);
+//   };
+
+//   const getStepOptions = () => {
+//     return Array.from({ length: instructions.length }, (_, i) => `Step ${i + 1}`);
+//   };
+
+//   // Calculate max height for the table container (4 rows height + header)
+//   const tableContainerStyle = {
+//     maxHeight: instructions.length > 4 ? 'calc(4 * 3.5rem + 3rem)' : 'none',
+//     overflowY: instructions.length > 4 ? 'auto' : 'visible' as const,
+//   };
+
+//   return (
+//     <div className="flex flex-col h-screen bg-gray-50">
+//       <MenuBar />
+//       <div className="flex-1 p-6">
+//         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+//           <div className="flex justify-between items-center mb-6">
+//             <h2 className="text-2xl font-semibold text-gray-800">Set Instructions</h2>
+//             <div className="flex space-x-3">
+//               <button
+//                 onClick={handleLoadFile}
+//                 className="px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm flex items-center space-x-2"
+//               >
+//                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+//                   <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+//                 </svg>
+//                 <span>Load File</span>
+//               </button>
+//               <button
+//                 onClick={handleSave}
+//                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm flex items-center space-x-2"
+//               >
+//                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+//                   <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm6.293-9.707a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 9.414V17a1 1 0 11-2 0V9.414L7.707 11.707a1 1 0 01-1.414-1.414l3-3z" clipRule="evenodd" />
+//                 </svg>
+//                 <span>Save</span>
+//               </button>
+//               <input
+//                 type="file"
+//                 ref={fileInputRef}
+//                 onChange={handleFileChange}
+//                 className="hidden"
+//                 accept=".json"
+//               />
+//             </div>
+//           </div>
+
+//           <div className="mb-6">
+//             <div className="relative shadow-sm rounded-lg border border-gray-200" style={tableContainerStyle}>
+//               <table className="w-full text-sm text-left text-gray-700">
+//                 <thead className="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0">
+//                   <tr>
+//                     <th scope="col" className="px-6 py-3 w-12">No</th>
+//                     <th scope="col" className="px-6 py-3">Command</th>
+//                     <th scope="col" className="px-6 py-3">Start Step</th>
+//                     <th scope="col" className="px-6 py-3">Cycle Index</th>
+//                     <th scope="col" className="px-6 py-3">Cell No</th>
+//                     <th scope="col" className="px-6 py-3">Voltage</th>
+//                     <th scope="col" className="px-6 py-3">Temperature</th>
+//                     <th scope="col" className="px-6 py-3">Time</th>
+//                   </tr>
+//                 </thead>
+//                 <tbody>
+//                   {instructions.map((row, index) => (
+//                     <tr
+//                       key={`row-${row.id}-${index}`}
+//                       className={`border-b ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-gray-50`}
+//                       onContextMenu={(e) => {
+//                         e.preventDefault();
+//                         setContextMenu({
+//                           x: e.clientX,
+//                           y: e.clientY,
+//                           rowIndex: index,
+//                         });
+//                       }}
+//                     >
+//                       <td className="px-6 py-4 font-medium text-gray-900">{index + 1}</td>
+//                       <td className="px-6 py-4">
 //                         <select
-//                           value={row.param1}
-//                           onChange={(e) =>
-//                             handleInputChange(index, "param1", e.target.value)
-//                           }
-//                           className="w-full p-1 border rounded"
-//                           title="Start Step"
+//                           value={row.command}
+//                           onChange={(e) => {
+//                             handleInputChange(index, "command", e.target.value);
+//                             setInstructions((prev) => {
+//                               const newInstructions = [...prev];
+//                               newInstructions[index] = {
+//                                 ...newInstructions[index],
+//                                 param1: e.target.value === "cycle" ? row.param1 : "",
+//                                 param2: e.target.value === "cycle" ? row.param2 : "",
+//                                 cellNo:
+//                                   (e.target.value === "set_temp" ||
+//                                    e.target.value === "get_temperature" ||
+//                                    e.target.value === "get_11_csu_temp" ||
+//                                    e.target.value === "get_12_csu_temp") &&
+//                                   parseInt(row.cellNo) > 6
+//                                     ? ""
+//                                     : ["delay", "end", "reset"].includes(e.target.value)
+//                                     ? ""
+//                                     : row.cellNo,
+//                                 cycleNo:
+//                                   e.target.value === "cycle" ? row.cycleNo : "",
+//                                 voltage:
+//                                   e.target.value === "set_voltage" ? row.voltage : "",
+//                                 temperature:
+//                                   e.target.value === "set_temp" ? row.temperature : "",
+//                                 time: e.target.value === "delay" ? row.time : "",
+//                               };
+//                               return newInstructions;
+//                             });
+//                           }}
+//                           className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
 //                         >
-//                           <option value="">Select start step</option>
-//                           {startStepOptions.map((step) => (
-//                             <option key={step} value={step}>
-//                               {step}
+//                           <option value="">Select command</option>
+//                           <option value="set_temp">SET TEMPERATURE</option>
+//                           <option value="set_voltage">SET VOLTAGE</option>
+//                           <option value="set_ow">SET OW</option>
+//                           <option value="set_balance">SET BALANCE</option>
+//                           <option value="daisy_chain">SET DAISY CHAIN</option>
+//                           <option value="get_voltage">GET VOLTAGE</option>
+//                           <option value="get_temperature">GET TEMPERATURE</option>
+//                           <option value="get_current">GET CURRENT</option>
+//                           <option value="get_11_csu_volt">GET 11 CSU VOLT</option>
+//                           <option value="get_11_csu_temp">GET 11 CSU TEMP</option>
+//                           <option value="get_11_csu_ow">GET 11 CSU OW</option>
+//                           <option value="get_11_csu_balance">GET 11 CSU BALANCE</option>
+//                           <option value="get_12_csu_volt">GET 12 CSU VOLT</option>
+//                           <option value="get_12_csu_temp">GET 12 CSU TEMP</option>
+//                           <option value="get_12_csu_ow">GET 12 CSU OW</option>
+//                           <option value="get_12_csu_balance">GET 12 CSU BALANCE</option>
+//                           <option value="reset">RESET</option>
+//                           <option value="cycle">CYCLE</option>
+//                           <option value="delay">DELAY</option>
+//                           <option value="cell_led">CELL LED</option>
+//                           <option value="end">END</option>
+//                         </select>
+//                       </td>
+//                       <td className="px-6 py-4">
+//                         {row.command === "cycle" ? (
+//                           <select
+//                             value={row.param1}
+//                             onChange={(e) =>
+//                               handleInputChange(index, "param1", e.target.value)
+//                             }
+//                             className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+//                           >
+//                             <option value="">Select start step</option>
+//                             {getStepOptions().map((step) => (
+//                               <option key={step} value={step}>
+//                                 {step}
+//                               </option>
+//                             ))}
+//                           </select>
+//                         ) : (
+//                           <div className="p-2 text-gray-400">-</div>
+//                         )}
+//                       </td>
+//                       <td className="px-6 py-4">
+//                         {row.command === "cycle" ? (
+//                           <input
+//                             type="text"
+                            
+//                             value={row.param2}
+//                             onChange={(e) =>
+//                               handleInputChange(index, "param2", e.target.value)
+//                             }
+//                             className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+//                             placeholder="Enter index"
+//                             title="Enter cycle index"
+//                           />
+//                         ) : (
+//                           <div className="p-2 text-gray-400">-</div>
+//                         )}
+//                       </td>
+//                       <td className="px-6 py-4">
+//                         <select
+//                           value={row.cellNo}
+//                           onChange={(e) =>
+//                             handleInputChange(index, "cellNo", e.target.value)
+//                           }
+//                           className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+//                             !isFieldEnabled(row.command, "cellNo") ? 'bg-gray-100 text-gray-400' : ''
+//                           }`}
+//                           disabled={!isFieldEnabled(row.command, "cellNo")}
+//                           aria-label="Cell Number"
+//                         >
+//                           <option value="">Select cell</option>
+//                           {getCellOptions(row.command).map((cell) => (
+//                             <option key={cell} value={String(cell)}>
+//                               {cell}
 //                             </option>
 //                           ))}
 //                         </select>
-//                       ) : (
+//                       </td>
+//                       <td className="px-6 py-4">
 //                         <input
 //                           type="text"
-//                           value=""
-//                           disabled
-//                           className="w-full p-1 border rounded bg-gray-100 cursor-not-allowed"
-//                           title="Param 1 only available for cycle"
-//                           placeholder="Unavailable"
-//                           readOnly
-//                         />
-//                       )}
-//                     </td>
-//                     {/* Param 2 */}
-//                     <td className="border border-gray-300 p-2">
-//                       {row.command === "cycle" ? (
-//                         <input
-//                           type="text"
-//                           value={row.param2}
+//                           value={row.voltage}
 //                           onChange={(e) =>
-//                             handleInputChange(index, "param2", e.target.value)
+//                             handleInputChange(index, "voltage", e.target.value)
 //                           }
-//                           className="w-full p-1 border rounded"
-//                           title="Cycle Index"
-//                           placeholder="Enter cycle index"
+//                           className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+//                             !isFieldEnabled(row.command, "voltage") ? 'bg-gray-100 text-gray-400' : ''
+//                           }`}
+//                           disabled={!isFieldEnabled(row.command, "voltage")}
+//                           placeholder={
+//                             isFieldEnabled(row.command, "voltage")
+//                               ? "Enter voltage"
+//                               : "-"
+//                           }
 //                         />
-//                       ) : (
+//                       </td>
+//                       <td className="px-6 py-4">
 //                         <input
 //                           type="text"
-//                           value=""
-//                           disabled
-//                           className="w-full p-1 border rounded bg-gray-100 cursor-not-allowed"
-//                           title="Param 2 only available for cycle"
-//                           placeholder="Unavailable"
-//                           readOnly
+//                           value={row.temperature}
+//                           onChange={(e) =>
+//                             handleInputChange(index, "temperature", e.target.value)
+//                           }
+//                           className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+//                             !isFieldEnabled(row.command, "temperature") ? 'bg-gray-100 text-gray-400' : ''
+//                           }`}
+//                           disabled={!isFieldEnabled(row.command, "temperature")}
+//                           placeholder={
+//                             isFieldEnabled(row.command, "temperature")
+//                               ? "Enter temp"
+//                               : "-"
+//                           }
 //                         />
-//                       )}
-//                     </td>
-//                     <td className="border border-gray-300 p-2">
-//                       <select
-//                         value={row.cellNo}
-//                         onChange={(e) =>
-//                           handleInputChange(index, "cellNo", e.target.value)
-//                         }
-//                         className="w-full p-1 border rounded"
-//                         title="Cell No"
-//                       >
-//                         <option value="">Select cell</option>
-//                         {Array.from({ length: 24 }, (_, i) => (
-//                           <option key={i + 1} value={String(i + 1)}>
-//                             {i + 1}
-//                           </option>
-//                         ))}
-//                       </select>
-//                     </td>
-//                     <td className="border border-gray-300 p-2">
-//                       <input
-//                         type="text"
-//                         value={row.voltage}
-//                         onChange={(e) =>
-//                           handleInputChange(index, "voltage", e.target.value)
-//                         }
-//                         className="w-full p-1 border rounded"
-//                         title="Voltage"
-//                         placeholder="Enter voltage"
-//                       />
-//                     </td>
-//                     <td className="border border-gray-300 p-2">
-//                       <input
-//                         type="text"
-//                         value={row.temperature}
-//                         onChange={(e) =>
-//                           handleInputChange(
-//                             index,
-//                             "temperature",
-//                             e.target.value
-//                           )
-//                         }
-//                         className="w-full p-1 border rounded"
-//                         title="Temperature"
-//                         placeholder="Enter temperature"
-//                       />
-//                     </td>
-//                     <td className="border border-gray-300 p-2">
-//                       <input
-//                         type="text"
-//                         value={row.time}
-//                         onChange={(e) =>
-//                           handleInputChange(index, "time", e.target.value)
-//                         }
-//                         className="w-full p-1 border rounded"
-//                         title="Time"
-//                         placeholder="Enter time"
-//                       />
-//                     </td>
-//                   </tr>
-//                 ))}
-//               </tbody>
-//             </table>
-//             {/* Custom context menu for inserting and deleting row */}
+//                       </td>
+//                       <td className="px-6 py-4">
+//                         <input
+//                           type="text"
+//                           value={row.time}
+//                           onChange={(e) =>
+//                             handleInputChange(index, "time", e.target.value)
+//                           }
+//                           className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+//                             !isFieldEnabled(row.command, "time") ? 'bg-gray-100 text-gray-400' : ''
+//                           }`}
+//                           disabled={!isFieldEnabled(row.command, "time")}
+//                           placeholder={
+//                             isFieldEnabled(row.command, "time")
+//                               ? "Enter time"
+//                               : "-"
+//                           }
+//                         />
+//                       </td>
+//                     </tr>
+//                   ))}
+//                 </tbody>
+//               </table>
+//             </div>
+
 //             {contextMenu && (
 //               <div
 //                 style={{
-//                   position: "fixed",
+//                   position: 'fixed',
 //                   top: contextMenu.y,
 //                   left: contextMenu.x,
 //                   zIndex: 1000,
-//                   background: "white",
-//                   border: "1px solid #ccc",
-//                   borderRadius: 4,
-//                   boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-//                   padding: 0,
 //                 }}
-//                 onClick={() => setContextMenu(null)}
-//                 onContextMenu={(e) => e.preventDefault()}
+//                 className="bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 py-1"
 //               >
 //                 <button
-//                   className="px-4 py-2 hover:bg-gray-100 w-full text-left"
+//                   className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
 //                   onClick={() => {
 //                     insertRow(contextMenu.rowIndex);
 //                     setContextMenu(null);
 //                   }}
 //                 >
+//                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+//                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+//                   </svg>
 //                   Insert Row
 //                 </button>
 //                 <button
-//                   className="px-4 py-2 hover:bg-gray-100 w-full text-left text-red-600"
+//                   className={`flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left ${
+//                     instructions.length === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-red-600'
+//                   }`}
 //                   onClick={() => {
-//                     deleteRow(contextMenu.rowIndex);
-//                     setContextMenu(null);
+//                     if (instructions.length > 1) {
+//                       deleteRow(contextMenu.rowIndex);
+//                       setContextMenu(null);
+//                     }
 //                   }}
 //                   disabled={instructions.length === 1}
-//                   title={
-//                     instructions.length === 1 ? "At least one row required" : ""
-//                   }
 //                 >
+//                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+//                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+//                   </svg>
 //                   Delete Row
 //                 </button>
 //               </div>
 //             )}
-//           </div>
-//           <button
-//             onClick={addRow}
-//             className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-//           >
-//             Add Row
-//           </button>
 
-//           <div className="mb-4">
-//             <label className="block text-sm font-medium mb-1">
-//               Notes/Instructions:
+//             <div className="mt-4 flex justify-between items-center">
+//               <button
+//                 onClick={addRow}
+//                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm flex items-center space-x-2"
+//               >
+//                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+//                   <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+//                 </svg>
+//                 <span>Add Row</span>
+//               </button>
+//             </div>
+//           </div>
+
+//           <div className="mb-6">
+//             <label className="block text-sm font-medium text-gray-700 mb-2">
+//               Notes/Instructions
 //             </label>
 //             <textarea
 //               value={notes}
 //               onChange={(e) => setNotes(e.target.value)}
-//               className="w-full p-2 border rounded h-24"
+//               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+//               rows={4}
 //               placeholder="Enter additional instructions or notes here..."
-//             />
-//           </div>
-
-//           <div className="flex justify-end gap-4">
-//             <button
-//               onClick={handleLoadFile}
-//               className="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400"
-//             >
-//               Load File
-//             </button>
-//             <button
-//               onClick={handleSave}
-//               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-//             >
-//               Save
-//             </button>
-//             <input
-//               type="file"
-//               ref={fileInputRef}
-//               onChange={handleFileChange}
-//               className="hidden-file-input"
-//               accept=".json"
-//               title="Load instructions JSON file"
-//               placeholder="Select a JSON file"
 //             />
 //           </div>
 //         </div>
@@ -429,7 +538,8 @@
 //   );
 // };
 
-// export default Settings;
+// export default Settings; 
+
 
 
 
@@ -484,7 +594,6 @@ const Settings: React.FC = () => {
     field: keyof SetInstruction,
     value: string
   ) => {
-    // Validate numeric inputs
     if (
       (field === "param2" || field === "voltage" || field === "temperature" || field === "time") &&
       value &&
@@ -523,7 +632,6 @@ const Settings: React.FC = () => {
     setInstructions((prev) => {
       if (prev.length === 1) return prev;
       const newInstructions = prev.filter((_, i) => i !== index);
-      // Adjust param1 for cycle commands if step number is invalid
       return newInstructions.map((instr) => {
         if (instr.command === "cycle" && instr.param1) {
           const stepNum = parseInt(instr.param1.replace("Step ", ""));
@@ -609,12 +717,11 @@ const Settings: React.FC = () => {
     alert("Instructions saved successfully.");
   };
 
-  // Determine if a field should be enabled based on the command
   const isFieldEnabled = (command: string, field: keyof SetInstruction) => {
-    if (command === "") return false; // Disable all fields if no command
+    if (command === "") return false;
     switch (command) {
       case "set_voltage":
-        return field === "cellNo" || field === "voltage";
+        return field === "cellунд1cellNo" || field === "voltage";
       case "set_temp":
         return field === "cellNo" || field === "temperature";
       case "cycle":
@@ -638,13 +745,12 @@ const Settings: React.FC = () => {
         return field === "cellNo";
       case "end":
       case "reset":
-        return false; // No fields enabled
+        return false;
       default:
-        return false; // Unknown commands disable all fields
+        return false;
     }
   };
 
-  // Get cell number options based on command
   const getCellOptions = (command: string) => {
     const maxCells =
       command === "set_temp" ||
@@ -653,358 +759,321 @@ const Settings: React.FC = () => {
       command === "get_12_csu_temp"
         ? 6
         : 24;
-    return Array.from({ length: maxCells }, (_, i) => i + 1);
+    return Array.from({ length: maxCells }, (_, i) => i);
   };
 
-  // Get step options for cycle's param1 based on number of instructions
   const getStepOptions = () => {
     return Array.from({ length: instructions.length }, (_, i) => `Step ${i + 1}`);
   };
 
+  const tableContainerStyle = {
+    maxHeight: instructions.length > 4 ? 'calc(4 * 3.5rem + 3rem)' : 'none',
+    overflowY: instructions.length > 4 ? 'auto' : 'visible' as const,
+  };
+
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
+    <div className="flex flex-col h-screen bg-gray-50">
       <MenuBar />
-      <div className="flex-1 p-4">
-        <div className="bg-white p-4 rounded-lg shadow-lg">
-          <h2 className="text-lg font-semibold mb-2">Set Instructions</h2>
-          <div
-            className="mb-4 instructions-table-scroll"
-            style={{ maxHeight: 320, overflowY: "auto", position: "relative" }}
-          >
-            <table className="w-full border-collapse border border-gray-300">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="border border-gray-300 p-2">No</th>
-                  <th className="border border-gray-300 p-2">Command</th>
-                  <th className="border border-gray-300 p-2">Start Step</th>
-                  <th className="border border-gray-300 p-2">Cycle Index</th>
-                  <th className="border border-gray-300 p-2">Cell No</th>
-                  <th className="border border-gray-300 p-2">Voltage</th>
-                  <th className="border border-gray-300 p-2">Temperature</th>
-                  <th className="border border-gray-300 p-2">Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {instructions.map((row, index) => (
-                  <tr
-                    key={`row-${row.id}-${index}`}
-                    data-index={index}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      setContextMenu({
-                        x: e.clientX,
-                        y: e.clientY,
-                        rowIndex: index,
-                      });
-                    }}
-                  >
-                    <td className="border border-gray-300 p-2">{index + 1}</td>
-                    <td className="border border-gray-300 p-2">
-                      <select
-                        value={row.command}
-                        onChange={(e) => {
-                          handleInputChange(index, "command", e.target.value);
-                          // Clear irrelevant fields when command changes
-                          setInstructions((prev) => {
-                            const newInstructions = [...prev];
-                            newInstructions[index] = {
-                              ...newInstructions[index],
-                              param1: e.target.value === "cycle" ? row.param1 : "",
-                              param2: e.target.value === "cycle" ? row.param2 : "",
-                              cellNo:
-                                (e.target.value === "set_temp" ||
-                                 e.target.value === "get_temperature" ||
-                                 e.target.value === "get_11_csu_temp" ||
-                                 e.target.value === "get_12_csu_temp") &&
-                                parseInt(row.cellNo) > 6
-                                  ? ""
-                                  : ["delay", "end", "reset"].includes(e.target.value)
-                                  ? ""
-                                  : row.cellNo,
-                              cycleNo:
-                                e.target.value === "cycle" ? row.cycleNo : "",
-                              voltage:
-                                e.target.value === "set_voltage" ? row.voltage : "",
-                              temperature:
-                                e.target.value === "set_temp" ? row.temperature : "",
-                              time: e.target.value === "delay" ? row.time : "",
-                            };
-                            return newInstructions;
-                          });
-                        }}
-                        className="w-full p-1 border rounded"
-                        title="Command"
-                      >
-                        <option value="">Select command</option>
-                        <option value="set_temp">SET TEMPERATURE</option>
-                        <option value="set_voltage">SET VOLTAGE</option>
-                        <option value="set_ow">SET OW</option>
-                        <option value="set_balance">SET BALANCE</option>
-                        <option value="daisy_chain">SET DAISY CHAIN</option>
-                        <option value="get_voltage">GET VOLTAGE</option>
-                        <option value="get_temperature">GET TEMPERATURE</option>
-                        <option value="get_current">GET CURRENT</option>
-                        <option value="get_11_csu_volt">GET 11 CSU VOLT</option>
-                        <option value="get_11_csu_temp">GET 11 CSU TEMP</option>
-                        <option value="get_11_csu_ow">GET 11 CSU OW</option>
-                        <option value="get_11_csu_balance">GET 11 CSU BALANCE</option>
-                        <option value="get_12_csu_volt">GET 12 CSU VOLT</option>
-                        <option value="get_12_csu_temp">GET 12 CSU TEMP</option>
-                        <option value="get_12_csu_ow">GET 12 CSU OW</option>
-                        <option value="get_12_csu_balance">GET 12 CSU BALANCE</option>
-                        <option value="reset">RESET</option>
-                        <option value="cycle">CYCLE</option>
-                        <option value="delay">DELAY</option>
-                        <option value="cell_led">CELL LED</option>
-                        <option value="end">END</option>
-                      </select>
-                    </td>
-                    {/* Param 1 */}
-                    <td className="border border-gray-300 p-2">
-                      {row.command === "cycle" ? (
+      <div className="flex-1 p-6">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-semibold text-gray-800">Set Instructions</h2>
+            <div className="flex space-x-3">
+              <button
+                onClick={handleLoadFile}
+                className="px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm flex items-center space-x-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+                <span>Load File</span>
+              </button>
+              <button
+                onClick={handleSave}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm flex items-center space-x-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm6.293-9.707a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 9.414V17a1 1 0 11-2 0V9.414L7.707 11.707a1 1 0 01-1.414-1.414l3-3z" clipRule="evenodd" />
+                </svg>
+                <span>Save</span>
+              </button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="hidden"
+                accept=".json"
+              />
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <div className="relative shadow-sm rounded-lg border border-gray-200" style={tableContainerStyle}>
+              <table className="w-full text-sm text-left text-gray-700">
+                <thead className="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 w-12">No</th>
+                    <th scope="col" className="px-6 py-3">Command</th>
+                    <th scope="col" className="px-6 py-3">Start Step</th>
+                    <th scope="col" className="px-6 py-3">Cycle Index</th>
+                    <th scope="col" className="px-6 py-3">Cell No</th>
+                    <th scope="col" className="px-6 py-3">Voltage</th>
+                    <th scope="col" className="px-6 py-3">Temperature</th>
+                    <th scope="col" className="px-6 py-3">Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {instructions.map((row, index) => (
+                    <tr
+                      key={`row-${row.id}-${index}`}
+                      className={`border-b ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-gray-50`}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        setContextMenu({
+                          x: e.clientX,
+                          y: e.clientY,
+                          rowIndex: index,
+                        });
+                      }}
+                    >
+                      <td className="px-6 py-4 font-medium text-gray-900">{index + 1}</td>
+                      <td className="px-6 py-4">
                         <select
-                          value={row.param1}
-                          onChange={(e) =>
-                            handleInputChange(index, "param1", e.target.value)
-                          }
-                          className="w-full p-1 border rounded"
-                          title="Select starting step for cycle"
+                          value={row.command}
+                          onChange={(e) => {
+                            handleInputChange(index, "command", e.target.value);
+                            setInstructions((prev) => {
+                              const newInstructions = [...prev];
+                              newInstructions[index] = {
+                                ...newInstructions[index],
+                                param1: e.target.value === "cycle" ? row.param1 : "",
+                                param2: e.target.value === "cycle" ? row.param2 : "",
+                                cellNo:
+                                  (e.target.value === "set_temp" ||
+                                   e.target.value === "get_temperature" ||
+                                   e.target.value === "get_11_csu_temp" ||
+                                   e.target.value === "get_12_csu_temp") &&
+                                  parseInt(row.cellNo) > 5
+                                    ? ""
+                                    : ["delay", "end", "reset"].includes(e.target.value)
+                                    ? ""
+                                    : row.cellNo,
+                                cycleNo:
+                                  e.target.value === "cycle" ? row.cycleNo : "",
+                                voltage:
+                                  e.target.value === "set_voltage" ? row.voltage : "",
+                                temperature:
+                                  e.target.value === "set_temp" ? row.temperature : "",
+                                time: e.target.value === "delay" ? row.time : "",
+                              };
+                              return newInstructions;
+                            });
+                          }}
+                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                         >
-                          <option value="">Select start step</option>
-                          {getStepOptions().map((step) => (
-                            <option key={step} value={step}>
-                              {step}
+                          <option value="">Select command</option>
+                          <option value="set_temp">SET TEMPERATURE</option>
+                          <option value="set_voltage">SET VOLTAGE</option>
+                          <option value="set_ow">SET OW</option>
+                          <option value="set_balance">SET BALANCE</option>
+                          <option value="daisy_chain">SET DAISY CHAIN</option>
+                          <option value="get_voltage">GET VOLTAGE</option>
+                          <option value="get_temperature">GET TEMPERATURE</option>
+                          <option value="get_current">GET CURRENT</option>
+                          <option value="get_11_csu_volt">GET 11 CSU VOLT</option>
+                          <option value="get_11_csu_temp">GET 11 CSU TEMP</option>
+                          <option value="get_11_csu_ow">GET 11 CSU OW</option>
+                          <option value="get_11_csu_balance">GET 11 CSU BALANCE</option>
+                          <option value="get_12_csu_volt">GET 12 CSU VOLT</option>
+                          <option value="get_12_csu_temp">GET 12 CSU TEMP</option>
+                          <option value="get_12_csu_ow">GET 12 CSU OW</option>
+                          <option value="get_12_csu_balance">GET 12 CSU BALANCE</option>
+                          <option value="reset">RESET</option>
+                          <option value="cycle">CYCLE</option>
+                          <option value="delay">DELAY</option>
+                          <option value="cell_led">CELL LED</option>
+                          <option value="end">END</option>
+                        </select>
+                      </td>
+                      <td className="px-6 py-4">
+                        {row.command === "cycle" ? (
+                          <select
+                            value={row.param1}
+                            onChange={(e) =>
+                              handleInputChange(index, "param1", e.target.value)
+                            }
+                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          >
+                            <option value="">Select start step</option>
+                            {getStepOptions().map((step) => (
+                              <option key={step} value={step}>
+                                {step}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="p-2 text-gray-400">-</div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        {row.command === "cycle" ? (
+                          <input
+                            type="text"
+                            value={row.param2}
+                            onChange={(e) =>
+                              handleInputChange(index, "param2", e.target.value)
+                            }
+                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Enter index"
+                          />
+                        ) : (
+                          <div className="p-2 text-gray-400">-</div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <select
+                          value={row.cellNo}
+                          onChange={(e) =>
+                            handleInputChange(index, "cellNo", e.target.value)
+                          }
+                          className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                            !isFieldEnabled(row.command, "cellNo") ? 'bg-gray-100 text-gray-400' : ''
+                          }`}
+                          disabled={!isFieldEnabled(row.command, "cellNo")}
+                        >
+                          <option value="">Select cell</option>
+                          {getCellOptions(row.command).map((cell) => (
+                            <option key={cell} value={String(cell)}>
+                              {cell}
                             </option>
                           ))}
                         </select>
-                      ) : (
+                      </td>
+                      <td className="px-6 py-4">
                         <input
                           type="text"
-                          value=""
-                          disabled
-                          className="w-full p-1 border rounded bg-gray-100 cursor-not-allowed"
-                          title="Start step only available for cycle"
-                          placeholder="Unavailable"
-                          readOnly
-                        />
-                      )}
-                    </td>
-                    {/* Param 2 */}
-                    <td className="border border-gray-300 p-2">
-                      {row.command === "cycle" ? (
-                        <input
-                          type="text"
-                          value={row.param2}
+                          value={row.voltage}
                           onChange={(e) =>
-                            handleInputChange(index, "param2", e.target.value)
+                            handleInputChange(index, "voltage", e.target.value)
                           }
-                          className="w-full p-1 border rounded"
-                          title="Number of cycle iterations"
-                          placeholder="Enter cycle index"
+                          className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                            !isFieldEnabled(row.command, "voltage") ? 'bg-gray-100 text-gray-400' : ''
+                          }`}
+                          disabled={!isFieldEnabled(row.command, "voltage")}
+                          placeholder={
+                            isFieldEnabled(row.command, "voltage")
+                              ? "Enter voltage"
+                              : "-"
+                          }
                         />
-                      ) : (
+                      </td>
+                      <td className="px-6 py-4">
                         <input
                           type="text"
-                          value=""
-                          disabled
-                          className="w-full p-1 border rounded bg-gray-100 cursor-not-allowed"
-                          title="Cycle index only available for cycle"
-                          placeholder="Unavailable"
-                          readOnly
+                          value={row.temperature}
+                          onChange={(e) =>
+                            handleInputChange(index, "temperature", e.target.value)
+                          }
+                          className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                            !isFieldEnabled(row.command, "temperature") ? 'bg-gray-100 text-gray-400' : ''
+                          }`}
+                          disabled={!isFieldEnabled(row.command, "temperature")}
+                          placeholder={
+                            isFieldEnabled(row.command, "temperature")
+                              ? "Enter temp"
+                              : "-"
+                          }
                         />
-                      )}
-                    </td>
-                    {/* Cell No */}
-                    <td className="border border-gray-300 p-2">
-                      <select
-                        value={row.cellNo}
-                        onChange={(e) =>
-                          handleInputChange(index, "cellNo", e.target.value)
-                        }
-                        className={`w-full p-1 border rounded ${
-                          !isFieldEnabled(row.command, "cellNo")
-                            ? "bg-gray-100 cursor-not-allowed"
-                            : ""
-                        }`}
-                        disabled={!isFieldEnabled(row.command, "cellNo")}
-                        title={
-                          isFieldEnabled(row.command, "cellNo")
-                            ? "Select cell number"
-                            : "Disabled for this command"
-                        }
-                      >
-                        <option value="">Select cell</option>
-                        {getCellOptions(row.command).map((cell) => (
-                          <option key={cell} value={String(cell)}>
-                            {cell}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    {/* Voltage */}
-                    <td className="border border-gray-300 p-2">
-                      <input
-                        type="text"
-                        value={row.voltage}
-                        onChange={(e) =>
-                          handleInputChange(index, "voltage", e.target.value)
-                        }
-                        className={`w-full p-1 border rounded ${
-                          !isFieldEnabled(row.command, "voltage")
-                            ? "bg-gray-100 cursor-not-allowed"
-                            : ""
-                        }`}
-                        disabled={!isFieldEnabled(row.command, "voltage")}
-                        title={
-                          isFieldEnabled(row.command, "voltage")
-                            ? "Enter voltage"
-                            : "Disabled for this command"
-                        }
-                        placeholder={
-                          isFieldEnabled(row.command, "voltage")
-                            ? "Enter voltage"
-                            : "Unavailable"
-                        }
-                      />
-                    </td>
-                    {/* Temperature */}
-                    <td className="border border-gray-300 p-2">
-                      <input
-                        type="text"
-                        value={row.temperature}
-                        onChange={(e) =>
-                          handleInputChange(index, "temperature", e.target.value)
-                        }
-                        className={`w-full p-1 border rounded ${
-                          !isFieldEnabled(row.command, "temperature")
-                            ? "bg-gray-100 cursor-not-allowed"
-                            : ""
-                        }`}
-                        disabled={!isFieldEnabled(row.command, "temperature")}
-                        title={
-                          isFieldEnabled(row.command, "temperature")
-                            ? "Enter temperature"
-                            : "Disabled for this command"
-                        }
-                        placeholder={
-                          isFieldEnabled(row.command, "temperature")
-                            ? "Enter temperature"
-                            : "Unavailable"
-                        }
-                      />
-                    </td>
-                    {/* Time */}
-                    <td className="border border-gray-300 p-2">
-                      <input
-                        type="text"
-                        value={row.time}
-                        onChange={(e) =>
-                          handleInputChange(index, "time", e.target.value)
-                        }
-                        className={`w-full p-1 border rounded ${
-                          !isFieldEnabled(row.command, "time")
-                            ? "bg-gray-100 cursor-not-allowed"
-                            : ""
-                        }`}
-                        disabled={!isFieldEnabled(row.command, "time")}
-                        title={
-                          isFieldEnabled(row.command, "time")
-                            ? "Enter time"
-                            : "Disabled for this command"
-                        }
-                        placeholder={
-                          isFieldEnabled(row.command, "time")
-                            ? "Enter time"
-                            : "Unavailable"
-                        }
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {/* Custom context menu for inserting and deleting row */}
+                      </td>
+                      <td className="px-6 py-4">
+                        <input
+                          type="text"
+                          value={row.time}
+                          onChange={(e) =>
+                            handleInputChange(index, "time", e.target.value)
+                          }
+                          className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                            !isFieldEnabled(row.command, "time") ? 'bg-gray-100 text-gray-400' : ''
+                          }`}
+                          disabled={!isFieldEnabled(row.command, "time")}
+                          placeholder={
+                            isFieldEnabled(row.command, "time")
+                              ? "Enter time"
+                              : "-"
+                          }
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
             {contextMenu && (
               <div
                 style={{
-                  position: "fixed",
+                  position: 'fixed',
                   top: contextMenu.y,
                   left: contextMenu.x,
                   zIndex: 1000,
-                  background: "white",
-                  border: "1px solid #ccc",
-                  borderRadius: 4,
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                  padding: 0,
                 }}
-                onClick={() => setContextMenu(null)}
-                onContextMenu={(e) => e.preventDefault()}
+                className="bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 py-1"
               >
                 <button
-                  className="px-4 py-2 hover:bg-gray-100 w-full text-left"
+                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                   onClick={() => {
                     insertRow(contextMenu.rowIndex);
                     setContextMenu(null);
                   }}
                 >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="11 11 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
                   Insert Row
                 </button>
                 <button
-                  className="px-4 py-2 hover:bg-gray-100 w-full text-left text-red-600"
+                  className={`flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left ${
+                    instructions.length === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-red-600'
+                  }`}
                   onClick={() => {
-                    deleteRow(contextMenu.rowIndex);
-                    setContextMenu(null);
+                    if (instructions.length > 1) {
+                      deleteRow(contextMenu.rowIndex);
+                      setContextMenu(null);
+                    }
                   }}
                   disabled={instructions.length === 1}
-                  title={
-                    instructions.length === 1 ? "At least one row required" : ""
-                  }
                 >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
                   Delete Row
                 </button>
               </div>
             )}
-          </div>
-          <button
-            onClick={addRow}
-            className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Add Row
-          </button>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">
-              Notes/Instructions:
+            <div className="mt-4 flex justify-between items-center">
+              <button
+                onClick={addRow}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm flex items-center space-x-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                </svg>
+                <span>Add Row</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Notes/Instructions
             </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full p-2 border rounded h-24"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              rows={4}
               placeholder="Enter additional instructions or notes here..."
-            />
-          </div>
-
-          <div className="flex justify-end gap-4">
-            <button
-              onClick={handleLoadFile}
-              className="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400"
-            >
-              Load File
-            </button>
-            <button
-              onClick={handleSave}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-            >
-              Save
-            </button>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              className="hidden-file-input"
-              accept=".json"
-              title="Load instructions JSON file"
-              placeholder="Select a JSON file"
             />
           </div>
         </div>
