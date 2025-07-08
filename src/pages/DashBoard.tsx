@@ -915,7 +915,7 @@
 
 
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import MenuBar from "../components/MenuBar";
 import Battery from "../components/Battery";
 import CSU1 from "../components/CSU1";
@@ -1031,51 +1031,50 @@ const DashBoard: React.FC = () => {
     });
   }, []);
 
-  const updateCellVoltage = (cellId: number, voltage: number) => {
-    const isCSU1 = cellId < 12;
-    const targetCells = isCSU1 ? csu1Cells : csu2Cells;
-    const setTargetCells = isCSU1 ? setCSU1Cells : setCSU2Cells;
-
-    const updatedCells = targetCells.map((cell) => {
-      if (cell.id === cellId) {
-        return { ...cell, voltage };
+  const calculateStatus = (voltage: number | null, temperature: number | null): CellStatus => {
+    let status: CellStatus = "normal";
+    if (voltage !== null) {
+      if (voltage < 2.5 || voltage > 4.2) {
+        status = "critical";
+      } else if ((voltage < 2.8 || voltage > 4.0) && status !== "critical") {
+        status = "warning";
       }
-      return cell;
-    });
-
-    setTargetCells(updatedCells);
-    
+    }
+    if (temperature !== null) {
+      if (temperature < -20 || temperature > 60) {
+        status = "critical";
+      } else if ((temperature < 0 || temperature > 45) && status !== "critical") {
+        status = "warning";
+      }
+    }
+    return status;
   };
 
-  // Handle serial data
-  useEffect(() => {
-    if (window.serialAPI && isPortOpen) {
-      console.log("Renderer: Setting up serial data listener...");
-      window.serialAPI.onSerialData((data: string) => {
-        console.log("Renderer: Received serial data (raw):", data);
-        const hexData = data
-          .split("")
-          .map((c) => c.charCodeAt(0).toString(16).padStart(2, "0"))
-          .join(" ");
-        console.log("Renderer: Received serial data (hex):", hexData);
-        setLastSerialData(hexData);
-      });
-    }
-  }, [isPortOpen, setLastSerialData]);
+  const updateCellVoltage = (cellId: number, voltage: number) => {
+    console.log(`DashBoard: Updating cell ${cellId} with voltage ${voltage}`);
+    const isCSU1 = cellId < 12;
+    setCSU1Cells(prev => isCSU1 ? prev.map(cell =>
+      cell.id === cellId ? { ...cell, voltage, status: calculateStatus(voltage, cell.temperature) } : cell
+    ) : prev);
+    setCSU2Cells(prev => !isCSU1 ? prev.map(cell =>
+      cell.id === cellId ? { ...cell, voltage, status: calculateStatus(voltage, cell.temperature) } : cell
+    ) : prev);
+  };
 
   // Update cell states based on responseData
   useEffect(() => {
+    console.log('DashBoard: responseData changed:', responseData);
     Object.entries(responseData).forEach(([cellNo, dataItems]) => {
-      const cellId = parseInt(cellNo) - 1;
+      const cellId = parseInt(cellNo);
       if (cellId < 0 || cellId >= 24) return;
 
       const isCSU1 = cellId < 12;
       const cellIndex = isCSU1 ? cellId : cellId - 12;
-      const cells = isCSU1 ? csu1Cells : csu2Cells;
-      const setCells = isCSU1 ? setCSU1Cells : setCSU2Cells;
 
-      if (cells[cellIndex]) {
-        const updatedCell = { ...cells[cellIndex] };
+      const setCells = isCSU1 ? setCSU1Cells : setCSU2Cells;
+      setCells(prev => {
+        const updatedCells = [...prev];
+        const updatedCell = { ...updatedCells[cellIndex] };
         dataItems.forEach((item) => {
           switch (item.command) {
             case "get_voltage":
@@ -1116,34 +1115,13 @@ const DashBoard: React.FC = () => {
           }
         });
 
-        // Recalculate status after all updates for this cell
-        let newStatus: CellStatus = "normal";
-        if (updatedCell.voltage !== null) {
-          if (updatedCell.voltage < 5) {
-            newStatus = "critical";
-          } else if (updatedCell.voltage < 4.5) {
-            newStatus = "warning";
-          }
-        }
-        if (updatedCell.temperature !== null) {
-          if (updatedCell.temperature > 60) {
-            newStatus = "critical";
-          } else if (updatedCell.temperature > 45 && newStatus !== "critical") {
-            newStatus = "warning";
-          }
-        }
-        updatedCell.status = newStatus;
-
-        const updatedCells = [...cells];
+        updatedCell.status = calculateStatus(updatedCell.voltage, updatedCell.temperature);
         updatedCells[cellIndex] = updatedCell;
-        setCells(updatedCells);
-        console.log(
-          `Renderer: Updated cell ${cellId + 1} with response data`,
-          updatedCell
-        );
-      }
+        console.log(`Renderer: Updated cell ${cellId} with response data`, updatedCell);
+        return updatedCells;
+      });
     });
-  }, [responseData, csu1Cells, csu2Cells]);
+  }, [responseData]);
 
   const validateInstruction = (
     instruction: any,
@@ -1161,9 +1139,7 @@ const DashBoard: React.FC = () => {
           parseInt(instruction.cellNo) < 1 ||
           parseInt(instruction.cellNo) > 23
         ) {
-          return `Instruction ${
-            index + 1
-          }: Invalid cellNo for set_voltage (1-23)`;
+          return `Instruction ${index + 1}: Invalid cellNo for set_voltage (1-23)`;
         }
         if (
           !instruction.voltage ||
@@ -1197,9 +1173,7 @@ const DashBoard: React.FC = () => {
           parseInt(instruction.cellNo) < 1 ||
           parseInt(instruction.cellNo) > 23
         ) {
-          return `Instruction ${
-            index + 1
-          }: Invalid cellNo for set_balance (1-23)`;
+          return `Instruction ${index + 1}: Invalid cellNo for set_balance (1-23)`;
         }
         break;
       case "set_ow":
@@ -1222,9 +1196,7 @@ const DashBoard: React.FC = () => {
         }
         const stepNum = parseInt(instruction.param1.replace("Step ", ""));
         if (stepNum < 1 || stepNum > totalInstructions) {
-          return `Instruction ${
-            index + 1
-          }: param1 references invalid step (${stepNum})`;
+          return `Instruction ${index + 1}: param1 references invalid step (${stepNum})`;
         }
         if (
           !instruction.param2 ||
@@ -1351,15 +1323,17 @@ const DashBoard: React.FC = () => {
 
     const isCSU1 = cellNo < 12;
     const cellIndex = isCSU1 ? cellNo : cellNo - 12;
-    const cells = isCSU1 ? csu1Cells : csu2Cells;
     const setCells = isCSU1 ? setCSU1Cells : setCSU2Cells;
 
-    if (cells[cellIndex]) {
-      const updatedCell = { ...cells[cellIndex] };
+    setCells(prev => {
+      const updatedCells = [...prev];
+      const updatedCell = { ...updatedCells[cellIndex] };
       switch (instruction.command) {
         case "set_voltage":
-          updatedCell.setVoltage =
-            parseFloat(instruction.voltage) || updatedCell.setVoltage;
+          const newVoltage = parseFloat(instruction.voltage);
+          if (!isNaN(newVoltage)) {
+            updatedCell.setVoltage = newVoltage;
+          }
           break;
         case "set_balance":
           updatedCell.balancing = true;
@@ -1374,19 +1348,15 @@ const DashBoard: React.FC = () => {
           }
           break;
       }
-      const updatedCells = [...cells];
+      updatedCell.status = calculateStatus(updatedCell.voltage, updatedCell.temperature);
       updatedCells[cellIndex] = updatedCell;
-      setCells(updatedCells);
-      console.log(
-        `Renderer: Updated cell ${cellNo + 1} for command ${
-          instruction.command
-        }`
-      );
-    }
+      console.log(`Renderer: Updated cell ${cellNo} for command ${instruction.command}`, updatedCell);
+      return updatedCells;
+    });
   };
 
-  // Combine cells for Battery component
-  const batteryCells = [...csu1Cells, ...csu2Cells];
+  // Memoize batteryCells to prevent unnecessary re-renders
+  const batteryCells = useMemo(() => [...csu1Cells, ...csu2Cells], [csu1Cells, csu2Cells]);
 
   return (
     <div className="flex flex-col h-screen bg-gray-150">
@@ -1410,7 +1380,6 @@ const DashBoard: React.FC = () => {
             </div>
           </div>
           <div>{/* <DaicyChain /> */}</div>
-
           <div className="ml-20">
             <SerialTerminal
               responseData={responseData}

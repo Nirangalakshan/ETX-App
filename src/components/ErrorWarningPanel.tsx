@@ -58,7 +58,7 @@
 
 
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 
 type CellStatus = 'normal' | 'warning' | 'critical';
 
@@ -78,11 +78,30 @@ const ErrorWarningPanel: React.FC<ErrorWarningPanelProps> = ({ csu1Cells, csu2Ce
   const [errors, setErrors] = useState<BatteryCell[]>([]);
   const [warnings, setWarnings] = useState<BatteryCell[]>([]);
 
+  const allCells = useMemo(() => [...csu1Cells, ...csu2Cells], [csu1Cells, csu2Cells]);
+
   useEffect(() => {
-    const allCells = [...csu1Cells, ...csu2Cells];
-    setErrors(allCells.filter(cell => cell.status === 'critical'));
-    setWarnings(allCells.filter(cell => cell.status === 'warning'));
-  }, [csu1Cells, csu2Cells]);
+    console.log('ErrorWarningPanel: useEffect triggered', { csu1Cells, csu2Cells });
+    const newErrors = allCells.filter(cell => cell.status === 'critical');
+    const newWarnings = allCells.filter(cell => cell.status === 'warning');
+
+    // Only update state if the errors or warnings have changed
+    if (
+      newErrors.length !== errors.length ||
+      newErrors.some((cell, i) => cell !== errors[i])
+    ) {
+      console.log('ErrorWarningPanel: Updating errors', newErrors);
+      setErrors(newErrors);
+    }
+
+    if (
+      newWarnings.length !== warnings.length ||
+      newWarnings.some((cell, i) => cell !== warnings[i])
+    ) {
+      console.log('ErrorWarningPanel: Updating warnings', newWarnings);
+      setWarnings(newWarnings);
+    }
+  }, [allCells, errors, warnings]);
 
   return (
     <div className="w-full bg-white border border-gray-200 rounded-xl p-5 shadow-md mt-4 space-y-4 overflow-y-auto" style={{ height: 'calc(22vh - 20px)' }}>

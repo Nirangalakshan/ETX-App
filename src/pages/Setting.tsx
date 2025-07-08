@@ -211,14 +211,13 @@
 //       command === "get_12_csu_temp"
 //         ? 6
 //         : 24;
-//     return Array.from({ length: maxCells }, (_, i) => i + 1);
+//     return Array.from({ length: maxCells }, (_, i) => i);
 //   };
 
 //   const getStepOptions = () => {
 //     return Array.from({ length: instructions.length }, (_, i) => `Step ${i + 1}`);
 //   };
 
-//   // Calculate max height for the table container (4 rows height + header)
 //   const tableContainerStyle = {
 //     maxHeight: instructions.length > 4 ? 'calc(4 * 3.5rem + 3rem)' : 'none',
 //     overflowY: instructions.length > 4 ? 'auto' : 'visible' as const,
@@ -306,7 +305,7 @@
 //                                    e.target.value === "get_temperature" ||
 //                                    e.target.value === "get_11_csu_temp" ||
 //                                    e.target.value === "get_12_csu_temp") &&
-//                                   parseInt(row.cellNo) > 6
+//                                   parseInt(row.cellNo) > 5
 //                                     ? ""
 //                                     : ["delay", "end", "reset"].includes(e.target.value)
 //                                     ? ""
@@ -372,14 +371,12 @@
 //                         {row.command === "cycle" ? (
 //                           <input
 //                             type="text"
-                            
 //                             value={row.param2}
 //                             onChange={(e) =>
 //                               handleInputChange(index, "param2", e.target.value)
 //                             }
 //                             className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
 //                             placeholder="Enter index"
-//                             title="Enter cycle index"
 //                           />
 //                         ) : (
 //                           <div className="p-2 text-gray-400">-</div>
@@ -395,7 +392,6 @@
 //                             !isFieldEnabled(row.command, "cellNo") ? 'bg-gray-100 text-gray-400' : ''
 //                           }`}
 //                           disabled={!isFieldEnabled(row.command, "cellNo")}
-//                           aria-label="Cell Number"
 //                         >
 //                           <option value="">Select cell</option>
 //                           {getCellOptions(row.command).map((cell) => (
@@ -482,7 +478,7 @@
 //                     setContextMenu(null);
 //                   }}
 //                 >
-//                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+//                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="11 11 24 24" stroke="currentColor">
 //                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
 //                   </svg>
 //                   Insert Row
@@ -538,8 +534,7 @@
 //   );
 // };
 
-// export default Settings; 
-
+// export default Settings;
 
 
 
@@ -595,7 +590,7 @@ const Settings: React.FC = () => {
     value: string
   ) => {
     if (
-      (field === "param2" || field === "voltage" || field === "temperature" || field === "time") &&
+      (field === "param2" || field === "temperature" || field === "time") &&
       value &&
       (isNaN(Number(value)) || Number(value) < 0)
     ) {
@@ -675,17 +670,28 @@ const Settings: React.FC = () => {
           const text = e.target?.result as string;
           const data = JSON.parse(text);
           if (Array.isArray(data)) {
-            const validData = data.map((item, index) => ({
-              id: index + 1,
-              command: item.command || "",
-              param1: item.param1 || "",
-              param2: item.param2 || "",
-              cellNo: item.cellNo || "",
-              cycleNo: item.cycleNo || "",
-              voltage: item.voltage || "",
-              temperature: item.temperature || "",
-              time: item.time || "",
-            }));
+            const validData = data.map((item, index) => {
+              const voltage =
+                item.command === "set_voltage" &&
+                item.voltage &&
+                parseInt(item.voltage) >= 1 &&
+                parseInt(item.voltage) <= 8
+                  ? item.voltage
+                  : item.command === "set_voltage"
+                  ? ""
+                  : item.voltage || "";
+              return {
+                id: index + 1,
+                command: item.command || "",
+                param1: item.param1 || "",
+                param2: item.param2 || "",
+                cellNo: item.cellNo || "",
+                cycleNo: item.cycleNo || "",
+                voltage,
+                temperature: item.temperature || "",
+                time: item.time || "",
+              };
+            });
             setInstructions(validData);
           } else {
             alert(
@@ -721,7 +727,7 @@ const Settings: React.FC = () => {
     if (command === "") return false;
     switch (command) {
       case "set_voltage":
-        return field === "cellунд1cellNo" || field === "voltage";
+        return field === "cellNo" || field === "voltage";
       case "set_temp":
         return field === "cellNo" || field === "temperature";
       case "cycle":
@@ -745,6 +751,8 @@ const Settings: React.FC = () => {
         return field === "cellNo";
       case "end":
       case "reset":
+      case "daisy_chain":
+      case "cell_led":
         return false;
       default:
         return false;
@@ -760,6 +768,10 @@ const Settings: React.FC = () => {
         ? 6
         : 24;
     return Array.from({ length: maxCells }, (_, i) => i);
+  };
+
+  const getVoltageOptions = () => {
+    return Array.from({ length: 8 }, (_, i) => String(i + 1)); // Options: "1" to "8"
   };
 
   const getStepOptions = () => {
@@ -841,30 +853,31 @@ const Settings: React.FC = () => {
                         <select
                           value={row.command}
                           onChange={(e) => {
-                            handleInputChange(index, "command", e.target.value);
+                            const newCommand = e.target.value;
+                            handleInputChange(index, "command", newCommand);
                             setInstructions((prev) => {
                               const newInstructions = [...prev];
                               newInstructions[index] = {
                                 ...newInstructions[index],
-                                param1: e.target.value === "cycle" ? row.param1 : "",
-                                param2: e.target.value === "cycle" ? row.param2 : "",
+                                param1: newCommand === "cycle" ? row.param1 : "",
+                                param2: newCommand === "cycle" ? row.param2 : "",
                                 cellNo:
-                                  (e.target.value === "set_temp" ||
-                                   e.target.value === "get_temperature" ||
-                                   e.target.value === "get_11_csu_temp" ||
-                                   e.target.value === "get_12_csu_temp") &&
+                                  (newCommand === "set_temp" ||
+                                  newCommand === "get_temperature" ||
+                                  newCommand === "get_11_csu_temp" ||
+                                  newCommand === "get_12_csu_temp") &&
                                   parseInt(row.cellNo) > 5
                                     ? ""
-                                    : ["delay", "end", "reset"].includes(e.target.value)
+                                    : ["delay", "end", "reset", "daisy_chain", "cell_led"].includes(newCommand)
                                     ? ""
                                     : row.cellNo,
                                 cycleNo:
-                                  e.target.value === "cycle" ? row.cycleNo : "",
+                                  newCommand === "cycle" ? row.cycleNo : "",
                                 voltage:
-                                  e.target.value === "set_voltage" ? row.voltage : "",
+                                  newCommand === "set_voltage" ? row.voltage : "",
                                 temperature:
-                                  e.target.value === "set_temp" ? row.temperature : "",
-                                time: e.target.value === "delay" ? row.time : "",
+                                  newCommand === "set_temp" ? row.temperature : "",
+                                time: newCommand === "delay" ? row.time : "",
                               };
                               return newInstructions;
                             });
@@ -943,29 +956,46 @@ const Settings: React.FC = () => {
                         >
                           <option value="">Select cell</option>
                           {getCellOptions(row.command).map((cell) => (
-                            <option key={cell} value={String(cell)}>
-                              {cell}
+                            <option key={cell} value={String(cell + 1)}>
+                              {cell + 1}
                             </option>
                           ))}
                         </select>
                       </td>
                       <td className="px-6 py-4">
-                        <input
-                          type="text"
-                          value={row.voltage}
-                          onChange={(e) =>
-                            handleInputChange(index, "voltage", e.target.value)
-                          }
-                          className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-                            !isFieldEnabled(row.command, "voltage") ? 'bg-gray-100 text-gray-400' : ''
-                          }`}
-                          disabled={!isFieldEnabled(row.command, "voltage")}
-                          placeholder={
-                            isFieldEnabled(row.command, "voltage")
-                              ? "Enter voltage"
-                              : "-"
-                          }
-                        />
+                        {row.command === "set_voltage" ? (
+                          <select
+                            value={row.voltage}
+                            onChange={(e) =>
+                              handleInputChange(index, "voltage", e.target.value)
+                            }
+                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          >
+                            <option value="">Select voltage</option>
+                            {getVoltageOptions().map((volt) => (
+                              <option key={volt} value={volt}>
+                                {volt}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type="text"
+                            value={row.voltage}
+                            onChange={(e) =>
+                              handleInputChange(index, "voltage", e.target.value)
+                            }
+                            className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                              !isFieldEnabled(row.command, "voltage") ? 'bg-gray-100 text-gray-400' : ''
+                            }`}
+                            disabled={!isFieldEnabled(row.command, "voltage")}
+                            placeholder={
+                              isFieldEnabled(row.command, "voltage")
+                                ? "Enter voltage"
+                                : "-"
+                            }
+                          />
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <input
@@ -1026,7 +1056,7 @@ const Settings: React.FC = () => {
                     setContextMenu(null);
                   }}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="11 11 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                   Insert Row
