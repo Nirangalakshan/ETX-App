@@ -110,6 +110,7 @@ import Swal from "sweetalert2";
 import { useEffect, useState } from "react";
 import 'react-toastify/dist/ReactToastify.css';
 import 'sweetalert2/src/sweetalert2.scss';
+import "../index.css";
 
 declare global {
   interface Window {
@@ -192,12 +193,12 @@ export default function CustomTitleBar() {
         {/* Left: Logo + Title */}
         <div className="flex items-center gap-3">
           <img src="/icon.svg" alt="Logo" className="w-8 h-8" />
-          <span className="text-lg font-serif tracking-wide font-extrabold">ETX BATTERY TESTER <span className="text-xs">@V 1.0.0</span></span>
+          <span className="text-xl tracking-wide font-bold font-inter">ETX BATTERY TESTER <span className="text-xs">@V 1.0.0</span></span>
         </div>
 
         {/* Center: Navigation */}
         <div
-          className="flex gap-6 text-slate-950 font-bold font-serif mr-30"
+          className="flex gap-6 text-slate-950 font-inter mr-30 text-lg font-semibold"
           style={{ WebkitAppRegion: "no-drag" } as any}
         >
           <Link to="/" className="hover:text-blue-600 transition">
@@ -211,7 +212,7 @@ export default function CustomTitleBar() {
           </Link>
           <button
             onClick={handleLogout}
-            className="hover:text-red-600 transition text-sm"
+            className="hover:underline cursor-pointer  transition text-lg text-red-500 font-inter"
           >
             Logout
           </button>

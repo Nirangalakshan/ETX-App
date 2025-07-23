@@ -902,8 +902,13 @@ const Settings: React.FC = () => {
       case "get_12_csu_ow":
       case "get_11_csu_balance":
       case "get_12_csu_balance":
+      case "get_dc_csu_volt":
+      case "get_dc_csu_ow":
+      case "get_dc_csu_balance":
+      case "get_dc_csu_temp":
         return field === "cellNo";
       case "get_temperature":
+      case "get_temperature_res":
       case "get_11_csu_temp":
       case "get_12_csu_temp":
         return field === "cellNo";
@@ -1089,6 +1094,7 @@ const Settings: React.FC = () => {
                           <option value="daisy_chain">SET DAISY CHAIN</option>
                           <option value="get_voltage">GET VOLTAGE</option>
                           <option value="get_temperature">GET TEMPERATURE</option>
+                          <option value="get_temperature_res">GET TEMP_RES</option>
                           <option value="get_current">GET CURRENT</option>
                           <option value="get_11_csu_volt">GET 11 CSU VOLT</option>
                           <option value="get_11_csu_temp">GET 11 CSU TEMP</option>
@@ -1102,6 +1108,12 @@ const Settings: React.FC = () => {
                           <option value="get_12_csu_balance">
                             GET 12 CSU BALANCE
                           </option>
+                          <option value="get_dc_csu_volt">GET DC CSU VOLT</option>
+                          <option value="get_dc_csu_ow">GET DC CSU OW</option>
+                          <option value="get_dc_csu_balance">
+                            GET DC CSU BALANCE
+                          </option>
+                          <option value="get_dc_csu_temp">GET DC CSU TEMP</option>
                           <option value="reset">RESET</option>
                           <option value="cycle">CYCLE</option>
                           <option value="delay">DELAY</option>

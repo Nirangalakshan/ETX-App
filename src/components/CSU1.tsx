@@ -198,7 +198,7 @@ const BatteryCellComponent: React.FC<{
   cell: BatteryCell;
   onClick: (event: React.MouseEvent, cell: BatteryCell) => void;
 }> = ({ cell, onClick }) => {
-  let statusColor = 'bg-green-300/20 border-green-400 text-green-800';
+  let statusColor = 'bg-green-300/20 border-green-300/20 text-green-800 shadow-gray-600';
   if (cell.status === 'warning') statusColor = 'bg-yellow-200/20 border-yellow-500 text-yellow-700';
   else if (cell.status === 'critical') statusColor = 'bg-red-300/20 border-red-500 text-red-700';
 
@@ -207,9 +207,9 @@ const BatteryCellComponent: React.FC<{
       onClick={(e) => onClick(e, cell)}
       className={`w-[120px] h-[50px] m-[4px] border p-1 rounded-lg shadow-sm backdrop-blur-sm ${statusColor} cursor-pointer flex flex-col items-center justify-center text-xs hover:scale-[1.03] transition-transform duration-200`}
     >
-      <div>V: {cell.voltage != null ? cell.voltage.toFixed(2) : 'N/A'}V</div>
-      <div>T: {cell.temperature != null ? cell.temperature.toFixed(1) : 'N/A'}°C</div>
-      <div className="italic">{cell.status}</div>
+      <div className='font-inter'>V: {cell.voltage != null ? cell.voltage.toFixed(2) : 'N/A'}V</div>
+      <div className='font-inter'>T: {cell.temperature != null ? cell.temperature.toFixed(1) : 'N/A'}°C</div>
+      <div className="font-inter">{cell.status}</div>
     </div>
   );
 };
@@ -275,7 +275,7 @@ const CSU1: React.FC = () => {
 
   return (
     <div className="relative p-3">
-      <h1 className="text-2xl font-semibold mb-3 text-gray-800 font-roboto text-center">CSU 1</h1>
+      <h1 className="text-2xl font-semibold mb-3 text-gray-800 font-inter text-center">CSU 1</h1>
       <div
         className="csu-grid grid grid-cols-2 grid-rows-6 gap-1 bg-white/60 border border-gray-300 p-2 rounded-lg shadow-lg backdrop-blur-md"
         style={{

@@ -1044,7 +1044,7 @@
 
 
 
-//work properly
+//work properly 2
 
 import React, { useEffect, useState, useRef } from "react";
 
@@ -1089,7 +1089,7 @@ const instructionToHexMap: Record<
     cellNoRange: [0, 23],
     valueType: "current",
   },
-  get_cell_temp_res: {
+  get_temperature_res: {
     commandCode: "04",
     functionCode: "04",
     cellNoRange: [0, 23],
@@ -1098,8 +1098,8 @@ const instructionToHexMap: Record<
   get_dc_csu_volt: {
     commandCode: "04",
     functionCode: "05",
-    cellNoRange: [0, 22],
-    valueType: "float",
+    cellNoRange: [0, 23],
+    valueType: "dc_csu_voltage",
   },
   get_dc_csu_temp: {
     commandCode: "04",
@@ -1107,7 +1107,7 @@ const instructionToHexMap: Record<
     cellNoRange: [0, 5],
     valueType: "int",
   },
-  get_dc_csu_balance_reg: {
+  get_dc_csu_balance: {
     commandCode: "04",
     functionCode: "07",
     cellNoRange: [0, 22],
@@ -1131,7 +1131,7 @@ const instructionToHexMap: Record<
     cellNoRange: [0, 5],
     valueType: "int",
   },
-  get_11_csu_balance_reg: {
+  get_11_csu_balance: {
     commandCode: "04",
     functionCode: "0B",
     cellNoRange: [0, 22],
@@ -1155,7 +1155,7 @@ const instructionToHexMap: Record<
     cellNoRange: [0, 5],
     valueType: "int",
   },
-  get_12_csu_balance_reg: {
+  get_12_csu_balance: {
     commandCode: "04",
     functionCode: "0F",
     cellNoRange: [0, 22],
@@ -1167,6 +1167,7 @@ const instructionToHexMap: Record<
     cellNoRange: [0, 23],
     valueType: "binary",
   },
+
   set_voltage: {
     commandCode: "03",
     functionCode: "01",
@@ -1191,9 +1192,10 @@ const instructionToHexMap: Record<
     cellNoRange: [0, 23],
     valueType: "binary",
   },
-  set_daisy_chain: {
+  daisy_chain: {
     commandCode: "03",
     functionCode: "05",
+    cellNoRange: [0, 23],
     valueType: "binary",
   },
   set_delay: {
@@ -1246,6 +1248,18 @@ const extractIndividualCellVoltageData = (
   const id = hexArray[1];
   const cellNo = hexArray[2];
   const valueBytes = hexArray.slice(3, 5);
+  const valueInt = (valueBytes[0] << 8) | valueBytes[1];
+  const floatValue = valueInt / 10000;
+  return { id, cellNo, value: floatValue.toFixed(3) };
+};
+
+const extractDCVoltageData = (
+  hexArray: number[]
+): { id: number; cellNo: number; value: string | null } => {
+  if (hexArray.length < 8) return { id: 0, cellNo: 0, value: null };
+  const id = hexArray[1];
+  const cellNo = hexArray[3];
+  const valueBytes = hexArray.slice(4, 6);
   const valueInt = (valueBytes[0] << 8) | valueBytes[1];
   const floatValue = valueInt / 10000;
   return { id, cellNo, value: floatValue.toFixed(3) };
@@ -1340,7 +1354,7 @@ const parseNonVoltageValue = (
     command === "get_12_csu_balance_reg" ||
     command === "get_12_csu_ow" ||
     command === "set_ow" ||
-    command === "set_daisy_chain" ||
+    command === "daisy_chain" ||
     command === "set_cell_led" ||
     command === "set_automatic_sequence"
   ) {
@@ -1395,7 +1409,7 @@ const parseSentSetCommand = (
     parsedValue = `${value} °C`;
   } else if (
     command === "set_ow" ||
-    command === "set_daisy_chain" ||
+    command === "daisy_chain" ||
     command === "set_cell_led" ||
     command === "set_automatic_sequence"
   ) {
@@ -1666,11 +1680,15 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
           `SerialTerminal: Parsed id: ${extractedId}, cellNo: ${cellNo}, value: ${parsedValue} for ${command}`
         );
       }
-      
-      
-      
-      
-      else if (valueType === "int") {
+       else if (valueType === "dc_csu_voltage") {
+        const { cellNo: extractedCellNo, id, value } =
+          extractDCVoltageData(hexArray);
+        cellNo = extractedCellNo;
+        parsedValue = value;
+        console.log(
+          `SerialTerminal: Parsed id: ${id}, cellNo: ${cellNo}, value: ${parsedValue} for ${command}`
+        );
+      } else if (valueType === "int") {
         const {
           cellNo: extractedCellNo,
           id: extractedId,
@@ -1951,7 +1969,7 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
             }
           } else if (
             command === "set_ow" ||
-            command === "set_daisy_chain" ||
+            command === "daisy_chain" ||
             command === "set_cell_led" ||
             command === "set_automatic_sequence"
           ) {
@@ -2110,7 +2128,7 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
 
   return (
     <div className="w-100 mx-2 p-4 bg-white shadow-lg rounded-xl mt-8 space-y-4 border border-gray-200">
-      <h2 className="text-2xl font-bold text-gray-900 text-center font-serif">
+      <h2 className="text-2xl font-bold text-gray-900 text-center font-roboto">
         🔌 BMS TEST RUN
       </h2>
 
@@ -2267,7 +2285,7 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
         <button
           onClick={handleRunTest}
           disabled={!isOpen || isLoading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm disabled:opacity-50 flex items-center justify-center text-sm transition-colors"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm disabled:opacity-50 flex items-center justify-center text-sm transition-colors font-sans"
         >
           {isLoading ? (
             <svg
@@ -2295,7 +2313,7 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
       )}
 
       {error && (
-        <div className="p-2 bg-red-100 text-red-700 font-semibold rounded-lg text-sm animate-pulse">
+        <div className="p-2 bg-red-100 text-red-700 rounded-lg text-xs animate-pulse font-sans">
           {error}
         </div>
       )}
@@ -2352,7 +2370,7 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
           {received.length > 0 && (
             <button
               onClick={handleClearOutput}
-              className="text-xs text-blue-600 hover:text-blue-800"
+              className="text-xs text-blue-600 hover:text-blue-800 font-inter"
             >
               Clear Output
             </button>
