@@ -47,7 +47,7 @@
 //     value: string
 //   ) => {
 //     if (
-//       (field === "param2" || field === "voltage" || field === "temperature" || field === "time") &&
+//       (field === "param2" || field === "temperature" || field === "time") &&
 //       value &&
 //       (isNaN(Number(value)) || Number(value) < 0)
 //     ) {
@@ -127,17 +127,40 @@
 //           const text = e.target?.result as string;
 //           const data = JSON.parse(text);
 //           if (Array.isArray(data)) {
-//             const validData = data.map((item, index) => ({
-//               id: index + 1,
-//               command: item.command || "",
-//               param1: item.param1 || "",
-//               param2: item.param2 || "",
-//               cellNo: item.cellNo || "",
-//               cycleNo: item.cycleNo || "",
-//               voltage: item.voltage || "",
-//               temperature: item.temperature || "",
-//               time: item.time || "",
-//             }));
+//             const validData = data.map((item, index) => {
+//               const voltage =
+//                 item.command === "set_voltage" &&
+//                 item.voltage &&
+//                 parseInt(item.voltage) >= 1 &&
+//                 parseInt(item.voltage) <= 8
+//                   ? item.voltage
+//                   : item.command === "set_voltage"
+//                   ? ""
+//                   : item.voltage || "";
+//               const cellNo =
+//                 item.cellNo &&
+//                 parseInt(item.cellNo) >= 0 &&
+//                 parseInt(item.cellNo) <=
+//                   (item.command === "set_temp" ||
+//                   item.command === "get_temperature" ||
+//                   item.command === "get_11_csu_temp" ||
+//                   item.command === "get_12_csu_temp"
+//                     ? 5
+//                     : 22)
+//                   ? item.cellNo
+//                   : "";
+//               return {
+//                 id: index + 1,
+//                 command: item.command || "",
+//                 param1: item.param1 || "",
+//                 param2: item.param2 || "",
+//                 cellNo,
+//                 cycleNo: item.cycleNo || "",
+//                 voltage,
+//                 temperature: item.temperature || "",
+//                 time: item.time || "",
+//               };
+//             });
 //             setInstructions(validData);
 //           } else {
 //             alert(
@@ -197,6 +220,8 @@
 //         return field === "cellNo";
 //       case "end":
 //       case "reset":
+//       case "daisy_chain":
+//       case "cell_led":
 //         return false;
 //       default:
 //         return false;
@@ -210,8 +235,12 @@
 //       command === "get_11_csu_temp" ||
 //       command === "get_12_csu_temp"
 //         ? 6
-//         : 24;
-//     return Array.from({ length: maxCells }, (_, i) => i);
+//         : 24; // Changed to 23 to match 0 to 22 range
+//     return Array.from({ length: maxCells }, (_, i) => i); // 0-based: 0 to 22
+//   };
+
+//   const getVoltageOptions = () => {
+//     return Array.from({ length: 8 }, (_, i) => String(i + 1)); // Options: "1" to "8"
 //   };
 
 //   const getStepOptions = () => {
@@ -219,8 +248,8 @@
 //   };
 
 //   const tableContainerStyle = {
-//     maxHeight: instructions.length > 4 ? 'calc(4 * 3.5rem + 3rem)' : 'none',
-//     overflowY: instructions.length > 4 ? 'auto' : 'visible' as const,
+//     maxHeight: instructions.length > 4 ? "calc(4 * 3.5rem + 3rem)" : "none",
+//     overflowY: instructions.length > 4 ? "auto" : "visible" as const,
 //   };
 
 //   return (
@@ -235,8 +264,17 @@
 //                 onClick={handleLoadFile}
 //                 className="px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm flex items-center space-x-2"
 //               >
-//                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-//                   <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+//                 <svg
+//                   xmlns="http://www.w3.org/2000/svg"
+//                   className="h-5 w-5"
+//                   viewBox="0 0 20 20"
+//                   fill="currentColor"
+//                 >
+//                   <path
+//                     fillRule="evenodd"
+//                     d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+//                     clipRule="evenodd"
+//                   />
 //                 </svg>
 //                 <span>Load File</span>
 //               </button>
@@ -244,8 +282,17 @@
 //                 onClick={handleSave}
 //                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm flex items-center space-x-2"
 //               >
-//                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-//                   <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm6.293-9.707a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 9.414V17a1 1 0 11-2 0V9.414L7.707 11.707a1 1 0 01-1.414-1.414l3-3z" clipRule="evenodd" />
+//                 <svg
+//                   xmlns="http://www.w3.org/2000/svg"
+//                   className="h-5 w-5"
+//                   viewBox="0 0 20 20"
+//                   fill="currentColor"
+//                 >
+//                   <path
+//                     fillRule="evenodd"
+//                     d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm6.293-9.707a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 9.414V17a1 1 0 11-2 0V9.414L7.707 11.707a1 1 0 01-1.414-1.414l3-3z"
+//                     clipRule="evenodd"
+//                   />
 //                 </svg>
 //                 <span>Save</span>
 //               </button>
@@ -260,7 +307,10 @@
 //           </div>
 
 //           <div className="mb-6">
-//             <div className="relative shadow-sm rounded-lg border border-gray-200" style={tableContainerStyle}>
+//             <div
+//               className="relative shadow-sm rounded-lg border border-gray-200"
+//               style={tableContainerStyle}
+//             >
 //               <table className="w-full text-sm text-left text-gray-700">
 //                 <thead className="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0">
 //                   <tr>
@@ -278,7 +328,9 @@
 //                   {instructions.map((row, index) => (
 //                     <tr
 //                       key={`row-${row.id}-${index}`}
-//                       className={`border-b ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-gray-50`}
+//                       className={`border-b ${
+//                         index % 2 === 0 ? "bg-white" : "bg-gray-50"
+//                       } hover:bg-gray-50`}
 //                       onContextMenu={(e) => {
 //                         e.preventDefault();
 //                         setContextMenu({
@@ -288,35 +340,44 @@
 //                         });
 //                       }}
 //                     >
-//                       <td className="px-6 py-4 font-medium text-gray-900">{index + 1}</td>
+//                       <td className="px-6 py-4 font-medium text-gray-900">
+//                         {index + 1}
+//                       </td>
 //                       <td className="px-6 py-4">
 //                         <select
 //                           value={row.command}
 //                           onChange={(e) => {
-//                             handleInputChange(index, "command", e.target.value);
+//                             const newCommand = e.target.value;
+//                             handleInputChange(index, "command", newCommand);
 //                             setInstructions((prev) => {
 //                               const newInstructions = [...prev];
 //                               newInstructions[index] = {
 //                                 ...newInstructions[index],
-//                                 param1: e.target.value === "cycle" ? row.param1 : "",
-//                                 param2: e.target.value === "cycle" ? row.param2 : "",
+//                                 param1: newCommand === "cycle" ? row.param1 : "",
+//                                 param2: newCommand === "cycle" ? row.param2 : "",
 //                                 cellNo:
-//                                   (e.target.value === "set_temp" ||
-//                                    e.target.value === "get_temperature" ||
-//                                    e.target.value === "get_11_csu_temp" ||
-//                                    e.target.value === "get_12_csu_temp") &&
+//                                   (newCommand === "set_temp" ||
+//                                   newCommand === "get_temperature" ||
+//                                   newCommand === "get_11_csu_temp" ||
+//                                   newCommand === "get_12_csu_temp") &&
 //                                   parseInt(row.cellNo) > 5
 //                                     ? ""
-//                                     : ["delay", "end", "reset"].includes(e.target.value)
+//                                     : [
+//                                         "delay",
+//                                         "end",
+//                                         "reset",
+//                                         "daisy_chain",
+//                                         "cell_led",
+//                                       ].includes(newCommand)
 //                                     ? ""
 //                                     : row.cellNo,
 //                                 cycleNo:
-//                                   e.target.value === "cycle" ? row.cycleNo : "",
+//                                   newCommand === "cycle" ? row.cycleNo : "",
 //                                 voltage:
-//                                   e.target.value === "set_voltage" ? row.voltage : "",
+//                                   newCommand === "set_voltage" ? row.voltage : "",
 //                                 temperature:
-//                                   e.target.value === "set_temp" ? row.temperature : "",
-//                                 time: e.target.value === "delay" ? row.time : "",
+//                                   newCommand === "set_temp" ? row.temperature : "",
+//                                 time: newCommand === "delay" ? row.time : "",
 //                               };
 //                               return newInstructions;
 //                             });
@@ -335,11 +396,15 @@
 //                           <option value="get_11_csu_volt">GET 11 CSU VOLT</option>
 //                           <option value="get_11_csu_temp">GET 11 CSU TEMP</option>
 //                           <option value="get_11_csu_ow">GET 11 CSU OW</option>
-//                           <option value="get_11_csu_balance">GET 11 CSU BALANCE</option>
+//                           <option value="get_11_csu_balance">
+//                             GET 11 CSU BALANCE
+//                           </option>
 //                           <option value="get_12_csu_volt">GET 12 CSU VOLT</option>
 //                           <option value="get_12_csu_temp">GET 12 CSU TEMP</option>
 //                           <option value="get_12_csu_ow">GET 12 CSU OW</option>
-//                           <option value="get_12_csu_balance">GET 12 CSU BALANCE</option>
+//                           <option value="get_12_csu_balance">
+//                             GET 12 CSU BALANCE
+//                           </option>
 //                           <option value="reset">RESET</option>
 //                           <option value="cycle">CYCLE</option>
 //                           <option value="delay">DELAY</option>
@@ -389,7 +454,9 @@
 //                             handleInputChange(index, "cellNo", e.target.value)
 //                           }
 //                           className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-//                             !isFieldEnabled(row.command, "cellNo") ? 'bg-gray-100 text-gray-400' : ''
+//                             !isFieldEnabled(row.command, "cellNo")
+//                               ? "bg-gray-100 text-gray-400"
+//                               : ""
 //                           }`}
 //                           disabled={!isFieldEnabled(row.command, "cellNo")}
 //                         >
@@ -402,22 +469,41 @@
 //                         </select>
 //                       </td>
 //                       <td className="px-6 py-4">
-//                         <input
-//                           type="text"
-//                           value={row.voltage}
-//                           onChange={(e) =>
-//                             handleInputChange(index, "voltage", e.target.value)
-//                           }
-//                           className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-//                             !isFieldEnabled(row.command, "voltage") ? 'bg-gray-100 text-gray-400' : ''
-//                           }`}
-//                           disabled={!isFieldEnabled(row.command, "voltage")}
-//                           placeholder={
-//                             isFieldEnabled(row.command, "voltage")
-//                               ? "Enter voltage"
-//                               : "-"
-//                           }
-//                         />
+//                         {row.command === "set_voltage" ? (
+//                           <select
+//                             value={row.voltage}
+//                             onChange={(e) =>
+//                               handleInputChange(index, "voltage", e.target.value)
+//                             }
+//                             className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+//                           >
+//                             <option value="">Select voltage</option>
+//                             {getVoltageOptions().map((volt) => (
+//                               <option key={volt} value={volt}>
+//                                 {volt}
+//                               </option>
+//                             ))}
+//                           </select>
+//                         ) : (
+//                           <input
+//                             type="text"
+//                             value={row.voltage}
+//                             onChange={(e) =>
+//                               handleInputChange(index, "voltage", e.target.value)
+//                             }
+//                             className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+//                               !isFieldEnabled(row.command, "voltage")
+//                                 ? "bg-gray-100 text-gray-400"
+//                                 : ""
+//                             }`}
+//                             disabled={!isFieldEnabled(row.command, "voltage")}
+//                             placeholder={
+//                               isFieldEnabled(row.command, "voltage")
+//                                 ? "Enter voltage"
+//                                 : "-"
+//                             }
+//                           />
+//                         )}
 //                       </td>
 //                       <td className="px-6 py-4">
 //                         <input
@@ -427,7 +513,9 @@
 //                             handleInputChange(index, "temperature", e.target.value)
 //                           }
 //                           className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-//                             !isFieldEnabled(row.command, "temperature") ? 'bg-gray-100 text-gray-400' : ''
+//                             !isFieldEnabled(row.command, "temperature")
+//                               ? "bg-gray-100 text-gray-400"
+//                               : ""
 //                           }`}
 //                           disabled={!isFieldEnabled(row.command, "temperature")}
 //                           placeholder={
@@ -445,7 +533,9 @@
 //                             handleInputChange(index, "time", e.target.value)
 //                           }
 //                           className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-//                             !isFieldEnabled(row.command, "time") ? 'bg-gray-100 text-gray-400' : ''
+//                             !isFieldEnabled(row.command, "time")
+//                               ? "bg-gray-100 text-gray-400"
+//                               : ""
 //                           }`}
 //                           disabled={!isFieldEnabled(row.command, "time")}
 //                           placeholder={
@@ -464,7 +554,7 @@
 //             {contextMenu && (
 //               <div
 //                 style={{
-//                   position: 'fixed',
+//                   position: "fixed",
 //                   top: contextMenu.y,
 //                   left: contextMenu.x,
 //                   zIndex: 1000,
@@ -478,14 +568,27 @@
 //                     setContextMenu(null);
 //                   }}
 //                 >
-//                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="11 11 24 24" stroke="currentColor">
-//                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+//                   <svg
+//                     xmlns="http://www.w3.org/2000/svg"
+//                     className="h-4 w-4 mr-2"
+//                     fill="none"
+//                     viewBox="0 0 24 24"
+//                     stroke="currentColor"
+//                   >
+//                     <path
+//                       strokeLinecap="round"
+//                       strokeLinejoin="round"
+//                       strokeWidth={2}
+//                       d="M12 4v16m8-8H4"
+//                     />
 //                   </svg>
 //                   Insert Row
 //                 </button>
 //                 <button
 //                   className={`flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left ${
-//                     instructions.length === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-red-600'
+//                     instructions.length === 1
+//                       ? "text-gray-400 cursor-not-allowed"
+//                       : "text-red-600"
 //                   }`}
 //                   onClick={() => {
 //                     if (instructions.length > 1) {
@@ -495,8 +598,19 @@
 //                   }}
 //                   disabled={instructions.length === 1}
 //                 >
-//                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-//                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+//                   <svg
+//                     xmlns="http://www.w3.org/2000/svg"
+//                     className="h-4 w-4 mr-2"
+//                     fill="none"
+//                     viewBox="0 0 24 24"
+//                     stroke="currentColor"
+//                   >
+//                     <path
+//                       strokeLinecap="round"
+//                       strokeLinejoin="round"
+//                       strokeWidth={2}
+//                       d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+//                     />
 //                   </svg>
 //                   Delete Row
 //                 </button>
@@ -508,8 +622,17 @@
 //                 onClick={addRow}
 //                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm flex items-center space-x-2"
 //               >
-//                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-//                   <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+//                 <svg
+//                   xmlns="http://www.w3.org/2000/svg"
+//                   className="h-5 w-5"
+//                   viewBox="0 0 20 20"
+//                   fill="currentColor"
+//                 >
+//                   <path
+//                     fillRule="evenodd"
+//                     d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+//                     clipRule="evenodd"
+//                   />
 //                 </svg>
 //                 <span>Add Row</span>
 //               </button>
@@ -541,6 +664,13 @@
 
 
 
+
+
+
+
+
+
+
 import React, { useState, useRef, useEffect } from "react";
 import MenuBar from "../components/MenuBar";
 
@@ -549,6 +679,7 @@ interface SetInstruction {
   command: string;
   param1: string;
   param2: string;
+  value: string;
   cellNo: string;
   cycleNo: string;
   voltage: string;
@@ -563,6 +694,7 @@ const Settings: React.FC = () => {
       command: "",
       param1: "",
       param2: "",
+      value: "",
       cellNo: "",
       cycleNo: "",
       voltage: "",
@@ -610,6 +742,7 @@ const Settings: React.FC = () => {
       command: "",
       param1: "",
       param2: "",
+      value: "",
       cellNo: "",
       cycleNo: "",
       voltage: "",
@@ -646,6 +779,7 @@ const Settings: React.FC = () => {
       command: "",
       param1: "",
       param2: "",
+      value: "",
       cellNo: "",
       cycleNo: "",
       voltage: "",
@@ -680,12 +814,32 @@ const Settings: React.FC = () => {
                   : item.command === "set_voltage"
                   ? ""
                   : item.voltage || "";
+              const cellNo =
+                item.cellNo &&
+                parseInt(item.cellNo) >= 0 &&
+                parseInt(item.cellNo) <=
+                  (item.command === "set_temp" ||
+                  item.command === "get_temperature" ||
+                  item.command === "get_11_csu_temp" ||
+                  item.command === "get_12_csu_temp"
+                    ? 5
+                    : 22)
+                  ? item.cellNo
+                  : "";
+              const value =
+                (item.command === "set_ow" || item.command === "daisy_chain") &&
+                ["0", "1"].includes(item.value)
+                  ? item.value
+                  : item.command === "set_ow" || item.command === "daisy_chain"
+                  ? ""
+                  : item.value || "";
               return {
                 id: index + 1,
                 command: item.command || "",
                 param1: item.param1 || "",
                 param2: item.param2 || "",
-                cellNo: item.cellNo || "",
+                value,
+                cellNo,
                 cycleNo: item.cycleNo || "",
                 voltage,
                 temperature: item.temperature || "",
@@ -730,12 +884,16 @@ const Settings: React.FC = () => {
         return field === "cellNo" || field === "voltage";
       case "set_temp":
         return field === "cellNo" || field === "temperature";
+      case "set_ow":
+      case "daisy_chain":
+        return field === "cellNo" || field === "value";
+      case "set_balance":
+        return field === "cellNo" || field === "value";
       case "cycle":
         return field === "param1" || field === "param2" || field === "cycleNo";
       case "delay":
         return field === "time";
-      case "set_balance":
-      case "set_ow":
+      
       case "get_voltage":
       case "get_current":
       case "get_11_csu_volt":
@@ -751,7 +909,6 @@ const Settings: React.FC = () => {
         return field === "cellNo";
       case "end":
       case "reset":
-      case "daisy_chain":
       case "cell_led":
         return false;
       default:
@@ -771,7 +928,11 @@ const Settings: React.FC = () => {
   };
 
   const getVoltageOptions = () => {
-    return Array.from({ length: 8 }, (_, i) => String(i + 1)); // Options: "1" to "8"
+    return Array.from({ length: 8 }, (_, i) => String(i + 1));
+  };
+
+  const getValueOptions = () => {
+    return ["0", "1"];
   };
 
   const getStepOptions = () => {
@@ -779,8 +940,8 @@ const Settings: React.FC = () => {
   };
 
   const tableContainerStyle = {
-    maxHeight: instructions.length > 4 ? 'calc(4 * 3.5rem + 3rem)' : 'none',
-    overflowY: instructions.length > 4 ? 'auto' : 'visible' as const,
+    maxHeight: instructions.length > 4 ? "calc(4 * 3.5rem + 3rem)" : "none",
+    overflowY: instructions.length > 4 ? "auto" : "visible" as const,
   };
 
   return (
@@ -795,8 +956,17 @@ const Settings: React.FC = () => {
                 onClick={handleLoadFile}
                 className="px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm flex items-center space-x-2"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 <span>Load File</span>
               </button>
@@ -804,8 +974,17 @@ const Settings: React.FC = () => {
                 onClick={handleSave}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm flex items-center space-x-2"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm6.293-9.707a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 9.414V17a1 1 0 11-2 0V9.414L7.707 11.707a1 1 0 01-1.414-1.414l3-3z" clipRule="evenodd" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm6.293-9.707a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 9.414V17a1 1 0 11-2 0V9.414L7.707 11.707a1 1 0 01-1.414-1.414l3-3z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 <span>Save</span>
               </button>
@@ -820,7 +999,10 @@ const Settings: React.FC = () => {
           </div>
 
           <div className="mb-6">
-            <div className="relative shadow-sm rounded-lg border border-gray-200" style={tableContainerStyle}>
+            <div
+              className="relative shadow-sm rounded-lg border border-gray-200"
+              style={tableContainerStyle}
+            >
               <table className="w-full text-sm text-left text-gray-700">
                 <thead className="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0">
                   <tr>
@@ -828,6 +1010,7 @@ const Settings: React.FC = () => {
                     <th scope="col" className="px-6 py-3">Command</th>
                     <th scope="col" className="px-6 py-3">Start Step</th>
                     <th scope="col" className="px-6 py-3">Cycle Index</th>
+                    <th scope="col" className="px-6 py-3">Value</th>
                     <th scope="col" className="px-6 py-3">Cell No</th>
                     <th scope="col" className="px-6 py-3">Voltage</th>
                     <th scope="col" className="px-6 py-3">Temperature</th>
@@ -838,7 +1021,9 @@ const Settings: React.FC = () => {
                   {instructions.map((row, index) => (
                     <tr
                       key={`row-${row.id}-${index}`}
-                      className={`border-b ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-gray-50`}
+                      className={`border-b ${
+                        index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                      } hover:bg-gray-50`}
                       onContextMenu={(e) => {
                         e.preventDefault();
                         setContextMenu({
@@ -848,7 +1033,9 @@ const Settings: React.FC = () => {
                         });
                       }}
                     >
-                      <td className="px-6 py-4 font-medium text-gray-900">{index + 1}</td>
+                      <td className="px-6 py-4 font-medium text-gray-900">
+                        {index + 1}
+                      </td>
                       <td className="px-6 py-4">
                         <select
                           value={row.command}
@@ -861,6 +1048,11 @@ const Settings: React.FC = () => {
                                 ...newInstructions[index],
                                 param1: newCommand === "cycle" ? row.param1 : "",
                                 param2: newCommand === "cycle" ? row.param2 : "",
+                                value:
+                                  newCommand === "set_ow" ||
+                                  newCommand === "daisy_chain"
+                                    ? row.value
+                                    : "",
                                 cellNo:
                                   (newCommand === "set_temp" ||
                                   newCommand === "get_temperature" ||
@@ -868,7 +1060,12 @@ const Settings: React.FC = () => {
                                   newCommand === "get_12_csu_temp") &&
                                   parseInt(row.cellNo) > 5
                                     ? ""
-                                    : ["delay", "end", "reset", "daisy_chain", "cell_led"].includes(newCommand)
+                                    : [
+                                        "delay",
+                                        "end",
+                                        "reset",
+                                        "cell_led",
+                                      ].includes(newCommand)
                                     ? ""
                                     : row.cellNo,
                                 cycleNo:
@@ -896,11 +1093,15 @@ const Settings: React.FC = () => {
                           <option value="get_11_csu_volt">GET 11 CSU VOLT</option>
                           <option value="get_11_csu_temp">GET 11 CSU TEMP</option>
                           <option value="get_11_csu_ow">GET 11 CSU OW</option>
-                          <option value="get_11_csu_balance">GET 11 CSU BALANCE</option>
+                          <option value="get_11_csu_balance">
+                            GET 11 CSU BALANCE
+                          </option>
                           <option value="get_12_csu_volt">GET 12 CSU VOLT</option>
                           <option value="get_12_csu_temp">GET 12 CSU TEMP</option>
                           <option value="get_12_csu_ow">GET 12 CSU OW</option>
-                          <option value="get_12_csu_balance">GET 12 CSU BALANCE</option>
+                          <option value="get_12_csu_balance">
+                            GET 12 CSU BALANCE
+                          </option>
                           <option value="reset">RESET</option>
                           <option value="cycle">CYCLE</option>
                           <option value="delay">DELAY</option>
@@ -944,20 +1145,59 @@ const Settings: React.FC = () => {
                         )}
                       </td>
                       <td className="px-6 py-4">
+                        {row.command === "set_ow" || row.command === "daisy_chain" ? (
+                          <select
+                            value={row.value}
+                            onChange={(e) =>
+                              handleInputChange(index, "value", e.target.value)
+                            }
+                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          >
+                            <option value="">Select value</option>
+                            {getValueOptions().map((val) => (
+                              <option key={val} value={val}>
+                                {val}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type="text"
+                            value={row.value}
+                            onChange={(e) =>
+                              handleInputChange(index, "value", e.target.value)
+                            }
+                            className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                              !isFieldEnabled(row.command, "value")
+                                ? "bg-gray-100 text-gray-400"
+                                : ""
+                            }`}
+                            disabled={!isFieldEnabled(row.command, "value")}
+                            placeholder={
+                              isFieldEnabled(row.command, "value")
+                                ? "Enter value"
+                                : "-"
+                            }
+                          />
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
                         <select
                           value={row.cellNo}
                           onChange={(e) =>
                             handleInputChange(index, "cellNo", e.target.value)
                           }
                           className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-                            !isFieldEnabled(row.command, "cellNo") ? 'bg-gray-100 text-gray-400' : ''
+                            !isFieldEnabled(row.command, "cellNo")
+                              ? "bg-gray-100 text-gray-400"
+                              : ""
                           }`}
                           disabled={!isFieldEnabled(row.command, "cellNo")}
                         >
                           <option value="">Select cell</option>
                           {getCellOptions(row.command).map((cell) => (
-                            <option key={cell} value={String(cell + 1)}>
-                              {cell + 1}
+                            <option key={cell} value={String(cell)}>
+                              {cell}
                             </option>
                           ))}
                         </select>
@@ -986,7 +1226,9 @@ const Settings: React.FC = () => {
                               handleInputChange(index, "voltage", e.target.value)
                             }
                             className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-                              !isFieldEnabled(row.command, "voltage") ? 'bg-gray-100 text-gray-400' : ''
+                              !isFieldEnabled(row.command, "voltage")
+                                ? "bg-gray-100 text-gray-400"
+                                : ""
                             }`}
                             disabled={!isFieldEnabled(row.command, "voltage")}
                             placeholder={
@@ -1005,8 +1247,10 @@ const Settings: React.FC = () => {
                             handleInputChange(index, "temperature", e.target.value)
                           }
                           className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-                            !isFieldEnabled(row.command, "temperature") ? 'bg-gray-100 text-gray-400' : ''
-                          }`}
+                            !isFieldEnabled(row.command, "temperature")
+                              ? "bg-gray-100 text-gray-400"
+                              : ""
+                            }`}
                           disabled={!isFieldEnabled(row.command, "temperature")}
                           placeholder={
                             isFieldEnabled(row.command, "temperature")
@@ -1023,8 +1267,10 @@ const Settings: React.FC = () => {
                             handleInputChange(index, "time", e.target.value)
                           }
                           className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-                            !isFieldEnabled(row.command, "time") ? 'bg-gray-100 text-gray-400' : ''
-                          }`}
+                            !isFieldEnabled(row.command, "time")
+                              ? "bg-gray-100 text-gray-400"
+                              : ""
+                            }`}
                           disabled={!isFieldEnabled(row.command, "time")}
                           placeholder={
                             isFieldEnabled(row.command, "time")
@@ -1042,7 +1288,7 @@ const Settings: React.FC = () => {
             {contextMenu && (
               <div
                 style={{
-                  position: 'fixed',
+                  position: "fixed",
                   top: contextMenu.y,
                   left: contextMenu.x,
                   zIndex: 1000,
@@ -1056,14 +1302,27 @@ const Settings: React.FC = () => {
                     setContextMenu(null);
                   }}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 mr-2"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
                   </svg>
                   Insert Row
                 </button>
                 <button
                   className={`flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left ${
-                    instructions.length === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-red-600'
+                    instructions.length === 1
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-red-600"
                   }`}
                   onClick={() => {
                     if (instructions.length > 1) {
@@ -1073,8 +1332,19 @@ const Settings: React.FC = () => {
                   }}
                   disabled={instructions.length === 1}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 mr-2"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
                   </svg>
                   Delete Row
                 </button>
@@ -1086,8 +1356,17 @@ const Settings: React.FC = () => {
                 onClick={addRow}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm flex items-center space-x-2"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 <span>Add Row</span>
               </button>

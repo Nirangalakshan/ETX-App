@@ -119,7 +119,7 @@ const ErrorWarningPanel: React.FC<ErrorWarningPanelProps> = ({ csu1Cells, csu2Ce
                 className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800 shadow-sm"
               >
                 <strong>Cell {cell.id}</strong> (CSU {cell.id < 12 ? 1 : 2})<br />
-                Voltage: <span className="font-medium">{cell.voltage.toFixed(2)}V</span>, Temp: <span className="font-medium">{cell.temperature}°C</span>
+                Voltage: <span className="font-medium">{cell.voltage}V</span>, Temp: <span className="font-medium">{cell.temperature}°C</span>
               </li>
             ))}
           </ul>
@@ -138,7 +138,7 @@ const ErrorWarningPanel: React.FC<ErrorWarningPanelProps> = ({ csu1Cells, csu2Ce
                 className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800 shadow-sm"
               >
                 <strong>Cell {cell.id}</strong> (CSU {cell.id < 12 ? 1 : 2})<br />
-                Voltage: <span className="font-medium">{cell.voltage.toFixed(2)}V</span>, Temp: <span className="font-medium">{cell.temperature}°C</span>
+                Voltage: <span className="font-medium">{cell.voltage}V</span>, Temp: <span className="font-medium">{cell.temperature}°C</span>
               </li>
             ))}
           </ul>

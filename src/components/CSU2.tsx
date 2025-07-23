@@ -272,7 +272,7 @@ const CSU2: React.FC = () => {
 
   return (
     <div className="relative p-4">
-      <h1 className="text-2xl font-semibold mb-3 text-gray-800">CSU2</h1>
+      <h1 className="text-2xl font-semibold mb-3 text-gray-800 font-roboto text-center">CSU 2</h1>
       <div
         className="csu-grid grid grid-cols-2 grid-rows-6 gap-1 bg-white/60 border border-gray-300 p-2 rounded-lg shadow-lg backdrop-blur-md"
         style={{

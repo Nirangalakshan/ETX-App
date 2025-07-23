@@ -1,3 +1,4 @@
+// //convert to values
 // import { app, BrowserWindow, ipcMain } from "electron";
 // import { createRequire } from "node:module";
 // import { fileURLToPath } from "node:url";
@@ -80,9 +81,11 @@
 //         autoOpen: false,
 //       });
 
-//       serialPort.open((err: Error | null) => {
+//       serialPort.open((err
+
+// : Error | null) => {
 //         if (err) {
-//           console.error("Error opening port:", err);
+//           console.error("Erroropening port:", err);
 //           serialPort = null;
 //           return reject({ success: false, error: err.message });
 //         }
@@ -90,25 +93,33 @@
 //         console.log(`Serial port ${portPath} opened at baud rate ${baudRate}`);
 //         resolve({ success: true });
 
-//         // Handle incoming data
-//         // serialPort.on("data", (data: Buffer) => {
-//         //   const dataString = data.toString();
-//         //   console.log("Serial data received:", dataString);
-//         //   if (win && !win.isDestroyed()) {
-//         //     win.webContents.send("serial-data", dataString);
-//         //   }
-//         // });
-
 //         serialPort.on("data", (data: Buffer) => {
 //           // Convert buffer to array of hex strings
 //           const hexString = Array.from(data)
 //             .map((b) => b.toString(16).padStart(2, "0"))
 //             .join(" ");
+//           // Convert buffer to array of decimal values
+//           const decimalString = Array.from(data)
+//             .map((b) => b.toString(10).padStart(3, "0"))
+//             .join(" ");
 
 //           console.log("Serial HEX data received:", hexString.toUpperCase());
+//           console.log("Serial DECIMAL data received:", decimalString);
+
+//           // Define voltageVolts outside the if block
+//           let voltageVolts: string | undefined = undefined;
+
+//           // Check if this is a get_voltage_limits response (byte 0 = 0x07, byte 1 = 0xA6 or 0xA7)
+//           if (data.length >= 3 && data[0] === 0x07 && (data[2] === 0xA6 || data[2] === 0xA7)) {
+//             const voltageLimit = (data[2] << 8) | data[3]; // bytes 1 and 2
+//             voltageVolts = (voltageLimit / 10000).toFixed(3); // Convert to volts
+//             console.log(`Voltage: ${voltageVolts} V`);
+//           }
 
 //           if (win && !win.isDestroyed()) {
-//             win.webContents.send("serial-data", hexString.toUpperCase()); // 👈 send hex to frontend
+//             win.webContents.send("serial-data", 
+//               { hex: hexString.toUpperCase(), 
+//                 parsed: voltageVolts });
 //           }
 //         });
 
@@ -130,23 +141,6 @@
 //     });
 //   }
 // );
-
-// // Handle writing to the serial port
-// // ipcMain.handle("write-port", async (_event, data: string) => {
-// //   return new Promise((resolve, reject) => {
-// //     if (!serialPort || !serialPort.isOpen) {
-// //       return resolve({ success: false, error: "No port is open" });
-// //     }
-// //     serialPort.write(data, (err: Error | null) => {
-// //       if (err) {
-// //         console.error("Error writing to port:", err);
-// //         return reject({ success: false, error: err.message });
-// //       }
-// //       console.log("Data written to port:", data);
-// //       resolve({ success: true });
-// //     });
-// //   });
-// // });
 
 // // Handle writing raw bytes to the serial port (from Uint8Array)
 // ipcMain.handle("write-port-raw", async (_event, data: Uint8Array) => {
@@ -204,13 +198,11 @@
 //     frame: false,
 //     autoHideMenuBar: true,
 //     icon: path.join(__dirname, "public/icon.ico"),
-//     // icon: path.join(process.env.VITE_PUBLIC, "icon.svg"),
 //     webPreferences: {
 //       preload: path.join(__dirname, "preload.mjs"),
-//       // nodeIntegration: true, // Enable Node.js integration
-//       // contextIsolation: false, // Disable context isolation for easier access to Node.js APIs
 //     },
 //   });
+//   win.webContents.openDevTools();
 
 //   win.webContents.on("did-finish-load", () => {
 //     if (win && !win.isDestroyed()) {
@@ -267,7 +259,7 @@
 
 
 
-//convert to values
+
 import { app, BrowserWindow, ipcMain } from "electron";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
@@ -331,6 +323,22 @@ ipcMain.handle("list-ports", async () => {
   }
 });
 
+// CRC-16 calculation function (same as in SerialTerminal.tsx)
+const calculateCRC16 = (data: number[]): number => {
+  let crc = 0xffff;
+  const polynomial = 0xa001;
+
+  for (const byte of data) {
+    crc ^= byte;
+    for (let i = 0; i < 8; i++) {
+      const lsb = crc & 0x0001;
+      crc >>= 1;
+      if (lsb) crc ^= polynomial;
+    }
+  }
+  return crc;
+};
+
 // Handle opening a serial port
 let serialPort: typeof SerialPort.prototype | null = null;
 ipcMain.handle(
@@ -350,11 +358,12 @@ ipcMain.handle(
         autoOpen: false,
       });
 
-      serialPort.open((err
+      // Buffer to store incoming bytes
+      let byteBuffer: number[] = [];
 
-: Error | null) => {
+      serialPort.open((err: Error | null) => {
         if (err) {
-          console.error("Erroropening port:", err);
+          console.error("Error opening port:", err);
           serialPort = null;
           return reject({ success: false, error: err.message });
         }
@@ -363,32 +372,70 @@ ipcMain.handle(
         resolve({ success: true });
 
         serialPort.on("data", (data: Buffer) => {
-          // Convert buffer to array of hex strings
-          const hexString = Array.from(data)
-            .map((b) => b.toString(16).padStart(2, "0"))
-            .join(" ");
-          // Convert buffer to array of decimal values
-          const decimalString = Array.from(data)
-            .map((b) => b.toString(10).padStart(3, "0"))
-            .join(" ");
+          // Convert buffer to array of bytes
+          const bytes = Array.from(data);
+          byteBuffer = [...byteBuffer, ...bytes];
 
-          console.log("Serial HEX data received:", hexString.toUpperCase());
-          console.log("Serial DECIMAL data received:", decimalString);
+          // Process complete 8-byte frames
+          while (byteBuffer.length >= 8) {
+            const frame = byteBuffer.slice(0, 8); // Extract first 8 bytes
+            byteBuffer = byteBuffer.slice(8); // Remove processed bytes from buffer
 
-          // Define voltageVolts outside the if block
-          let voltageVolts: string | undefined = undefined;
+            // Validate frame start (0x07)
+            if (frame[0] !== 0x07) {
+              console.warn("Invalid frame start:", frame);
+              if (win && !win.isDestroyed()) {
+                win.webContents.send("serial-error", `Invalid frame start: ${frame}`);
+              }
+              continue;
+            }
 
-          // Check if this is a get_voltage_limits response (byte 0 = 0x07, byte 1 = 0xA6 or 0xA7)
-          if (data.length >= 3 && data[0] === 0x07 && (data[2] === 0xA6 || data[2] === 0xA7)) {
-            const voltageLimit = (data[2] << 8) | data[3]; // bytes 1 and 2
-            voltageVolts = (voltageLimit / 10000).toFixed(3); // Convert to volts
-            console.log(`Voltage: ${voltageVolts} V`);
-          }
+            // Verify CRC
+            const receivedCRC = (frame[7] << 8) | frame[6];
+            const calculatedCRC = calculateCRC16(frame.slice(0, 6));
+            if (receivedCRC !== calculatedCRC) {
+              console.warn("CRC mismatch:", frame);
+              if (win && !win.isDestroyed()) {
+                win.webContents.send("serial-error", `CRC mismatch: ${frame}`);
+              }
+              continue;
+            }
 
-          if (win && !win.isDestroyed()) {
-            win.webContents.send("serial-data", 
-              { hex: hexString.toUpperCase(), 
-                parsed: voltageVolts });
+            // Convert frame to hex string
+            const hexString = frame
+              .map((b) => b.toString(16).padStart(2, "0"))
+              .join(" ")
+              .toUpperCase();
+            // Convert frame to decimal string
+            const decimalString = frame
+              .map((b) => b.toString(10).padStart(3, "0"))
+              .join(" ");
+
+            console.log("Serial HEX data received:", hexString);
+            console.log("Serial DECIMAL data received:", decimalString);
+
+            // Parse voltage for get_voltage_limits (byte 0 = 0x07, byte 2 = 0xA6 or 0xA7)
+            let voltageVolts: string | undefined = undefined;
+            if (frame.length >= 8 && frame[0] === 0x07 && (frame[2] === 0xA6 || frame[2] === 0xA7)) {
+              const voltageLimit = ((frame[2] << 8) | frame[3]) / 10000; // Use bytes 4 and 5 for voltage
+              voltageVolts = voltageLimit.toFixed(3); // Convert to volts
+              console.log(`Voltage: ${voltageVolts} V`);
+            }
+
+            let tempCelsius: string | undefined = undefined;
+            if (frame.length >= 8 && frame[0] === 0x07 && frame[2] === 0xA5) {
+              const tempRaw = (frame[4] << 8) | frame[5];
+              const tempC = tempRaw / 100; // Use bytes 4 and 5 for temperature
+              tempCelsius = tempC.toFixed(1); // Convert to degrees Celsius
+              console.log(`Temperature: ${tempCelsius} °C`);
+            }
+
+            if (win && !win.isDestroyed()) {
+              win.webContents.send("serial-data", {
+                hex: hexString,
+                parsed: voltageVolts,
+              });
+            }
           }
         });
 
@@ -402,6 +449,7 @@ ipcMain.handle(
         serialPort.on("close", () => {
           console.log("Serial port closed");
           serialPort = null;
+          byteBuffer = []; // Clear buffer on close
           if (win && !win.isDestroyed()) {
             win.webContents.send("serial-closed");
           }

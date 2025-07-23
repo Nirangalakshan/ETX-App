@@ -192,12 +192,12 @@ export default function CustomTitleBar() {
         {/* Left: Logo + Title */}
         <div className="flex items-center gap-3">
           <img src="/icon.svg" alt="Logo" className="w-8 h-8" />
-          <span className="text-lg font-semibold tracking-wide">ETX Battery Tester</span>
+          <span className="text-lg font-serif tracking-wide font-extrabold">ETX BATTERY TESTER <span className="text-xs">@V 1.0.0</span></span>
         </div>
 
         {/* Center: Navigation */}
         <div
-          className="flex gap-6 text-sm font-medium"
+          className="flex gap-6 text-slate-950 font-bold font-serif mr-30"
           style={{ WebkitAppRegion: "no-drag" } as any}
         >
           <Link to="/" className="hover:text-blue-600 transition">

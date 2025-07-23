@@ -1,1 +1,9 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Abhaya+Libre:wght@400;500;600;700;800&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Maname&display=swap');
 @import "tailwindcss";
+
+
+@theme {
+  --font-roboto: "Roboto", sans-serif; 
+}
+

@@ -47,6 +47,19 @@ ipcMain.handle("list-ports", async () => {
     return [];
   }
 });
+const calculateCRC16 = (data) => {
+  let crc = 65535;
+  const polynomial = 40961;
+  for (const byte of data) {
+    crc ^= byte;
+    for (let i = 0; i < 8; i++) {
+      const lsb = crc & 1;
+      crc >>= 1;
+      if (lsb) crc ^= polynomial;
+    }
+  }
+  return crc;
+};
 let serialPort = null;
 ipcMain.handle(
   "open-port",
@@ -63,33 +76,60 @@ ipcMain.handle(
         baudRate,
         autoOpen: false
       });
+      let byteBuffer = [];
       serialPort.open((err) => {
         if (err) {
-          console.error("Erroropening port:", err);
+          console.error("Error opening port:", err);
           serialPort = null;
           return reject({ success: false, error: err.message });
         }
         console.log(`Serial port ${portPath} opened at baud rate ${baudRate}`);
         resolve({ success: true });
         serialPort.on("data", (data) => {
-          const hexString = Array.from(data).map((b) => b.toString(16).padStart(2, "0")).join(" ");
-          const decimalString = Array.from(data).map((b) => b.toString(10).padStart(3, "0")).join(" ");
-          console.log("Serial HEX data received:", hexString.toUpperCase());
-          console.log("Serial DECIMAL data received:", decimalString);
-          let voltageVolts = void 0;
-          if (data.length >= 3 && data[0] === 7 && (data[2] === 166 || data[2] === 167)) {
-            const voltageLimit = data[2] << 8 | data[3];
-            voltageVolts = (voltageLimit / 1e4).toFixed(3);
-            console.log(`Voltage: ${voltageVolts} V`);
-          }
-          if (win && !win.isDestroyed()) {
-            win.webContents.send(
-              "serial-data",
-              {
-                hex: hexString.toUpperCase(),
-                parsed: voltageVolts
+          const bytes = Array.from(data);
+          byteBuffer = [...byteBuffer, ...bytes];
+          while (byteBuffer.length >= 8) {
+            const frame = byteBuffer.slice(0, 8);
+            byteBuffer = byteBuffer.slice(8);
+            if (frame[0] !== 7) {
+              console.warn("Invalid frame start:", frame);
+              if (win && !win.isDestroyed()) {
+                win.webContents.send("serial-error", `Invalid frame start: ${frame}`);
               }
-            );
+              continue;
+            }
+            const receivedCRC = frame[7] << 8 | frame[6];
+            const calculatedCRC = calculateCRC16(frame.slice(0, 6));
+            if (receivedCRC !== calculatedCRC) {
+              console.warn("CRC mismatch:", frame);
+              if (win && !win.isDestroyed()) {
+                win.webContents.send("serial-error", `CRC mismatch: ${frame}`);
+              }
+              continue;
+            }
+            const hexString = frame.map((b) => b.toString(16).padStart(2, "0")).join(" ").toUpperCase();
+            const decimalString = frame.map((b) => b.toString(10).padStart(3, "0")).join(" ");
+            console.log("Serial HEX data received:", hexString);
+            console.log("Serial DECIMAL data received:", decimalString);
+            let voltageVolts = void 0;
+            if (frame.length >= 8 && frame[0] === 7 && (frame[2] === 166 || frame[2] === 167)) {
+              const voltageLimit = (frame[2] << 8 | frame[3]) / 1e4;
+              voltageVolts = voltageLimit.toFixed(3);
+              console.log(`Voltage: ${voltageVolts} V`);
+            }
+            let tempCelsius = void 0;
+            if (frame.length >= 8 && frame[0] === 7 && frame[2] === 165) {
+              const tempRaw = frame[4] << 8 | frame[5];
+              const tempC = tempRaw / 100;
+              tempCelsius = tempC.toFixed(1);
+              console.log(`Temperature: ${tempCelsius} °C`);
+            }
+            if (win && !win.isDestroyed()) {
+              win.webContents.send("serial-data", {
+                hex: hexString,
+                parsed: voltageVolts
+              });
+            }
           }
         });
         serialPort.on("error", (err2) => {
@@ -101,6 +141,7 @@ ipcMain.handle(
         serialPort.on("close", () => {
           console.log("Serial port closed");
           serialPort = null;
+          byteBuffer = [];
           if (win && !win.isDestroyed()) {
             win.webContents.send("serial-closed");
           }

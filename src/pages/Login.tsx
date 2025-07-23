@@ -235,7 +235,7 @@ const Login: React.FC = () => {
             alt="Logo"
             className="mx-auto mb-6 w-16 h-16 sm:w-20 sm:h-20 transition-transform duration-300 hover:scale-110"
           />
-          <h1 className="text-2xl sm:text-3xl font-semibold text-center text-gray-900 mb-6 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-center text-gray-900 mb-6 tracking-tight font-serif">
             Welcome Back
           </h1>
 
