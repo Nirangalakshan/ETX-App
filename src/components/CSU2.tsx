@@ -167,7 +167,7 @@
 
 
 import React, { useEffect, useState, useRef } from 'react';
-import { ResponseData } from './test'; // Import ResponseData type from SerialTerminal
+import { ResponseData } from './test';
 
 export type CellStatus = 'normal' | 'warning' | 'critical';
 
@@ -184,7 +184,7 @@ interface PopupInfo {
 }
 
 interface CSU2Props {
-  responseData: Record<number, ResponseData[]>;
+  responseData: Record<number, ResponseData[]> | undefined;
 }
 
 const BatteryCellComponent: React.FC<{
@@ -225,7 +225,8 @@ const CSU2: React.FC<CSU2Props> = ({ responseData }) => {
   }, []);
 
   useEffect(() => {
-    // Update cells based on responseData
+    if (!responseData) return; // Prevent accessing undefined responseData
+
     setCells((prevCells) =>
       prevCells.map((cell) => {
         const cellData = responseData[cell.id] || [];
@@ -239,7 +240,6 @@ const CSU2: React.FC<CSU2Props> = ({ responseData }) => {
           const parsedVoltage = parseFloat(voltageData.value);
           if (!isNaN(parsedVoltage)) {
             voltage = parsedVoltage;
-            // Update status based on voltage
             status = voltage < 3.3 ? 'critical' : voltage < 3.5 ? 'warning' : 'normal';
           }
         }
@@ -250,7 +250,6 @@ const CSU2: React.FC<CSU2Props> = ({ responseData }) => {
           const tempValue = parseFloat(tempData.value.replace(' °C', ''));
           if (!isNaN(tempValue)) {
             temperature = tempValue;
-            // Update status based on temperature
             if (temperature > 60) {
               status = 'critical';
             } else if (temperature > 45 && status !== 'critical') {
