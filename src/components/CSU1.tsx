@@ -1,159 +1,32 @@
-// import React, { useEffect, useState, useRef } from 'react';
-// import "../index.css"
-
-// type CellStatus = 'normal' | 'warning' | 'critical';
-
-// export interface BatteryCell {
-//   id: number;
-//   voltage: number | null; // Allow null for real data
-//   temperature: number | null; // Allow null for real data
-//   status: CellStatus;
-// }
-
-// interface PopupInfo {
-//   cell: BatteryCell;
-//   position: { top: number; left: number };
-// }
-
-// const BatteryCellComponent: React.FC<{
-//   cell: BatteryCell;
-//   onClick: (event: React.MouseEvent, cell: BatteryCell) => void;
-// }> = ({ cell, onClick }) => {
-//   let statusColor = 'bg-green-300/20 border-green-400 text-green-800';
-//   if (cell.status === 'warning') statusColor = 'bg-yellow-200/20 border-yellow-500 text-yellow-700';
-//   else if (cell.status === 'critical') statusColor = 'bg-red-300/20 border-red-500 text-red-700';
-
-//   return (
-//     <div
-//       onClick={(e) => onClick(e, cell)}
-//       className={`w-[120px] h-[50px] m-[4px] border p-1 rounded-lg shadow-sm backdrop-blur-sm ${statusColor} cursor-pointer flex flex-col items-center justify-center text-xs hover:scale-[1.03] transition-transform duration-200`}
-//     >
-//       <div>V: {cell.voltage != null ? cell.voltage.toFixed(2) : 'N/A'}V</div>
-//       <div>T: {cell.temperature != null ? cell.temperature.toFixed(1) : 'N/A'}°C</div>
-//       <div className="italic">{cell.status}</div>
-//     </div>
-//   );
-// };
+// import React, { useEffect, useState } from "react";
+// import { ResponseData } from "./test";
 
 // const CSU1: React.FC = () => {
-//   const [cells, setCells] = useState<BatteryCell[]>([]);
-//   const [popup, setPopup] = useState<PopupInfo | null>(null);
-//   const [popupHeight, setPopupHeight] = useState(150);
-//   const popupRef = useRef<HTMLDivElement>(null);
+//   const [csu1Data, setCsu1Data] = useState<Record<number, ResponseData[]>>({});
 
 //   useEffect(() => {
-//     // Initialize cells without random data
-//     const initialCells = Array.from({ length: 12 }, (_, i) => ({
-//       id: i,
-//       voltage: null, // No initial voltage
-//       temperature: null, // No initial temperature
-//       status: 'normal' as CellStatus, // Default status
-//     }));
-//     setCells(initialCells);
+//     const handleUpdate = (event: Event) => {
+//       const data = (event as CustomEvent).detail;
+//       if (data && typeof data === "object" && !Array.isArray(data)) {
+//         setCsu1Data(data as Record<number, ResponseData[]>);
+//       } else {
+//         console.warn("CSU1: Invalid responseData format received:", data);
+//       }
+//     };
 
-//     // Removed setInterval for random data generation
-//   }, []);
+//     window.addEventListener("csu1CellsUpdate", handleUpdate);
+//     return () => window.removeEventListener("csu1CellsUpdate", handleUpdate);
+//   }, []); // Empty dependency array to prevent infinite loops
 
-//   useEffect(() => {
-//     window.dispatchEvent(new CustomEvent('csu1CellsUpdate', { detail: cells }));
-//   }, [cells]);
-
-//   useEffect(() => {
-//     if (popupRef.current) {
-//       setPopupHeight(popupRef.current.offsetHeight);
-//     }
-//   }, [popup]);
-
-//   const handleCellClick = (e: React.MouseEvent, cell: BatteryCell) => {
-//     const targetRect = (e.target as HTMLElement).getBoundingClientRect();
-//     const popupWidth = 200;
-//     const padding = 10;
-
-//     const container = e.currentTarget.closest('.csu-grid') as HTMLElement;
-//     if (!container) return;
-//     const containerRect = container.getBoundingClientRect();
-//     const containerTop = containerRect.top + window.scrollY;
-//     const containerLeft = containerRect.left + window.scrollX;
-//     const containerWidth = container.clientWidth;
-//     const containerHeight = container.offsetHeight;
-
-//     let top = targetRect.top - containerTop + (targetRect.height - popupHeight) / 2;
-//     let left = targetRect.left - containerLeft + targetRect.width + padding;
-
-//     if (left + popupWidth > containerWidth) {
-//       left = targetRect.left - containerLeft - popupWidth - padding;
-//     }
-
-//     if (top < 0) top = 0;
-//     if (top + popupHeight > containerHeight) {
-//       top = containerHeight - popupHeight;
-//     }
-
-//     if (left < 0) left = padding;
-
-//     setPopup({ cell, position: { top, left } });
-//   };
-
+//   // Render logic using csu1Data
 //   return (
-//     <div className="relative p-3">
-//       <h1 className="text-2xl font-semibold mb-3 text-gray-800 font-roboto text-center">CSU 1</h1>
-//       <div
-//         className="csu-grid grid grid-cols-2 grid-rows-6 gap-1 bg-white/60 border border-gray-300 p-2 rounded-lg shadow-lg backdrop-blur-md"
-//         style={{
-//           height: 'auto',
-//           minHeight: 'calc(300px + 4rem)',
-//           overflow: 'hidden',
-//           position: 'relative',
-//         }}
-//       >
-//         {cells.map((cell) => (
-//           <BatteryCellComponent key={cell.id} cell={cell} onClick={handleCellClick} />
-//         ))}
-//       </div>
-
-//       {popup && (
-//         <div
-//           ref={popupRef}
-//           className="absolute z-50 bg-white/90 backdrop-blur-md border border-gray-300 rounded-lg shadow-xl p-3"
-//           style={{
-//             top: popup.position.top,
-//             left: popup.position.left,
-//             minWidth: 220,
-//           }}
-//         >
-//           <div className="mb-2 text-sm font-bold text-gray-700">
-//             Feedback for Cell <span className="text-blue-600">{popup.cell.id}</span> (CSU1)
-//           </div>
-//           <div className="text-sm text-gray-800 space-y-1">
-//             <p>
-//               <strong>Voltage:</strong> {popup.cell.voltage != null ? popup.cell.voltage.toFixed(2) : 'N/A'} V
-//             </p>
-//             <p>
-//               <strong>Temperature:</strong> {popup.cell.temperature != null ? popup.cell.temperature.toFixed(1) : 'N/A'}°C
-//             </p>
-//             <p>
-//               <strong>Status:</strong>{' '}
-//               <span
-//                 className={
-//                   popup.cell.status === 'critical'
-//                     ? 'text-red-600'
-//                     : popup.cell.status === 'warning'
-//                     ? 'text-yellow-600'
-//                     : 'text-green-600'
-//                 }
-//               >
-//                 {popup.cell.status}
-//               </span>
-//             </p>
-//           </div>
-//           <button
-//             onClick={() => setPopup(null)}
-//             className="mt-3 text-xs text-blue-600 hover:underline"
-//           >
-//             Close
-//           </button>
+//     <div className="relative ml-4">
+//       <h2>CSU1 Data</h2>
+//       {Object.entries(csu1Data).map(([cellId, dataItems]) => (
+//         <div key={cellId}>
+//           Cell {cellId}: {dataItems.map((item) => `${item.command}: ${item.value}`).join(", ")}
 //         </div>
-//       )}
+//       ))}
 //     </div>
 //   );
 // };
@@ -165,211 +38,102 @@
 
 
 
-
-
-
-
-import React, { useEffect, useState, useRef } from 'react';
-import { BatteryCell } from './CSU2';
-import { ResponseData } from './test';
-
-interface PopupInfo {
-  cell: BatteryCell;
-  position: { top: number; left: number };
-}
-
-const BatteryCellComponent: React.FC<{
-  cell: BatteryCell;
-  onClick: (event: React.MouseEvent, cell: BatteryCell) => void;
-}> = ({ cell, onClick }) => {
-  let statusColor = 'bg-green-300/20 border-green-400 text-green-800';
-  if (cell.status === 'warning') statusColor = 'bg-yellow-200/20 border-yellow-500 text-yellow-700';
-  else if (cell.status === 'critical') statusColor = 'bg-red-300/20 border-red-500 text-red-700';
-
-  return (
-    <div
-      onClick={(e) => onClick(e, cell)}
-      className={`w-[120px] h-[50px] m-[4px] border p-1 rounded-lg shadow-sm backdrop-blur-sm ${statusColor} cursor-pointer flex flex-col items-center justify-center text-xs hover:scale-[1.03] transition-transform duration-200`}
-    >
-      <div>V: {cell.voltage != null ? cell.voltage.toFixed(2) : 'N/A'}V</div>
-      <div>T: {cell.temperature != null ? cell.temperature.toFixed(1) : 'N/A'}°C</div>
-      <div className="italic">{cell.status}</div>
-    </div>
-  );
-};
+import React, { useEffect, useState } from "react";
+import { ResponseData } from "./test";
 
 const CSU1: React.FC = () => {
-  const [cells, setCells] = useState<BatteryCell[]>([]);
-  const [popup, setPopup] = useState<PopupInfo | null>(null);
-  const [popupHeight, setPopupHeight] = useState(150);
-  const popupRef = useRef<HTMLDivElement>(null);
-  const [responseData, setResponseData] = useState<Record<number, ResponseData[]>>({});
-
-  useEffect(() => {
-    const initialCells = Array.from({ length: 12 }, (_, i) => ({
-      id: i,
-      voltage: null,
-      temperature: null,
-      status: 'normal' as 'normal' | 'warning' | 'critical',
-    }));
-    setCells(initialCells);
-  }, []);
+  const [csu1Data, setCsu1Data] = useState<Record<number, ResponseData[]>>({});
 
   useEffect(() => {
     const handleUpdate = (event: Event) => {
       const data = (event as CustomEvent).detail;
-      if (data && typeof data === 'object' && !Array.isArray(data)) {
-        setResponseData(data as Record<number, ResponseData[]>);
+      if (data && typeof data === "object" && !Array.isArray(data)) {
+        setCsu1Data(data as Record<number, ResponseData[]>);
       } else {
-        console.warn('CSU1: Invalid responseData format received:', data);
-        setResponseData({});
+        console.warn("CSU1: Invalid responseData format received:", data);
       }
     };
 
-    window.addEventListener('csu1CellsUpdate', handleUpdate);
-    return () => window.removeEventListener('csu1CellsUpdate', handleUpdate);
+    window.addEventListener("csu1CellsUpdate", handleUpdate);
+    return () => window.removeEventListener("csu1CellsUpdate", handleUpdate);
   }, []);
 
-  useEffect(() => {
-    if (!responseData) {
-      console.log('CSU1: No responseData received');
-      return;
-    }
+  // Determine status based on voltage and temperature
+  const getCellStatus = (dataItems: ResponseData[]) => {
+    const voltageItem = dataItems.find((item) => item.command === "get_11_csu_volt");
+    const tempItem = dataItems.find((item) => item.command === "get_11_csu_temp");
+    const voltage = voltageItem ? parseFloat(voltageItem.value) : null;
+    const temp = tempItem ? parseFloat(tempItem.value) : null;
 
-    setCells((prevCells) =>
-      prevCells.map((cell) => {
-        const cellData = responseData[cell.id] || [];
-        if (!Array.isArray(cellData)) {
-          console.warn(`CSU1: cellData for cell ${cell.id} is not an array, defaulting to empty array`);
-          return { ...cell };
-        }
-        let voltage: number | null = cell.voltage;
-        let temperature: number | null = cell.temperature;
-        let status: 'normal' | 'warning' | 'critical' = cell.status;
-
-        const voltageData = cellData.find((item) => item.command === 'get_11_csu_volt');
-        if (voltageData && voltageData.value) {
-          const parsedVoltage = parseFloat(voltageData.value);
-          if (!isNaN(parsedVoltage)) {
-            voltage = parsedVoltage;
-            status = voltage < 3.3 ? 'critical' : voltage < 3.5 ? 'warning' : 'normal';
-          }
-        }
-
-        const tempData = cellData.find((item) => item.command === 'get_11_csu_temp');
-        if (tempData && tempData.value) {
-          const tempValue = parseFloat(tempData.value.replace(' °C', ''));
-          if (!isNaN(tempValue)) {
-            temperature = tempValue;
-            if (temperature > 60) status = 'critical';
-            else if (temperature > 45 && status !== 'critical') status = 'warning';
-          }
-        }
-
-        return { ...cell, voltage, temperature, status };
-      })
-    );
-  }, [responseData]);
-
-  useEffect(() => {
-    window.dispatchEvent(new CustomEvent('csu1CellsUpdate', { detail: cells }));
-  }, [cells]);
-
-  useEffect(() => {
-    if (popupRef.current) {
-      setPopupHeight(popupRef.current.offsetHeight);
-    }
-  }, [popup]);
-
-  const handleCellClick = (e: React.MouseEvent, cell: BatteryCell) => {
-    const targetRect = (e.target as HTMLElement).getBoundingClientRect();
-    const popupWidth = 200;
-    const padding = 10;
-
-    const container = e.currentTarget.closest('.csu-grid') as HTMLElement;
-    if (!container) return;
-    const containerRect = container.getBoundingClientRect();
-    const containerTop = containerRect.top + window.scrollY;
-    const containerLeft = containerRect.left + window.scrollX;
-    const containerWidth = container.clientWidth;
-    const containerHeight = container.offsetHeight;
-
-    let top = targetRect.top - containerTop + (targetRect.height - popupHeight) / 2;
-    let left = targetRect.left - containerLeft + targetRect.width + padding;
-
-    if (left + popupWidth > containerWidth) {
-      left = targetRect.left - containerLeft - popupWidth - padding;
-    }
-
-    if (top < 0) top = 0;
-    if (top + popupHeight > containerHeight) {
-      top = containerHeight - popupHeight;
-    }
-
-    if (left < 0) left = padding;
-
-    setPopup({ cell, position: { top, left } });
+    if (voltage !== null && voltage < 3.3) return "critical";
+    if (voltage !== null && voltage < 3.5) return "warning";
+    if (temp !== null && temp > 60) return "critical";
+    if (temp !== null && temp > 45) return "warning";
+    return "normal";
   };
 
   return (
-    <div className="relative p-3">
-      <h1 className="text-2xl font-semibold mb-3 text-gray-800 font-roboto text-center">CSU 1</h1>
-      <div
-        className="csu-grid grid grid-cols-2 grid-rows-6 gap-1 bg-white/60 border border-gray-300 p-2 rounded-lg shadow-lg backdrop-blur-md"
-        style={{
-          height: 'auto',
-          minHeight: 'calc(300px + 4rem)',
-          overflow: 'hidden',
-          position: 'relative',
-        }}
-      >
-        {cells.map((cell) => (
-          <BatteryCellComponent key={cell.id} cell={cell} onClick={handleCellClick} />
-        ))}
-      </div>
+    <div className="p-3 bg-gray-50 min-h-screen">
+      <h2 className="text-xl font-bold text-gray-800 mb-6 text-center bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg shadow-lg">
+        CSU1 Dashboard
+      </h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {Object.entries(csu1Data).map(([cellId, dataItems]) => {
+          const status = getCellStatus(dataItems);
+          const statusColors = {
+            normal: "bg-green-100 text-green-800",
+            warning: "bg-yellow-100 text-yellow-800",
+            critical: "bg-red-100 text-red-800",
+          };
 
-      {popup && (
-        <div
-          ref={popupRef}
-          className="absolute z-50 bg-white/90 backdrop-blur-md border border-gray-300 rounded-lg shadow-xl p-3"
-          style={{
-            top: popup.position.top,
-            left: popup.position.left,
-            minWidth: 220,
-          }}
-        >
-          <div className="mb-2 text-sm font-bold text-gray-700">
-            Feedback for Cell <span className="text-blue-600">{popup.cell.id}</span> (CSU1)
-          </div>
-          <div className="text-sm text-gray-800 space-y-1">
-            <p>
-              <strong>Voltage:</strong> {popup.cell.voltage != null ? popup.cell.voltage.toFixed(2) : 'N/A'} V
-            </p>
-            <p>
-              <strong>Temperature:</strong> {popup.cell.temperature != null ? popup.cell.temperature.toFixed(1) : 'N/A'}°C
-            </p>
-            <p>
-              <strong>Status:</strong>{' '}
-              <span
-                className={
-                  popup.cell.status === 'critical'
-                    ? 'text-red-600'
-                    : popup.cell.status === 'warning'
-                    ? 'text-yellow-600'
-                    : 'text-green-600'
-                }
+          return (
+            <div
+              key={cellId}
+              className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 border-l-4 border-blue-500"
+            >
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                Cell {cellId}
+              </h3>
+              <div className="space-y-2">
+                {dataItems.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="flex justify-between items-center p-2 rounded-md"
+                  >
+                    <span className="text-sm font-medium capitalize">
+                      {item.command
+                        .replace("get_", "")
+                        .replace("_11_csu_", "CSU11 ")
+                        .replace(/_/g, " ")}
+                    </span>
+                    <span
+                      className={`text-sm font-semibold ${
+                        item.command.includes("volt")
+                          ? parseFloat(item.value) > 4.5 ||
+                            (parseFloat(item.value) < 2.0 && item.value !== "1")
+                            ? "text-red-600"
+                            : ""
+                          : ""
+                      }`}
+                    >
+                      {item.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div
+                className={`mt-4 p-2 text-center rounded-md ${statusColors[status]}`}
               >
-                {popup.cell.status}
-              </span>
-            </p>
-          </div>
-          <button
-            onClick={() => setPopup(null)}
-            className="mt-3 text-xs text-blue-600 hover:underline"
-          >
-            Close
-          </button>
-        </div>
+                <span className="text-xs font-medium">
+                  Status: {status.charAt(0).toUpperCase() + status.slice(1)}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {Object.keys(csu1Data).length === 0 && (
+        <p className="text-center text-gray-500 mt-6">No data available.</p>
       )}
     </div>
   );

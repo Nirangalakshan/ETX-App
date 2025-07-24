@@ -1,18 +1,17 @@
-
-// //work properly 2
-
 // import React, { useEffect, useState, useRef } from "react";
 
-// interface ResponseData {
+// export interface ResponseData {
 //   command: string;
 //   value: string;
 // }
 
 // interface SerialTerminalProps {
 //   responseData: Record<number, ResponseData[]>;
-//   setResponseData: React.Dispatch<
-//     React.SetStateAction<Record<number, ResponseData[]>>
-//   >;
+//   setResponseData: React.Dispatch<React.SetStateAction<Record<number, ResponseData[]>>>;
+//   csu1ResponseData: Record<number, ResponseData[]>;
+//   setCsu1ResponseData: React.Dispatch<React.SetStateAction<Record<number, ResponseData[]>>>;
+//   csu2ResponseData: Record<number, ResponseData[]>;
+//   setCsu2ResponseData: React.Dispatch<React.SetStateAction<Record<number, ResponseData[]>>>;
 //   updateCellVoltage: (cellId: number, voltage: number) => void;
 // }
 
@@ -122,7 +121,6 @@
 //     cellNoRange: [0, 23],
 //     valueType: "binary",
 //   },
-
 //   set_voltage: {
 //     commandCode: "03",
 //     functionCode: "01",
@@ -135,12 +133,6 @@
 //     cellNoRange: [0, 5],
 //     valueType: "temp",
 //   },
-//   // temp_response: {
-//   //   commandCode: "03",
-//   //   functionCode: "03",
-//   //   cellNoRange: [0, 5],
-//   //   valueType: "temp",
-//   // },
 //   set_ow: {
 //     commandCode: "03",
 //     functionCode: "04",
@@ -220,7 +212,6 @@
 //   return { id, cellNo, value: floatValue.toFixed(3) };
 // };
 
-
 // const extractCurrent = (
 //   hexArray: number[]
 // ): { id: number; cellNo: number; value: string | null } => {
@@ -232,7 +223,6 @@
 //   const floatValue = valueInt / 10000;
 //   return { id, cellNo, value: floatValue.toFixed(3) };
 // };
-
 
 // const extract11CSUVoltageData = (
 //   hexArray: number[]
@@ -421,10 +411,11 @@
 // };
 
 // const SerialTerminal: React.FC<SerialTerminalProps> = ({
-//   responseData,
-//   setResponseData,
 //   updateCellVoltage,
 // }) => {
+//   const [responseData, setResponseData] = useState<Record<number, ResponseData[]>>({});
+//   const [csu1ResponseData, setCsu1ResponseData] = useState<Record<number, ResponseData[]>>({});
+//   const [csu2ResponseData, setCsu2ResponseData] = useState<Record<number, ResponseData[]>>({});
 //   const [ports, setPorts] = useState<string[]>([]);
 //   const [selectedPort, setSelectedPort] = useState<string>("");
 //   const [baudRate, setBaudRate] = useState<number>(() => {
@@ -481,7 +472,6 @@
 //       const timestamp = new Date().toLocaleTimeString();
 //       const hexArray = data.hex.split(" ").map((hex) => parseInt(hex, 16));
 
-//       // Validate frame
 //       if (hexArray.length !== 8 || hexArray[0] !== 0x07) {
 //         console.warn("SerialTerminal: Invalid hex data format:", data.hex);
 //         logHexCommand(
@@ -497,7 +487,6 @@
 //         return;
 //       }
 
-//       // Verify CRC
 //       const receivedCRC = (hexArray[7] << 8) | hexArray[6];
 //       const calculatedCRC = calculateCRC16(hexArray.slice(0, 6));
 //       if (receivedCRC !== calculatedCRC) {
@@ -515,20 +504,17 @@
 //         return;
 //       }
 
-//       // Extract command code and function code
 //       const commandCode = hexArray[1];
 //       const functionCode = hexArray[2];
 
 //       let command: string | undefined;
 
-//       // Use last sent command first if available
 //       if (
 //         lastSentCommandRef.current?.command &&
 //         instructionToHexMap[lastSentCommandRef.current.command]
 //       ) {
 //         command = lastSentCommandRef.current.command;
 //       } else {
-//         // Fallback: try to match from the map
 //         command = Object.entries(instructionToHexMap).find(
 //           ([, { commandCode: cc, functionCode: fc }]) =>
 //             parseInt(cc, 16) === commandCode &&
@@ -557,30 +543,8 @@
 //         return;
 //       }
 
-//       if (!instructionToHexMap[command]) {
-//         console.warn(
-//           `SerialTerminal: Unknown command: ${command} (commandCode: 0x${commandCode.toString(
-//             16
-//           )}, functionCode: 0x${functionCode.toString(16)})`
-//         );
-//         logHexCommand(
-//           "Received",
-//           hexArray,
-//           timestamp,
-//           command,
-//           0,
-//           null,
-//           setReceivedRef.current,
-//           `Unknown command (commandCode: 0x${commandCode.toString(
-//             16
-//           )}, functionCode: 0x${functionCode.toString(16)})`
-//         );
-//         return;
-//       }
-
 //       const { cellNoRange, valueType } = instructionToHexMap[command];
 
-//       // Extract cell number and value based on command type
 //       let cellNo: number;
 //       let parsedValue: string | null;
 
@@ -590,52 +554,38 @@
 //         cellNo = extractedCellNo;
 //         parsedValue = value;
 //       } else if (valueType === "11_csu_voltage") {
-//         const {
-//           cellNo: extractedCellNo,
-//           id11: extractedId11,
-//           value,
-//         } = extract11CSUVoltageData(hexArray);
+//         const { cellNo: extractedCellNo, id11: extractedId11, value } =
+//           extract11CSUVoltageData(hexArray);
 //         cellNo = extractedCellNo;
 //         parsedValue = value;
 //         console.log(
-//           `SerialTerminal: Parsed cellNo: ${cellNo}, id11: ${extractedId11}, value: ${parsedValue} for ${command}`
+//           `SerialTerminal: Parsed CSU11 cellNo: ${cellNo}, id11: ${extractedId11}, value: ${parsedValue} for ${command}`
 //         );
 //       } else if (valueType === "12_csu_voltage") {
-//         const {
-//           cellNo: extractedCellNo,
-//           id12: extractedId12,
-//           value,
-//         } = extract12CSUVoltageData(hexArray);
+//         const { cellNo: extractedCellNo, id12: extractedId12, value } =
+//           extract12CSUVoltageData(hexArray);
 //         cellNo = extractedCellNo;
 //         parsedValue = value;
 //         console.log(
-//           `SerialTerminal: Parsed cellNo: ${cellNo}, id12: ${extractedId12}, value: ${parsedValue} for ${command}`
+//           `SerialTerminal: Parsed CSU12 cellNo: ${cellNo}, id12: ${extractedId12}, value: ${parsedValue} for ${command}`
 //         );
 //       } else if (valueType === "temp") {
-//         const {
-//           cellNo: extractedCellNo,
-//           id: extractedId,
-//           value,
-//         } = extractTemperature(hexArray);
+//         const { cellNo: extractedCellNo, id: extractedId, value } =
+//           extractTemperature(hexArray);
 //         cellNo = extractedCellNo;
 //         parsedValue = value;
 //         console.log(
 //           `SerialTerminal: Parsed id: ${extractedId}, cellNo: ${cellNo}, value: ${parsedValue} for ${command}`
 //         );
-//       }
-//       else if (valueType === "current") {
-//         const {
-//           cellNo: extractedCellNo,
-//           id: extractedId,
-//           value,
-//         } = extractCurrent(hexArray);
+//       } else if (valueType === "current") {
+//         const { cellNo: extractedCellNo, id: extractedId, value } =
+//           extractCurrent(hexArray);
 //         cellNo = extractedCellNo;
 //         parsedValue = value;
 //         console.log(
 //           `SerialTerminal: Parsed id: ${extractedId}, cellNo: ${cellNo}, value: ${parsedValue} for ${command}`
 //         );
-//       }
-//        else if (valueType === "dc_csu_voltage") {
+//       } else if (valueType === "dc_csu_voltage") {
 //         const { cellNo: extractedCellNo, id, value } =
 //           extractDCVoltageData(hexArray);
 //         cellNo = extractedCellNo;
@@ -644,16 +594,43 @@
 //           `SerialTerminal: Parsed id: ${id}, cellNo: ${cellNo}, value: ${parsedValue} for ${command}`
 //         );
 //       } else if (valueType === "int") {
-//         const {
-//           cellNo: extractedCellNo,
-//           id: extractedId,
-//           value,
-//         } = extract11CSUTemperature(hexArray);
-//         cellNo = extractedCellNo;
-//         parsedValue = value;
-//         console.log(
-//           `SerialTerminal: Parsed cellNo: ${cellNo}, id: ${extractedId}, value: ${parsedValue} for ${command}`
-//         );
+//         if (command.includes("_11_csu_")) {
+//           const { cellNo: extractedCellNo, id: extractedId, value } =
+//             extract11CSUTemperature(hexArray);
+//           cellNo = extractedCellNo;
+//           parsedValue = value;
+//           console.log(
+//             `SerialTerminal: Parsed CSU11 temp cellNo: ${cellNo}, id: ${extractedId}, value: ${parsedValue} for ${command}`
+//           );
+//         } else if (command.includes("_12_csu_")) {
+//           const { cellNo: extractedCellNo, id: extractedId, value } =
+//             extract11CSUTemperature(hexArray);
+//           cellNo = extractedCellNo;
+//           parsedValue = value;
+//           console.log(
+//             `SerialTerminal: Parsed CSU12 temp cellNo: ${cellNo}, id: ${extractedId}, value: ${parsedValue} for ${command}`
+//           );
+//         } else {
+//           cellNo = hexArray[2];
+//           parsedValue = parseNonVoltageValue(hexArray, command);
+//         }
+//       } else if (valueType === "binary") {
+//         if (command.includes("_11_csu_")) {
+//           cellNo = hexArray[3];
+//           parsedValue = hexArray[4] === 1 ? "On" : "Off";
+//           console.log(
+//             `SerialTerminal: Parsed CSU11 binary command ${command}, cellNo: ${cellNo}, value: ${parsedValue}`
+//           );
+//         } else if (command.includes("_12_csu_")) {
+//           cellNo = hexArray[3];
+//           parsedValue = hexArray[4] === 1 ? "On" : "Off";
+//           console.log(
+//             `SerialTerminal: Parsed CSU12 binary command ${command}, cellNo: ${cellNo}, value: ${parsedValue}`
+//           );
+//         } else {
+//           cellNo = hexArray[2];
+//           parsedValue = parseNonVoltageValue(hexArray, command);
+//         }
 //       } else {
 //         cellNo = hexArray[2];
 //         parsedValue = parseNonVoltageValue(hexArray, command);
@@ -676,7 +653,6 @@
 //         return;
 //       }
 
-//       // Log received data
 //       logHexCommand(
 //         "Received",
 //         hexArray,
@@ -687,7 +663,6 @@
 //         setReceivedRef.current
 //       );
 
-//       // Validate cell number
 //       if (cellNoRange && !isNaN(cellNo)) {
 //         if (cellNo < cellNoRange[0] || cellNo > cellNoRange[1]) {
 //           console.warn(
@@ -707,7 +682,6 @@
 //         }
 //       }
 
-//       // Update voltage for specific commands
 //       if (
 //         [
 //           "get_voltage",
@@ -740,37 +714,67 @@
 //         }
 //       }
 
-//       // Update responseData without overwriting existing commands
-//       setResponseData((prevData) => {
-//         const existingDataForCell = prevData[cellNo] || [];
-//         const commandExists = existingDataForCell.some(
-//           (item) => item.command === command
-//         );
+//       const newResponseEntry: ResponseData = { command, value: parsedValue };
 
-//         if (commandExists) {
-//           console.log(
-//             `SerialTerminal: Skipping update for Cell ID ${cellNo}, command ${command} already exists`
+//       if (command.includes("_11_csu_")) {
+//         setCsu1ResponseData((prevData) => {
+//           const existingDataForCell = prevData[cellNo] || [];
+//           const commandExists = existingDataForCell.some(
+//             (item) => item.command === command
 //           );
-//           return prevData;
-//         }
-
-//         const newResponseEntry: ResponseData = {
-//           command,
-//           value: parsedValue,
-//         };
-//         console.log(
-//           `SerialTerminal: Mapping Cell ID ${cellNo} with ${command}: ${parsedValue}`
-//         );
-//         return {
-//           ...prevData,
-//           [cellNo]: [...existingDataForCell, newResponseEntry],
-//         };
-//       });
+//           if (commandExists) {
+//             console.log(
+//               `SerialTerminal: Skipping update for CSU11 Cell ID ${cellNo}, command ${command} already exists`
+//             );
+//             return prevData;
+//           }
+//           return {
+//             ...prevData,
+//             [cellNo]: [...existingDataForCell, newResponseEntry],
+//           };
+//         });
+//         window.dispatchEvent(new CustomEvent('csu1CellsUpdate', { detail: csu1ResponseData }));
+//       } else if (command.includes("_12_csu_")) {
+//         setCsu2ResponseData((prevData) => {
+//           const existingDataForCell = prevData[cellNo] || [];
+//           const commandExists = existingDataForCell.some(
+//             (item) => item.command === command
+//           );
+//           if (commandExists) {
+//             console.log(
+//               `SerialTerminal: Skipping update for CSU12 Cell ID ${cellNo}, command ${command} already exists`
+//             );
+//             return prevData;
+//           }
+//           return {
+//             ...prevData,
+//             [cellNo]: [...existingDataForCell, newResponseEntry],
+//           };
+//         });
+//         window.dispatchEvent(new CustomEvent('csu2CellsUpdate', { detail: csu2ResponseData }));
+//       } else {
+//         setResponseData((prevData) => {
+//           const existingDataForCell = prevData[cellNo] || [];
+//           const commandExists = existingDataForCell.some(
+//             (item) => item.command === command
+//           );
+//           if (commandExists) {
+//             console.log(
+//               `SerialTerminal: Skipping update for Individual Cell ID ${cellNo}, command ${command} already exists`
+//             );
+//             return prevData;
+//           }
+//           return {
+//             ...prevData,
+//             [cellNo]: [...existingDataForCell, newResponseEntry],
+//           };
+//         });
+//         window.dispatchEvent(new CustomEvent('batteryCellsUpdate', { detail: responseData }));
+//       }
 //     };
 
 //     window.serialAPI.onSerialData(handler);
 
-//     // Handle serial errors
 //     const errorHandler = (error: string) => {
 //       setError(error);
 //       setReceived((prev) => [
@@ -784,7 +788,7 @@
 //       window.serialAPI.removeSerialDataListener?.();
 //       window.serialAPI.removeSerialErrorListener?.();
 //     };
-//   }, [setResponseData, updateCellVoltage]);
+//   }, [updateCellVoltage]);
 
 //   const loadPorts = async () => {
 //     setError(null);
@@ -1079,6 +1083,14 @@
 //   const handleClearOutput = () => {
 //     setReceived([]);
 //     setResponseData({});
+//     setCsu1ResponseData({});
+//     setCsu2ResponseData({});
+//   };
+
+//   const allCellData = {
+//     Individual: responseData || {},
+//     CSU11: csu1ResponseData || {},
+//     CSU12: csu2ResponseData || {},
 //   };
 
 //   return (
@@ -1273,46 +1285,58 @@
 //         </div>
 //       )}
 
-//       {Object.keys(responseData).length > 0 && (
+//       {(Object.keys(responseData || {}).length > 0 ||
+//         Object.keys(csu1ResponseData || {}).length > 0 ||
+//         Object.keys(csu2ResponseData || {}).length > 0) && (
 //         <div className="space-y-2">
 //           <label className="text-xs font-medium text-gray-700">Cell Data</label>
 //           <div className="h-40 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50 font-mono text-sm shadow-inner">
-//             {Object.entries(responseData)
-//               .sort(([a], [b]) => Number(a) - Number(b))
-//               .map(([cellId, dataItems]) => {
-//                 console.log(`SerialTerminal: Rendering Cell ID: ${cellId}`);
-//                 return (
-//                   <div key={cellId} className="text-gray-800 break-all mb-2">
-//                     <div className="font-semibold text-blue-600">
-//                       Cell {cellId}
-//                     </div>
-//                     {dataItems.map((item, idx) => (
-//                       <div key={idx} className="ml-4 flex justify-between">
-//                         <span>
-//                           {item.command
-//                             .replace("set_", "")
-//                             .replace("get_", "")
-//                             .replace(/_/g, " ")}
-//                           :
-//                         </span>
-//                         <span
-//                           className={`font-medium ${
-//                             parseFloat(item.value) > 4.5 ||
-//                             (parseFloat(item.value) < 2.0 &&
-//                               item.command.includes("volt") &&
-//                               !item.command.includes("csu_volt") &&
-//                               item.value !== "1")
-//                               ? "text-red-600"
-//                               : ""
-//                           }`}
-//                         >
-//                           {item.value}
-//                         </span>
-//                       </div>
-//                     ))}
-//                   </div>
-//                 );
-//               })}
+//             {Object.entries(allCellData).map(([category, data]) => {
+//               if (!data || Object.keys(data).length === 0) return null;
+//               return (
+//                 <div key={category} className="mb-4">
+//                   <h3 className="font-bold text-purple-600 mb-2">{category}</h3>
+//                   {Object.entries(data)
+//                     .sort(([a], [b]) => Number(a) - Number(b))
+//                     .map(([cellId, dataItems]) => {
+//                       console.log(`SerialTerminal: Rendering ${category} Cell ID: ${cellId}`);
+//                       return (
+//                         <div key={cellId} className="text-gray-800 break-all mb-2">
+//                           <div className="font-semibold text-blue-600">
+//                             Cell {cellId}
+//                           </div>
+//                           {dataItems.map((item, idx) => (
+//                             <div key={idx} className="ml-4 flex justify-between">
+//                               <span className="text-xs">
+//                                 {item.command
+//                                   .replace("set_", "")
+//                                   .replace("get_", "")
+//                                   .replace("_11_csu_", "csu11 ")
+//                                   .replace("_12_csu_", "csu12 ")
+//                                   .replace(/_/g, " ")}
+//                                 :
+//                               </span>
+//                               <span
+//                                 className={`font-medium text-xs ${
+//                                   parseFloat(item.value) > 4.5 ||
+//                                   (parseFloat(item.value) < 2.0 &&
+//                                     item.command.includes("volt") &&
+//                                     !item.command.includes("csu_volt") &&
+//                                     item.value !== "1")
+//                                     ? "text-red-600"
+//                                     : ""
+//                                 }`}
+//                               >
+//                                 {item.value}
+//                               </span>
+//                             </div>
+//                           ))}
+//                         </div>
+//                       );
+//                     })}
+//                 </div>
+//               );
+//             })}
 //           </div>
 //         </div>
 //       )}
@@ -1359,9 +1383,7 @@
 
 
 
-
-
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 
 export interface ResponseData {
   command: string;
@@ -1369,12 +1391,6 @@ export interface ResponseData {
 }
 
 interface SerialTerminalProps {
-  responseData: Record<number, ResponseData[]>;
-  setResponseData: React.Dispatch<React.SetStateAction<Record<number, ResponseData[]>>>;
-  csu1ResponseData: Record<number, ResponseData[]>;
-  setCsu1ResponseData: React.Dispatch<React.SetStateAction<Record<number, ResponseData[]>>>;
-  csu2ResponseData: Record<number, ResponseData[]>;
-  setCsu2ResponseData: React.Dispatch<React.SetStateAction<Record<number, ResponseData[]>>>;
   updateCellVoltage: (cellId: number, voltage: number) => void;
 }
 
@@ -1654,12 +1670,12 @@ const parseNonVoltageValue = (
     const floatValue = valueInt / 10000;
     return floatValue.toFixed(3);
   } else if (
-    command === "get_cell_temp_res" ||
-    command === "get_dc_csu_balance_reg" ||
+    command === "get_temperature_res" ||
+    command === "get_dc_csu_balance" ||
     command === "get_dc_csu_ow" ||
-    command === "get_11_csu_balance_reg" ||
+    command === "get_11_csu_balance" ||
     command === "get_11_csu_ow" ||
-    command === "get_12_csu_balance_reg" ||
+    command === "get_12_csu_balance" ||
     command === "get_12_csu_ow" ||
     command === "set_ow" ||
     command === "daisy_chain" ||
@@ -1735,9 +1751,7 @@ const parseSentSetCommand = (
 
   return `[${timestamp}] Sent HEX: ${hexArray
     .map((byte) => byte.toString(16).padStart(2, "0").toUpperCase())
-    .join(
-      " "
-    )} → Command: ${command}, Cell ID: ${cellNo}, Value: ${parsedValue}`;
+    .join(" ")} → Command: ${command}, Cell ID: ${cellNo}, Value: ${parsedValue}`;
 };
 
 const logHexCommand = (
@@ -2091,12 +2105,13 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
             );
             return prevData;
           }
-          return {
+          const newData = {
             ...prevData,
             [cellNo]: [...existingDataForCell, newResponseEntry],
           };
+          window.dispatchEvent(new CustomEvent('csu1CellsUpdate', { detail: newData }));
+          return newData;
         });
-        window.dispatchEvent(new CustomEvent('csu1CellsUpdate', { detail: csu1ResponseData }));
       } else if (command.includes("_12_csu_")) {
         setCsu2ResponseData((prevData) => {
           const existingDataForCell = prevData[cellNo] || [];
@@ -2109,12 +2124,13 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
             );
             return prevData;
           }
-          return {
+          const newData = {
             ...prevData,
             [cellNo]: [...existingDataForCell, newResponseEntry],
           };
+          window.dispatchEvent(new CustomEvent('csu2CellsUpdate', { detail: newData }));
+          return newData;
         });
-        window.dispatchEvent(new CustomEvent('csu2CellsUpdate', { detail: csu2ResponseData }));
       } else {
         setResponseData((prevData) => {
           const existingDataForCell = prevData[cellNo] || [];
@@ -2127,12 +2143,13 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
             );
             return prevData;
           }
-          return {
+          const newData = {
             ...prevData,
             [cellNo]: [...existingDataForCell, newResponseEntry],
           };
+          window.dispatchEvent(new CustomEvent('batteryCellsUpdate', { detail: newData }));
+          return newData;
         });
-        window.dispatchEvent(new CustomEvent('batteryCellsUpdate', { detail: responseData }));
       }
     };
 
