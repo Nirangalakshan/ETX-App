@@ -1,51 +1,8 @@
-
-// import React, { useEffect, useState } from "react";
-// import { ResponseData } from "./test";
-
-// const CSU2: React.FC = () => {
-//   const [csu2Data, setCsu2Data] = useState<Record<number, ResponseData[]>>({});
-
-//   useEffect(() => {
-//     const handleUpdate = (event: Event) => {
-//       const data = (event as CustomEvent).detail;
-//       if (data && typeof data === "object" && !Array.isArray(data)) {
-//         setCsu2Data(data as Record<number, ResponseData[]>);
-//       } else {
-//         console.warn("CSU2: Invalid responseData format received:", data);
-//       }
-//     };
-
-//     window.addEventListener("csu2CellsUpdate", handleUpdate);
-//     return () => window.removeEventListener("csu2CellsUpdate", handleUpdate);
-//   }, []); // Empty dependency array to prevent infinite loops
-
-//   // Render logic using csu2Data
-//   return (
-//     <div className="relative p-3 ml-4">
-//       <h2>CSU2 Data</h2>
-//       {Object.entries(csu2Data).map(([cellId, dataItems]) => (
-//         <div key={cellId}>
-//           Cell {cellId}: {dataItems.map((item) => `${item.command}: ${item.value}`).join(", ")}
-//         </div>
-//       ))}
-//     </div>
-//   );
-// };
-
-// export default CSU2;
-
-
-
-
-
-
-
-
-
 import React, { useEffect, useState } from "react";
 import { ResponseData } from "./test";
 
-const CSU2: React.FC = () => {
+
+const Daicy: React.FC = () => {
   const [csu2Data, setCsu2Data] = useState<Record<number, ResponseData[]>>({});
 
   useEffect(() => {
@@ -79,7 +36,7 @@ const CSU2: React.FC = () => {
     <div className="p-4 bg-gray-50 flex justify-center h-120 shadow-md">
       <div className="w-50">
         <h2 className="text-xl font-inter text-gray-800 mb-4 text-center font-semibold py-2 rounded-md shadow-md">
-          CSU2
+          Daicy Chain
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {Object.entries(csu2Data).map(([cellId, dataItems]) => {
@@ -144,4 +101,4 @@ const CSU2: React.FC = () => {
   );
 };
 
-export default CSU2;
+export default Daicy;

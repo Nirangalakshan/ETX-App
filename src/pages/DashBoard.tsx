@@ -7,6 +7,7 @@ import ErrorWarningPanel from "../components/ErrorWarningPanel";
 import DaicyChain from "../components/DaicyChain";
 import SerialTerminal from "../components/test";
 import { useSerial } from "../SerialContext";
+import Daicy from "../components/Daicy";
 
 declare global {
   interface Window {
@@ -446,10 +447,10 @@ const DashBoard: React.FC = () => {
       <MenuBar />
       <div className="flex-1 p-4">
         <div className="flex flex-row gap-4 items-start">
-          <div>
+          <div className="w-100">
             <Battery cells={batteryCells} setSelectedCell={() => {}} />
           </div>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 ml-3 h-180">
             <div className="flex flex-row gap-3">
               <div className="flex flex-col gap-2">
                 <CSU1 />
@@ -457,13 +458,16 @@ const DashBoard: React.FC = () => {
               <div className="flex flex-col gap-2">
                 <CSU2 />
               </div>
+              <div className="flex flex-col gap-2">
+                <Daicy/>
+              </div>
             </div>
             <div className="bg-white border rounded shadow p-4 min-w-[510px] mt-10">
               <ErrorWarningPanel csu1Cells={csu1Cells} csu2Cells={csu2Cells} />
             </div>
           </div>
           <div>{/* <DaicyChain /> */}</div>
-          <div className="ml-20">
+          <div className="ml-5">
             <SerialTerminal
               responseData={responseData}
               setResponseData={setResponseData}

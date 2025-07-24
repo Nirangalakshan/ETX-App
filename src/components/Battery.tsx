@@ -427,7 +427,7 @@ const Battery: React.FC = () => {
   };
 
   return (
-    <div className="relative">
+    <div className="relative w-68">
       <div
         className="grid grid-cols-2 gap-1 bg-white/60 border-2 border-gray-300 p-4 rounded-lg shadow-lg backdrop-blur-sm"
         style={{
