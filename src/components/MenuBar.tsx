@@ -198,7 +198,7 @@ export default function CustomTitleBar() {
 
         {/* Center: Navigation */}
         <div
-          className="flex gap-6 text-slate-950 font-inter mr-30 text-lg font-semibold"
+          className="flex gap-6 text-slate-950 font-inter mr-30 text-sm font-semibold"
           style={{ WebkitAppRegion: "no-drag" } as any}
         >
           <Link to="/" className="hover:text-blue-600 transition">
@@ -212,7 +212,7 @@ export default function CustomTitleBar() {
           </Link>
           <button
             onClick={handleLogout}
-            className="hover:underline cursor-pointer  transition text-lg text-red-500 font-inter"
+            className="hover:underline cursor-pointer  transition text-sm text-red-500 font-inter"
           >
             Logout
           </button>

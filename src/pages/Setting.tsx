@@ -670,7 +670,7 @@
 
 
 
-
+//new updated code
 import React, { useState, useRef, useEffect } from "react";
 import MenuBar from "../components/MenuBar";
 
@@ -960,7 +960,7 @@ const Settings: React.FC = () => {
       <div className="flex-1 p-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold text-gray-800">Set Instructions</h2>
+            <h2 className="text-2xl font-semibold text-gray-800 font-inter">Set Instructions</h2>
             <div className="flex space-x-3">
               <button
                 onClick={handleLoadFile}
@@ -1014,7 +1014,7 @@ const Settings: React.FC = () => {
               style={tableContainerStyle}
             >
               <table className="w-full text-sm text-left text-gray-700">
-                <thead className="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0">
+                <thead className="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0 font-inter">
                   <tr>
                     <th scope="col" className="px-6 py-3 w-12">No</th>
                     <th scope="col" className="px-6 py-3">Command</th>
