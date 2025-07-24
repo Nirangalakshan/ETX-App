@@ -24,7 +24,7 @@ const BatteryCellComponent: React.FC<{
   cell: BatteryCell;
   onClick: (event: React.MouseEvent, cell: BatteryCell) => void;
 }> = ({ cell, onClick }) => {
-  let statusColor = 'bg-green-300/20 border-green-300/20 shadow-gray-600';
+  let statusColor = 'bg-green-300/20 border-green-300/20 shadow-gray-400';
   if (cell.status === 'warning') statusColor = 'bg-yellow-300/20 border-yellow-400';
   else if (cell.status === 'critical') statusColor = 'bg-red-300/20 border-red-400';
 

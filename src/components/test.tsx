@@ -166,6 +166,7 @@ const instructionToHexMap: Record<
   set_automatic_sequence: {
     commandCode: "03",
     functionCode: "08",
+    cellNoRange: [0, 23],
     valueType: "binary",
   },
   get_voltage_limits: {

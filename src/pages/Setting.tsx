@@ -888,6 +888,7 @@ const Settings: React.FC = () => {
       case "daisy_chain":
         return field === "cellNo" || field === "value";
       case "set_balance":
+      
         return field === "cellNo" || field === "value";
       case "cycle":
         return field === "param1" || field === "param2" || field === "cycleNo";
@@ -906,6 +907,7 @@ const Settings: React.FC = () => {
       case "get_dc_csu_ow":
       case "get_dc_csu_balance":
       case "get_dc_csu_temp":
+      
         return field === "cellNo";
       case "get_temperature":
       case "get_temperature_res":
@@ -914,8 +916,11 @@ const Settings: React.FC = () => {
         return field === "cellNo";
       case "end":
       case "reset":
-      case "cell_led":
         return false;
+
+      case "set_automatic_sequence":
+      case "set_cell_led":
+        return field === "value" || field === "cellNo";
       default:
         return false;
     }
@@ -1092,6 +1097,8 @@ const Settings: React.FC = () => {
                           <option value="set_ow">SET OW</option>
                           <option value="set_balance">SET BALANCE</option>
                           <option value="daisy_chain">SET DAISY CHAIN</option>
+                          <option value="set_cell_led">CELL LED</option>
+                          <option value="set_automatic_sequence">SET AUTOMATIC SEQUENCE</option>
                           <option value="get_voltage">GET VOLTAGE</option>
                           <option value="get_temperature">GET TEMPERATURE</option>
                           <option value="get_temperature_res">GET TEMP_RES</option>
@@ -1114,11 +1121,9 @@ const Settings: React.FC = () => {
                             GET DC CSU BALANCE
                           </option>
                           <option value="get_dc_csu_temp">GET DC CSU TEMP</option>
-                          <option value="reset">RESET</option>
-                          <option value="cycle">CYCLE</option>
-                          <option value="delay">DELAY</option>
-                          <option value="cell_led">CELL LED</option>
-                          <option value="end">END</option>
+                          
+                          
+
                         </select>
                       </td>
                       <td className="px-6 py-4">
