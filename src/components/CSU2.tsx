@@ -166,6 +166,8 @@
 
 
 
+
+
 import React, { useEffect, useState, useRef } from 'react';
 import { ResponseData } from './test';
 
@@ -181,10 +183,6 @@ export interface BatteryCell {
 interface PopupInfo {
   cell: BatteryCell;
   position: { top: number; left: number };
-}
-
-interface CSU2Props {
-  responseData: Record<number, ResponseData[]> | undefined;
 }
 
 const BatteryCellComponent: React.FC<{
@@ -207,14 +205,14 @@ const BatteryCellComponent: React.FC<{
   );
 };
 
-const CSU2: React.FC<CSU2Props> = ({ responseData }) => {
+const CSU2: React.FC = () => {
   const [cells, setCells] = useState<BatteryCell[]>([]);
   const [popup, setPopup] = useState<PopupInfo | null>(null);
   const [popupHeight, setPopupHeight] = useState(150);
   const popupRef = useRef<HTMLDivElement>(null);
+  const [responseData, setResponseData] = useState<Record<number, ResponseData[]>>({});
 
   useEffect(() => {
-    // Initialize cells
     const initialCells = Array.from({ length: 12 }, (_, i) => ({
       id: i,
       voltage: null,
@@ -225,16 +223,34 @@ const CSU2: React.FC<CSU2Props> = ({ responseData }) => {
   }, []);
 
   useEffect(() => {
-    if (!responseData) return; // Prevent accessing undefined responseData
+    const handleUpdate = (event: Event) => {
+      const data = (event as CustomEvent).detail;
+      if (data && typeof data === 'object' && !Array.isArray(data)) {
+        setResponseData(data as Record<number, ResponseData[]>);
+      } else {
+        console.warn('CSU2: Invalid responseData format received:', data);
+        setResponseData({});
+      }
+    };
+
+    window.addEventListener('csu2CellsUpdate', handleUpdate);
+    return () => window.removeEventListener('csu2CellsUpdate', handleUpdate);
+  }, []);
+
+  useEffect(() => {
+    if (!responseData) return;
 
     setCells((prevCells) =>
       prevCells.map((cell) => {
         const cellData = responseData[cell.id] || [];
+        if (!Array.isArray(cellData)) {
+          console.warn(`CSU2: cellData for cell ${cell.id} is not an array, defaulting to empty array`);
+          return { ...cell };
+        }
         let voltage: number | null = cell.voltage;
         let temperature: number | null = cell.temperature;
         let status: CellStatus = cell.status;
 
-        // Process voltage
         const voltageData = cellData.find((item) => item.command === 'get_12_csu_volt');
         if (voltageData && voltageData.value) {
           const parsedVoltage = parseFloat(voltageData.value);
@@ -244,17 +260,13 @@ const CSU2: React.FC<CSU2Props> = ({ responseData }) => {
           }
         }
 
-        // Process temperature
         const tempData = cellData.find((item) => item.command === 'get_12_csu_temp');
         if (tempData && tempData.value) {
           const tempValue = parseFloat(tempData.value.replace(' °C', ''));
           if (!isNaN(tempValue)) {
             temperature = tempValue;
-            if (temperature > 60) {
-              status = 'critical';
-            } else if (temperature > 45 && status !== 'critical') {
-              status = 'warning';
-            }
+            if (temperature > 60) status = 'critical';
+            else if (temperature > 45 && status !== 'critical') status = 'warning';
           }
         }
 
