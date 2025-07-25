@@ -2474,7 +2474,7 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
   };
 
   return (
-    <div className="w-100 mx-2 p-4 bg-white shadow-lg rounded-xl mt-8 space-y-4 border border-gray-200">
+    <div className="w-90 mx-2 p-2 bg-white shadow-lg rounded-xl mt-8 space-y-4 border border-gray-200">
       <h2 className="text-2xl font-bold text-gray-900 text-center font-roboto">
         🔌 BMS TEST RUN
       </h2>

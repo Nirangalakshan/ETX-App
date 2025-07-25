@@ -466,8 +466,8 @@ const DashBoard: React.FC = () => {
               <ErrorWarningPanel csu1Cells={csu1Cells} csu2Cells={csu2Cells} />
             </div>
           </div>
-          <div>{/* <DaicyChain /> */}</div>
-          <div className="ml-5">
+         
+          <div className="">
             <SerialTerminal
               responseData={responseData}
               setResponseData={setResponseData}

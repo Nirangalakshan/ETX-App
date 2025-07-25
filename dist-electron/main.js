@@ -189,7 +189,7 @@ let win;
 function createWindow() {
   win = new BrowserWindow({
     width: 1920,
-    height: 1024,
+    height: 1080,
     resizable: false,
     frame: false,
     autoHideMenuBar: true,

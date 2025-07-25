@@ -263,18 +263,18 @@ const BatteryCellComponent: React.FC<{
   cell: BatteryCell;
   onClick: (event: React.MouseEvent, cell: BatteryCell) => void;
 }> = ({ cell, onClick }) => {
-  let statusColor = 'bg-green-300/20 border-green-400';
+  let statusColor = 'bg-white-200 shadow-sm border-gray-300';
   if (cell.status === 'warning') statusColor = 'bg-yellow-300/20 border-yellow-400';
   else if (cell.status === 'critical') statusColor = 'bg-red-300/20 border-red-400';
 
   return (
     <div
       onClick={(e) => onClick(e, cell)}
-      className={`w-[110px] h-[50px] m-[3px] border p-1 rounded-lg shadow-sm backdrop-blur-sm ${statusColor} cursor-pointer flex flex-col items-center justify-center text-xs text-gray-800 hover:scale-[1.03] transition-transform duration-200`}
+      className={`w-[110px] h-[50px] m-[3px] border-l-2 border-blue-500 border-r-2 border-blue-500 rounded-lg shadow-sm backdrop-blur-sm ${statusColor} cursor-pointer flex flex-col items-center justify-center text-xs bg-gray-100 text-gray-800 hover:scale-[1.03] transition-transform duration-200`}
     >
-      <div>V: {cell.voltage != null ? cell.voltage.toFixed(2) : 'N/A'}V</div>
-      <div>T: {cell.temperature != null ? cell.temperature.toFixed(1) : 'N/A'}°C</div>
-      <div>Data: {cell.voltageLimits || cell.data || 'N/A'}</div>
+      <div>V: {cell.voltage != null ? cell.voltage.toFixed(2) : '-'}V</div>
+      <div>T: {cell.temperature != null ? cell.temperature.toFixed(1) : '-'}°C</div>
+      <div>Data: {cell.voltageLimits || cell.data || '-'}</div>
     </div>
   );
 };
