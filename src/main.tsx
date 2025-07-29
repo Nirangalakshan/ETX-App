@@ -61,6 +61,7 @@ import Setting from "./pages/Setting.tsx";
 import Login from "./pages/Login.tsx";
 import { SerialProvider } from "./SerialContext.tsx";
 import Report from "./pages/Report.tsx";
+import { BatteryProvider } from "./BatteryContext.tsx";
 
 // Auth guard for protected routes
 function RequireAuth({ children }: { children: JSX.Element }) {
@@ -70,7 +71,7 @@ function RequireAuth({ children }: { children: JSX.Element }) {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <SerialProvider>
+    <BatteryProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Login />} />
@@ -102,7 +103,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
-    </SerialProvider>
+   </BatteryProvider>
   </React.StrictMode>
 );
 

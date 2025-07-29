@@ -191,6 +191,7 @@ function createWindow() {
     width: 1920,
     height: 1080,
     resizable: false,
+    center: true,
     frame: false,
     autoHideMenuBar: true,
     icon: path.join(__dirname, "public/icon.ico"),

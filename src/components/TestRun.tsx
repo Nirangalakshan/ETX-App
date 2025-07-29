@@ -253,126 +253,126 @@
 
 
 
-import React, { useState } from "react";
+// import React, { useState } from "react";
 
-interface SetInstruction {
-  id: number;
-  command: string;
-  voltage: string;
-  delay: string;
-  temperature: string;
-  cellId: string;
-}
+// interface SetInstruction {
+//   id: number;
+//   command: string;
+//   voltage: string;
+//   delay: string;
+//   temperature: string;
+//   cellId: string;
+// }
 
-interface InstructionRunnerProps {
-  instructions: SetInstruction[];
-  isPortOpen: boolean;
-  writeSerialData: (command: string) => Promise<void>; // First port
-  writeToSecondPort: (command: string) => Promise<void>; // Second port
-  updateCellState: (instruction: SetInstruction) => void;
-}
+// interface InstructionRunnerProps {
+//   instructions: SetInstruction[];
+//   isPortOpen: boolean;
+//   writeSerialData: (command: string) => Promise<void>; // First port
+//   writeToSecondPort: (command: string) => Promise<void>; // Second port
+//   updateCellState: (instruction: SetInstruction) => void;
+// }
 
-const InstructionRunner: React.FC<InstructionRunnerProps> = ({
-  instructions,
-  isPortOpen,
-  writeSerialData,
-  writeToSecondPort,
-  updateCellState,
-}) => {
-  const [isRunning, setIsRunning] = useState(false);
-  const [lastCommand, setLastCommand] = useState<string | null>(null);
+// const InstructionRunner: React.FC<InstructionRunnerProps> = ({
+//   instructions,
+//   isPortOpen,
+//   writeSerialData,
+//   writeToSecondPort,
+//   updateCellState,
+// }) => {
+//   const [isRunning, setIsRunning] = useState(false);
+//   const [lastCommand, setLastCommand] = useState<string | null>(null);
 
-  const delay = (ms: number) =>
-    new Promise((resolve) => setTimeout(resolve, ms));
+//   const delay = (ms: number) =>
+//     new Promise((resolve) => setTimeout(resolve, ms));
 
-  const formatCommand = (instruction: SetInstruction): string | null => {
-    const { command, voltage, delay, temperature, cellId } = instruction;
+//   const formatCommand = (instruction: SetInstruction): string | null => {
+//     const { command, voltage, delay, temperature, cellId } = instruction;
 
-    if (!command) return null;
+//     if (!command) return null;
 
-    const cmdType =
-      command === "voltage"
-        ? "01"
-        : command === "set"
-        ? "02"
-        : command === "delay"
-        ? "03"
-        : null;
+//     const cmdType =
+//       command === "voltage"
+//         ? "01"
+//         : command === "set"
+//         ? "02"
+//         : command === "delay"
+//         ? "03"
+//         : null;
 
-    if (!cmdType) return null;
+//     if (!cmdType) return null;
 
-    let hexParts: string[] = [cmdType];
+//     let hexParts: string[] = [cmdType];
 
-    if (cellId && cmdType !== "03") hexParts.push(toHex(cellId));
-    if (voltage && cmdType === "01") hexParts.push(toHex(voltage));
-    if (temperature && cmdType === "02") hexParts.push(toHex(temperature));
-    if (delay && cmdType === "03") hexParts.push(toHex(delay));
+//     if (cellId && cmdType !== "03") hexParts.push(toHex(cellId));
+//     if (voltage && cmdType === "01") hexParts.push(toHex(voltage));
+//     if (temperature && cmdType === "02") hexParts.push(toHex(temperature));
+//     if (delay && cmdType === "03") hexParts.push(toHex(delay));
 
-    return hexParts.join(" ");
-  };
+//     return hexParts.join(" ");
+//   };
 
-  const toHex = (val: string): string => {
-    const num = parseInt(val);
-    if (isNaN(num)) return "00";
-    return num.toString(16).padStart(2, "0").toUpperCase();
-  };
+//   const toHex = (val: string): string => {
+//     const num = parseInt(val);
+//     if (isNaN(num)) return "00";
+//     return num.toString(16).padStart(2, "0").toUpperCase();
+//   };
 
-  const handleRunInstructions = async () => {
-    if (!isPortOpen || isRunning) return;
+//   const handleRunInstructions = async () => {
+//     if (!isPortOpen || isRunning) return;
 
-    setIsRunning(true);
+//     setIsRunning(true);
 
-    for (const instruction of instructions) {
-      const cmd = formatCommand(instruction);
+//     for (const instruction of instructions) {
+//       const cmd = formatCommand(instruction);
 
-      if (cmd) {
-        setLastCommand(cmd);
+//       if (cmd) {
+//         setLastCommand(cmd);
 
-        try {
-          await writeToSecondPort(cmd); // Send to second port
-          updateCellState(instruction);
+//         try {
+//           await writeToSecondPort(cmd); // Send to second port
+//           updateCellState(instruction);
 
-          if (instruction.command === "delay") {
-            const ms = parseInt(instruction.delay);
-            if (ms > 0) await delay(ms);
-          }
-        } catch (err) {
-          console.error("Failed to send command:", err);
-        }
-      }
-    }
+//           if (instruction.command === "delay") {
+//             const ms = parseInt(instruction.delay);
+//             if (ms > 0) await delay(ms);
+//           }
+//         } catch (err) {
+//           console.error("Failed to send command:", err);
+//         }
+//       }
+//     }
 
-    setIsRunning(false);
-  };
+//     setIsRunning(false);
+//   };
 
-  return (
-    <div style={{ padding: "1rem", border: "1px solid #ddd" }}>
-      <h3>Instruction Runner</h3>
-      <button
-        onClick={handleRunInstructions}
-        disabled={!isPortOpen || isRunning}
-        style={{
-          padding: "10px 20px",
-          backgroundColor: isRunning ? "#ccc" : "#28a745",
-          color: "#fff",
-          border: "none",
-          borderRadius: "4px",
-          cursor: isRunning ? "not-allowed" : "pointer",
-        }}
-      >
-        {isRunning ? "Running..." : "Run Instructions"}
-      </button>
+//   return (
+//     <div style={{ padding: "1rem", border: "1px solid #ddd" }}>
+//       <h3>Instruction Runner</h3>
+//       <button
+//         onClick={handleRunInstructions}
+//         disabled={!isPortOpen || isRunning}
+//         style={{
+//           padding: "10px 20px",
+//           backgroundColor: isRunning ? "#ccc" : "#28a745",
+//           color: "#fff",
+//           border: "none",
+//           borderRadius: "4px",
+//           cursor: isRunning ? "not-allowed" : "pointer",
+//         }}
+//       >
+//         {isRunning ? "Running..." : "Run Instructions"}
+//       </button>
 
-      {lastCommand && (
-        <p style={{ marginTop: "10px" }}>
-          Last Sent Command: <code>{lastCommand}</code>
-        </p>
-      )}
-    </div>
-  );
-};
+//       {lastCommand && (
+//         <p style={{ marginTop: "10px" }}>
+//           Last Sent Command: <code>{lastCommand}</code>
+//         </p>
+//       )}
+//     </div>
+//   );
+// };
 
-export default InstructionRunner;
+// export default InstructionRunner;
 
 
 

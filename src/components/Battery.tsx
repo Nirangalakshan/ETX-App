@@ -23,34 +23,98 @@
 //   cell: BatteryCell;
 //   onClick: (event: React.MouseEvent, cell: BatteryCell) => void;
 // }> = ({ cell, onClick }) => {
-//   let statusColor = 'bg-green-300/20 border-green-400';
+//   let statusColor = 'bg-white-200 shadow-sm border-gray-300';
 //   if (cell.status === 'warning') statusColor = 'bg-yellow-300/20 border-yellow-400';
 //   else if (cell.status === 'critical') statusColor = 'bg-red-300/20 border-red-400';
-
 
 //   return (
 //     <div
 //       onClick={(e) => onClick(e, cell)}
-//       className={`w-[110px] h-[50px] m-[3px] border p-1 rounded-lg shadow-sm backdrop-blur-sm ${statusColor} cursor-pointer flex flex-col items-center justify-center text-xs text-gray-800 hover:scale-[1.03] transition-transform duration-200`}
+//       className={`w-[110px] h-[50px] m-[3px] border-l-2 border-blue-500 border-r-2 border-blue-500 rounded-lg shadow-sm backdrop-blur-sm ${statusColor} cursor-pointer flex flex-col items-center justify-center text-xs bg-gray-100 text-gray-800 hover:scale-[1.03] transition-transform duration-200`}
 //     >
-//       <div>V: {cell.voltage != null ? cell.voltage.toFixed(2) : 'N/A'}V</div>
-//       <div>T: {cell.temperature != null ? cell.temperature.toFixed(1) : 'N/A'}°C</div>
-//       <div>Data: {cell.voltageLimits || cell.data || 'N/A'}</div>
+//       <div>V: {cell.voltage != null ? cell.voltage.toFixed(2) : '-'}V</div>
+//       <div>T: {cell.temperature != null ? cell.temperature.toFixed(1) : '-'}°C</div>
+//       <div>Data: {cell.voltageLimits || cell.data || '-'}</div>
 //     </div>
 //   );
 // };
 
-// interface BatteryProps {
-//   cells: BatteryCell[];
-//   setSelectedCell: (cell: BatteryCell | null) => void;
-// }
-
-// const Battery: React.FC<BatteryProps> = ({ cells, setSelectedCell }) => {
+// const Battery: React.FC = () => {
+//   const [cells, setCells] = useState<BatteryCell[]>([]);
 //   const [popup, setPopup] = useState<PopupInfo | null>(null);
 //   const [popupHeight, setPopupHeight] = useState(180);
 //   const popupRef = useRef<HTMLDivElement>(null);
 //   const [setVoltageInput, setSetVoltageInput] = useState<number>(3.65);
 //   const [balancingActive, setBalancingActive] = useState<boolean>(false);
+//   const [responseData, setResponseData] = useState<Record<number, ResponseData[]>>({});
+
+//   useEffect(() => {
+//     const initialCells = Array.from({ length: 24 }, (_, i) => ({
+//       id: i,
+//       voltage: null,
+//       temperature: null,
+//       status: 'normal' as CellStatus,
+//       setVoltage: 3.65,
+//       balancing: false,
+//       openWire: false,
+//       data: null,
+//       voltageLimits: null,
+//     }));
+//     setCells(initialCells);
+//   }, []);
+
+//   useEffect(() => {
+//     const handleUpdate = (event: Event) => {
+//       const data = (event as CustomEvent).detail;
+//       setResponseData(data);
+//     };
+
+//     window.addEventListener('batteryCellsUpdate', handleUpdate);
+//     return () => window.removeEventListener('batteryCellsUpdate', handleUpdate);
+//   }, []);
+
+//   useEffect(() => {
+//     if (!responseData) return;
+
+//     setCells((prevCells) =>
+//       prevCells.map((cell) => {
+//         const cellData = responseData[cell.id] || [];
+//         let voltage: number | null = cell.voltage;
+//         let temperature: number | null = cell.temperature;
+//         let status: CellStatus = cell.status;
+//         let setVoltage: number = cell.setVoltage;
+//         let data: string | null = cell.data;
+//         let voltageLimits: string | null = cell.voltageLimits;
+
+//         const voltageData = cellData.find((item) => item.command === 'get_voltage');
+//         if (voltageData && voltageData.value) {
+//           const parsedVoltage = parseFloat(voltageData.value);
+//           if (!isNaN(parsedVoltage)) {
+//             voltage = parsedVoltage;
+//             status = voltage < 10.0 ? 'critical' : voltage < 3.5 ? 'warning' : 'normal';
+//           }
+//         }
+
+//         const tempData = cellData.find((item) => item.command === 'get_temp');
+//         if (tempData && tempData.value) {
+//           const tempValue = parseFloat(tempData.value.replace(' °C', ''));
+//           if (!isNaN(tempValue)) {
+//             temperature = tempValue;
+//             if (temperature > 60) status = 'critical';
+//             else if (temperature > 45 && status !== 'critical') status = 'warning';
+//           }
+//         }
+
+//         const setVoltageData = cellData.find((item) => item.command === 'set_voltage');
+//         if (setVoltageData && setVoltageData.value) {
+//           const parsedSetVoltage = parseFloat(setVoltageData.value);
+//           if (!isNaN(parsedSetVoltage)) setVoltage = parsedSetVoltage;
+//         }
+
+//         return { ...cell, voltage, temperature, status, setVoltage, data, voltageLimits };
+//       })
+//     );
+//   }, [responseData]);
 
 //   useEffect(() => {
 //     if (popupRef.current) {
@@ -123,7 +187,7 @@
 //   };
 
 //   return (
-//     <div className="relative">
+//     <div className="relative w-68">
 //       <div
 //         className="grid grid-cols-2 gap-1 bg-white/60 border-2 border-gray-300 p-4 rounded-lg shadow-lg backdrop-blur-sm"
 //         style={{
@@ -238,7 +302,11 @@
 
 
 
+
+// update with dc data
 import React, { useEffect, useState, useRef } from 'react';
+import { useBatteryContext } from '../BatteryContext';
+import { ResponseData } from './test';
 
 type CellStatus = 'normal' | 'warning' | 'critical';
 
@@ -251,7 +319,7 @@ export interface BatteryCell {
   balancing: boolean;
   openWire: boolean;
   data: string | null;
-  voltageLimits?: string | null;
+  voltageLimits: string | null;
 }
 
 interface PopupInfo {
@@ -280,13 +348,13 @@ const BatteryCellComponent: React.FC<{
 };
 
 const Battery: React.FC = () => {
+  const { responseData } = useBatteryContext();
   const [cells, setCells] = useState<BatteryCell[]>([]);
   const [popup, setPopup] = useState<PopupInfo | null>(null);
   const [popupHeight, setPopupHeight] = useState(180);
   const popupRef = useRef<HTMLDivElement>(null);
   const [setVoltageInput, setSetVoltageInput] = useState<number>(3.65);
   const [balancingActive, setBalancingActive] = useState<boolean>(false);
-  const [responseData, setResponseData] = useState<Record<number, ResponseData[]>>({});
 
   useEffect(() => {
     const initialCells = Array.from({ length: 24 }, (_, i) => ({
@@ -304,16 +372,6 @@ const Battery: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const handleUpdate = (event: Event) => {
-      const data = (event as CustomEvent).detail;
-      setResponseData(data);
-    };
-
-    window.addEventListener('batteryCellsUpdate', handleUpdate);
-    return () => window.removeEventListener('batteryCellsUpdate', handleUpdate);
-  }, []);
-
-  useEffect(() => {
     if (!responseData) return;
 
     setCells((prevCells) =>
@@ -323,6 +381,8 @@ const Battery: React.FC = () => {
         let temperature: number | null = cell.temperature;
         let status: CellStatus = cell.status;
         let setVoltage: number = cell.setVoltage;
+        let balancing: boolean = cell.balancing;
+        let openWire: boolean = cell.openWire;
         let data: string | null = cell.data;
         let voltageLimits: string | null = cell.voltageLimits;
 
@@ -331,7 +391,7 @@ const Battery: React.FC = () => {
           const parsedVoltage = parseFloat(voltageData.value);
           if (!isNaN(parsedVoltage)) {
             voltage = parsedVoltage;
-            status = voltage < 3.3 ? 'critical' : voltage < 3.5 ? 'warning' : 'normal';
+            status = parsedVoltage < 3.3 ? 'critical' : parsedVoltage < 3.5 ? 'warning' : 'normal';
           }
         }
 
@@ -351,7 +411,22 @@ const Battery: React.FC = () => {
           if (!isNaN(parsedSetVoltage)) setVoltage = parsedSetVoltage;
         }
 
-        return { ...cell, voltage, temperature, status, setVoltage, data, voltageLimits };
+        const balanceData = cellData.find((item) => item.command === 'set_balance');
+        if (balanceData && balanceData.value) {
+          balancing = balanceData.value === 'On';
+        }
+
+        const openWireData = cellData.find((item) => item.command === 'set_ow');
+        if (openWireData && openWireData.value) {
+          openWire = openWireData.value === 'On';
+        }
+
+        const voltageLimitsData = cellData.find((item) => item.command === 'get_voltage_limits');
+        if (voltageLimitsData && voltageLimitsData.value) {
+          voltageLimits = voltageLimitsData.value;
+        }
+
+        return { ...cell, voltage, temperature, status, setVoltage, balancing, openWire, data, voltageLimits };
       })
     );
   }, [responseData]);
@@ -384,14 +459,13 @@ const Battery: React.FC = () => {
     }
 
     if (left + popupWidth > containerWidth) {
-      left = Math.max(padding, targetRect.left - containerLeft - popupWidth + targetRect.width - padding);
+      left = Math.max(pading, targetRect.left - containerLeft - popupWidth + targetRect.width - padding);
     }
 
     if (top < 0) top = 0;
     if (left < 0) left = padding;
 
     setPopup({ cell, position: { top, left } });
-    setSelectedCell(cell);
     setSetVoltageInput(cell.setVoltage);
     setBalancingActive(cell.balancing);
   };
@@ -409,6 +483,16 @@ const Battery: React.FC = () => {
           }
         : null
     );
+
+    // Dispatch command to SerialTerminal (if needed)
+    const command = {
+      command: 'set_balance',
+      cellNo: popup.cell.id,
+      value: newBalancing ? 1 : 0,
+    };
+    window.serialAPI?.writePortRaw(new Uint8Array([
+      0x07, 0x03, 0x03, popup.cell.id, newBalancing ? 1 : 0, 0, 0, 0
+    ]));
   };
 
   const onSetVoltageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -424,6 +508,18 @@ const Battery: React.FC = () => {
           }
         : null
     );
+
+    // Dispatch command to SerialTerminal (if needed)
+    if (popup) {
+      const command = {
+        command: 'set_voltage',
+        cellNo: popup.cell.id,
+        voltage: val,
+      };
+      window.serialAPI?.writePortRaw(new Uint8Array([
+        0x07, 0x03, 0x01, popup.cell.id, Math.floor(val * 10000) & 0xFF, 0, 0, 0
+      ]));
+    }
   };
 
   return (

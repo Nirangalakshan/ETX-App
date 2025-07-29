@@ -214,10 +214,10 @@ const Settings: React.FC = () => {
         return field === "cellNo" || field === "temperature";
       case "set_ow":
       case "daisy_chain":
-        return field === "cellNo" || field === "value";
       case "set_balance":
-      
         return field === "cellNo" || field === "value";
+     
+        
       case "cycle":
         return field === "param1" || field === "param2" || field === "cycleNo";
       case "delay":
@@ -265,6 +265,16 @@ const Settings: React.FC = () => {
     return Array.from({ length: maxCells }, (_, i) => i);
   };
 
+  const csuVoltageOptions = (command: string) => {
+    const maxCells =
+  
+      command === "get_11_csu_volt" ||
+      command === "get_12_csu_volt"
+        ? 6
+        : 24;
+    return Array.from({ length: maxCells }, (_, i) => i);
+  };
+
   const getVoltageOptions = () => {
     return Array.from({ length: 8 }, (_, i) => String(i + 1));
   };
@@ -283,12 +293,12 @@ const Settings: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-gray-50 font-inter">
       <MenuBar />
       <div className="flex-1 p-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold text-gray-800 font-inter">Set Instructions</h2>
+            <h2 className="text-2xl font-semibold text-gray-800">Set Instructions</h2>
             <div className="flex space-x-3">
               <button
                 onClick={handleLoadFile}
@@ -388,6 +398,7 @@ const Settings: React.FC = () => {
                                 param2: newCommand === "cycle" ? row.param2 : "",
                                 value:
                                   newCommand === "set_ow" ||
+                                  newCommand === "set_balance" ||
                                   newCommand === "daisy_chain"
                                     ? row.value
                                     : "",
@@ -490,7 +501,7 @@ const Settings: React.FC = () => {
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        {row.command === "set_ow" || row.command === "daisy_chain" ? (
+                        {row.command === "set_ow" || row.command === "daisy_chain" || row.command === "set_automatic_sequence" || row.command === "set_balance" ? (
                           <select
                             value={row.value}
                             onChange={(e) =>
