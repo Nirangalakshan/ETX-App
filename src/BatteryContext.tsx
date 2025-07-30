@@ -12,6 +12,7 @@ interface BatteryContextType {
   setCsu2ResponseData: (data: Record<number, ResponseData[]>) => void;
   responseData: Record<number, ResponseData[]>;
   setResponseData: (data: Record<number, ResponseData[]>) => void;
+  
 }
 
 const BatteryContext = createContext<BatteryContextType | undefined>(undefined);

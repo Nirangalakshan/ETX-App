@@ -2975,7 +2975,7 @@ const instructionToHexMap: Record<
     commandCode: "04",
     functionCode: "06",
     cellNoRange: [0, 5],
-    valueType: "daisy_temp",
+    valueType: "int",
   },
   get_dc_csu_balance: {
     commandCode: "04",
@@ -3211,8 +3211,8 @@ const extractDaisyTemp = (
 ): { id: number; cellNo: number; value: string | null } => {
   if (hexArray.length < 8) return { id: 0, cellNo: 0, value: null };
   const id = hexArray[1];
-  const cellNo = hexArray[2];
-  const valueBytes = hexArray.slice(3, 5);
+  const cellNo = hexArray[3];
+  const valueBytes = hexArray.slice(4, 6);
   const valueInt = (valueBytes[0] << 8) | valueBytes[1];
   const floatValue = valueInt / 1000;
   return { id, cellNo, value: floatValue.toFixed(3) + " °C" };
@@ -3578,7 +3578,16 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
           console.log(
             `SerialTerminal: Parsed CSU12 temp cellNo: ${cellNo}, id: ${extractedId}, value: ${parsedValue} for ${command}`
           );
-        } else {
+        } else if (command.includes("_dc_csu_")) {
+          const { cellNo: extractedCellNo, value } =
+            extractDaisyTemp(hexArray);
+          cellNo = extractedCellNo;
+          parsedValue = value;
+          console.log(
+            `SerialTerminal: Parsed daisy chain temp cellNo: ${cellNo}, value: ${parsedValue} for ${command}`
+          );
+        }
+         else {
           cellNo = hexArray[2];
           parsedValue = parseNonVoltageValue(hexArray, command);
         }
