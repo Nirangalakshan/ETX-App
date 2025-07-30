@@ -262,13 +262,17 @@ const Daicy: React.FC = () => {
     );
   };
 
-  const cellIds = Array.from({ length: 12 }, (_, i) => i);
+  const cellIds = Array.from({ length: 24 }, (_, i) => i);
   const dcIcs = [0, 1]; // Assuming DC ICs are 00 and 01
   const rows = [
     cellIds.slice(0, 3),
     cellIds.slice(3, 6),
     cellIds.slice(6, 9),
     cellIds.slice(9, 12),
+    cellIds.slice(12, 15),
+    cellIds.slice(15, 18),
+    cellIds.slice(18, 21),
+    cellIds.slice(21, 24),
   ];
 
   return (
@@ -323,7 +327,7 @@ const Daicy: React.FC = () => {
                               className={
                                 voltageItem &&
                                 (parseFloat(voltageItem.value) > 4.5 ||
-                                  (parseFloat(voltageItem.value) < 2.0 &&
+                                  (parseFloat(voltageItem.value) < 3.0 &&
                                     voltageItem.value !== "1"))
                                   ? "text-red-600"
                                   : ""

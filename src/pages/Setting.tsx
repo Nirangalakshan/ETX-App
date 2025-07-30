@@ -220,8 +220,8 @@ const Settings: React.FC = () => {
         
       case "cycle":
         return field === "param1" || field === "param2" || field === "cycleNo";
-      case "delay":
-        return field === "time";
+      case "set_delay":
+        return field === "value" || field === "cellNo";
       
       case "get_voltage":
       case "get_current":
@@ -259,21 +259,28 @@ const Settings: React.FC = () => {
       command === "set_temp" ||
       command === "get_temperature" ||
       command === "get_11_csu_temp" ||
+      command === "get_dc_csu_temp" ||
       command === "get_12_csu_temp"
         ? 6
         : 24;
+    if (
+      command === "get_11_csu_volt" ||
+      command === "get_12_csu_volt" 
+    ) {
+      return Array.from({ length: 12 }, (_, i) => i);
+    }
     return Array.from({ length: maxCells }, (_, i) => i);
   };
 
-  const csuVoltageOptions = (command: string) => {
-    const maxCells =
+  // const csuVoltageOptions = (command: string) => {
+  //   const maxCells =
   
-      command === "get_11_csu_volt" ||
-      command === "get_12_csu_volt"
-        ? 6
-        : 24;
-    return Array.from({ length: maxCells }, (_, i) => i);
-  };
+  //     command === "get_11_csu_volt" ||
+  //     command === "get_12_csu_volt"
+  //       ? 11
+  //       : 24;
+  //   return Array.from({ length: maxCells }, (_, i) => i);
+  // };
 
   const getVoltageOptions = () => {
     return Array.from({ length: 8 }, (_, i) => String(i + 1));
@@ -406,6 +413,7 @@ const Settings: React.FC = () => {
                                   (newCommand === "set_temp" ||
                                   newCommand === "get_temperature" ||
                                   newCommand === "get_11_csu_temp" ||
+                                  newCommand === "get_dc_csu_temp" ||
                                   newCommand === "get_12_csu_temp") &&
                                   parseInt(row.cellNo) > 5
                                     ? ""
@@ -416,6 +424,10 @@ const Settings: React.FC = () => {
                                         "cell_led",
                                       ].includes(newCommand)
                                     ? ""
+                                    // : (newCommand === "get_11_csu_volt" ||
+                                    //   newCommand === "get_12_csu_volt") &&
+                                    //   parseInt(row.cellNo) > 11
+                                    // ? ""
                                     : row.cellNo,
                                 cycleNo:
                                   newCommand === "cycle" ? row.cycleNo : "",
@@ -437,6 +449,7 @@ const Settings: React.FC = () => {
                           <option value="set_balance">SET BALANCE</option>
                           <option value="daisy_chain">SET DAISY CHAIN</option>
                           <option value="set_cell_led">CELL LED</option>
+                          <option value="set_delay">DELAY</option>
                           <option value="set_automatic_sequence">SET AUTOMATIC SEQUENCE</option>
                           <option value="get_voltage">GET VOLTAGE</option>
                           <option value="get_temperature">GET TEMPERATURE</option>
@@ -551,6 +564,7 @@ const Settings: React.FC = () => {
                           disabled={!isFieldEnabled(row.command, "cellNo")}
                         >
                           <option value="">Select cell</option>
+
                           {getCellOptions(row.command).map((cell) => (
                             <option key={cell} value={String(cell)}>
                               {cell}
@@ -595,6 +609,7 @@ const Settings: React.FC = () => {
                           />
                         )}
                       </td>
+
                       <td className="px-6 py-4">
                         <input
                           type="text"

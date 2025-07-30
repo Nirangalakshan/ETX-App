@@ -334,6 +334,7 @@ const BatteryCellComponent: React.FC<{
   let statusColor = 'bg-white-200 shadow-sm border-gray-300';
   if (cell.status === 'warning') statusColor = 'bg-yellow-300/20 border-yellow-400';
   else if (cell.status === 'critical') statusColor = 'bg-red-300/20 border-red-400';
+  else if (cell.status === 'normal') statusColor = 'bg-green-300/20 border-green-400';
 
   return (
     <div
@@ -361,7 +362,7 @@ const Battery: React.FC = () => {
       id: i,
       voltage: null,
       temperature: null,
-      status: 'normal' as CellStatus,
+      status: null,
       setVoltage: 3.65,
       balancing: false,
       openWire: false,
