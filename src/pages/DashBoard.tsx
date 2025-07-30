@@ -516,7 +516,6 @@ import CSU1 from "../components/CSU1";
 import CSU2 from "../components/CSU2";
 import ErrorWarningPanel from "../components/ErrorWarningPanel";
 import SerialTerminal from "../components/test";
-import { useSerial } from "../SerialContext";
 import Daicy from "../components/Daicy";
 import "../index.css"
 
@@ -633,7 +632,7 @@ const DashBoard: React.FC = () => {
     if (voltage !== null) {
       if (voltage < 2.0 || voltage > 5.0) {
         status = "critical";
-      } else if ((voltage < 1.8 || voltage > 4.4) && status !== "critical") {
+      } else if (voltage < 1.8 || voltage > 4.4) {
         status = "warning";
       }
     }

@@ -242,7 +242,7 @@
 
 //update dc data correctly
 import React, { useState, useRef } from "react";
-import { ResponseData } from "./test";
+
 import { useBatteryContext } from "../BatteryContext";
 
 const Daicy: React.FC = () => {

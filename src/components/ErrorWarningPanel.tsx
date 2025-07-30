@@ -231,7 +231,8 @@
 
 
 import React from "react";
-import { BatteryCell, ResponseData } from "../pages/DashBoard";
+import { BatteryCell } from "./Battery";
+import { ResponseData } from "./test";
 
 interface ErrorWarningPanelProps {
   csu1Cells: BatteryCell[];
