@@ -272,41 +272,10 @@ process.chdir(__dirname);
 
 // Use createRequire for CommonJS modules
 const require = createRequire(import.meta.url);
-const sqlite3 = require("sqlite3").verbose();
+
 const { SerialPort } = require("serialport");
 
-const db = new sqlite3.Database("users.db");
 
-// Create users table and insert a test user
-db.run(`CREATE TABLE IF NOT EXISTS users (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  username TEXT NOT NULL UNIQUE,
-  password TEXT NOT NULL
-)`);
-
-db.run(`INSERT OR IGNORE INTO users (username, password) VALUES (?, ?)`, [
-  "vega",
-  "vega123",
-]);
-
-// Handle login requests
-ipcMain.handle("login", async (_event, username: string, password: string) => {
-  return new Promise((resolve, reject) => {
-    db.get(
-      `SELECT * FROM users WHERE username = ? AND password = ?`,
-      [username, password],
-      (err: Error | null, row: any) => {
-        if (err) {
-          reject(err);
-        } else if (row) {
-          resolve({ success: true });
-        } else {
-          resolve({ success: false, error: "Invalid credentials" });
-        }
-      }
-    );
-  });
-});
 
 // Handle serial port listing
 ipcMain.handle("list-ports", async () => {

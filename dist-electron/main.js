@@ -5,35 +5,7 @@ import path from "node:path";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 process.chdir(__dirname);
 const require2 = createRequire(import.meta.url);
-const sqlite3 = require2("sqlite3").verbose();
 const { SerialPort } = require2("serialport");
-const db = new sqlite3.Database("users.db");
-db.run(`CREATE TABLE IF NOT EXISTS users (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  username TEXT NOT NULL UNIQUE,
-  password TEXT NOT NULL
-)`);
-db.run(`INSERT OR IGNORE INTO users (username, password) VALUES (?, ?)`, [
-  "vega",
-  "vega123"
-]);
-ipcMain.handle("login", async (_event, username, password) => {
-  return new Promise((resolve, reject) => {
-    db.get(
-      `SELECT * FROM users WHERE username = ? AND password = ?`,
-      [username, password],
-      (err, row) => {
-        if (err) {
-          reject(err);
-        } else if (row) {
-          resolve({ success: true });
-        } else {
-          resolve({ success: false, error: "Invalid credentials" });
-        }
-      }
-    );
-  });
-});
 ipcMain.handle("list-ports", async () => {
   try {
     const ports = await SerialPort.list();
