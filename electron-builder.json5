@@ -1,29 +1,25 @@
-// @see - https://www.electron.build/configuration/configuration
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "YourAppID",
+  "appId": "com.etx.electron1",
   "asar": true,
-  "productName": "YourAppName",
+  "productName": "ETX BMS",
   "directories": {
     "output": "release/${version}"
   },
   "files": [
-    "dist",
-    "dist-electron"
+    "dist-electron/**/*",
+    "node_modules/**/*",
+    "package.json"
   ],
   "mac": {
-    "target": [
-      "dmg"
-    ],
+    "target": ["dmg"],
     "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
   },
   "win": {
     "target": [
       {
         "target": "nsis",
-        "arch": [
-          "x64"
-        ]
+        "arch": ["x64"]
       }
     ],
     "artifactName": "${productName}-Windows-${version}-Setup.${ext}"
@@ -35,9 +31,7 @@
     "deleteAppDataOnUninstall": false
   },
   "linux": {
-    "target": [
-      "AppImage"
-    ],
+    "target": ["AppImage"],
     "artifactName": "${productName}-Linux-${version}.${ext}"
   }
 }
