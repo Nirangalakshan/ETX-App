@@ -214,7 +214,7 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-200 via-blue-100 to-purple-200 flex flex-col">
       <MenuBar />
       <ToastContainer
         position="top-center"

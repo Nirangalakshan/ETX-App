@@ -49,9 +49,6 @@
 //   console.log(message);
 // });
 
-
-
-
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.tsx";
@@ -71,39 +68,41 @@ function RequireAuth({ children }: { children: JSX.Element }) {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <BatteryProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/login" element={<Login />} />
-          <Route
-            path="/dashboard"
-            element={
-              <RequireAuth>
-                <App />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/setting"
-            element={
-              <RequireAuth>
-                <Setting />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/report"
-            element={
-              <RequireAuth>
-                 <Report/>
-              </RequireAuth>
-            }
-          />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </BrowserRouter>
-   </BatteryProvider>
+    <SerialProvider>
+      <BatteryProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Login />} />
+            <Route path="/login" element={<Login />} />
+            <Route
+              path="/dashboard"
+              element={
+                <RequireAuth>
+                  <App />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/setting"
+              element={
+                <RequireAuth>
+                  <Setting />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/report"
+              element={
+                <RequireAuth>
+                  <Report />
+                </RequireAuth>
+              }
+            />
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </BatteryProvider>
+    </SerialProvider>
   </React.StrictMode>
 );
 
