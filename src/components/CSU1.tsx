@@ -199,8 +199,8 @@ const CSU1: React.FC = () => {
     const voltage = voltageItem ? parseFloat(voltageItem.value) : null;
     const temp = tempItem ? parseFloat(tempItem.value.replace(' °C', '')) : null;
 
-    if (voltage !== null && voltage < 3.3) return 'critical';
-    if (voltage !== null && voltage < 3.5) return 'warning';
+    if (voltage !== null && voltage > 1.0) return 'critical';
+    if (voltage !== null && voltage < 1.0) return 'warning';
     if (temp !== null && temp > 60) return 'critical';
     if (temp !== null && temp > 45) return 'warning';
     if (dataItems.length === 0) return 'N/A';

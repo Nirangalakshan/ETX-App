@@ -1,5 +1,3 @@
-
-// //correct upto now
 // import React, { useState, useEffect, useRef, useMemo } from "react";
 // import MenuBar from "../components/MenuBar";
 // import Battery from "../components/Battery";
@@ -7,9 +5,9 @@
 // import CSU2 from "../components/CSU2";
 // import ErrorWarningPanel from "../components/ErrorWarningPanel";
 // import SerialTerminal from "../components/test";
-// import { useSerial } from "../SerialContext";
 // import Daicy from "../components/Daicy";
-// import "../index.css"
+// import { useBatteryContext } from "../BatteryContext"; // Import BatteryContext
+// import "../index.css";
 
 // declare global {
 //   interface Window {
@@ -65,25 +63,13 @@
 // ];
 
 // const DashBoard: React.FC = () => {
+//   const { csu1ResponseData } = useBatteryContext(); // Use BatteryContext
 //   const [csu1Cells, setCSU1Cells] = useState<BatteryCell[]>([]);
 //   const [csu2Cells, setCSU2Cells] = useState<BatteryCell[]>([]);
+//   const [dcCsuResponseData, setDcCsuResponseData] = useState<Record<number, Record<number, ResponseData[]>>>({});
 //   const [instructions, setInstructions] = useState<SetInstruction[]>([]);
 //   const [responseData, setResponseData] = useState<Record<number, ResponseData[]>>({});
 //   const fileInputRef = useRef<HTMLInputElement>(null);
-//   const {
-//     baudRate,
-//     availablePorts,
-//     selectedPort,
-//     isPortOpen,
-//     lastSerialData,
-//     setBaudRate,
-//     setSelectedPort,
-//     setLastSerialData,
-//     refreshPorts,
-//     initializePort,
-//     closePort,
-//     writeSerialData,
-//   } = useSerial();
 
 //   // Initialize cell data with null values
 //   useEffect(() => {
@@ -98,7 +84,6 @@
 //       data: null,
 //       voltageLimits: null,
 //     }));
-
 
 //     const initialCSU2Cells = Array.from({ length: 12 }, (_, i) => ({
 //       id: i + 12,
@@ -122,16 +107,16 @@
 //   const calculateStatus = (voltage: number | null, temperature: number | null): CellStatus => {
 //     let status: CellStatus = "normal";
 //     if (voltage !== null) {
-//       if (voltage < 2.0 || voltage > 5.0) {
-//         status = "critical";
-//       } else if ((voltage < 1.8 || voltage > 4.4) && status !== "critical") {
+//       if (voltage > 1.0) {
+//         status = "critical"; // Align with CSU1 thresholds
+//       } else if (voltage < 1.0) {
 //         status = "warning";
 //       }
 //     }
 //     if (temperature !== null) {
-//       if (temperature < -20 || temperature > 60) {
+//       if (temperature > 60) {
 //         status = "critical";
-//       } else if ((temperature < 0 || temperature > 45) && status !== "critical") {
+//       } else if (temperature > 45 && status !== "critical") {
 //         status = "warning";
 //       }
 //     }
@@ -149,7 +134,48 @@
 //     ) : prev);
 //   };
 
-//   // Update cell states based on responseData
+//   // Update csu1Cells based on csu1ResponseData
+//   useEffect(() => {
+//     console.log('DashBoard: csu1ResponseData changed:', csu1ResponseData);
+//     Object.entries(csu1ResponseData).forEach(([cellNo, dataItems]) => {
+//       const cellId = parseInt(cellNo);
+//       if (cellId < 0 || cellId >= 12) return;
+
+//       setCSU1Cells(prev => {
+//         const updatedCells = [...prev];
+//         const updatedCell = { ...updatedCells[cellId] };
+//         dataItems.forEach((item) => {
+//           switch (item.command) {
+//             case "get_11_csu_volt":
+//               const newVoltage = parseFloat(item.value);
+//               if (!isNaN(newVoltage)) {
+//                 updatedCell.voltage = newVoltage;
+//               }
+//               break;
+//             case "get_11_csu_temp":
+//               const newTemp = parseFloat(item.value.replace(" °C", ""));
+//               if (!isNaN(newTemp)) {
+//                 updatedCell.temperature = newTemp;
+//               }
+//               break;
+//             case "get_11_csu_balance_reg":
+//               updatedCell.balancing = item.value === "On";
+//               break;
+//             case "get_11_csu_ow":
+//               updatedCell.openWire = item.value === "On";
+//               break;
+//           }
+//         });
+
+//         updatedCell.status = calculateStatus(updatedCell.voltage, updatedCell.temperature);
+//         updatedCells[cellId] = updatedCell;
+//         console.log(`Renderer: Updated CSU1 cell ${cellId} with response data`, updatedCell);
+//         return updatedCells;
+//       });
+//     });
+//   }, [csu1ResponseData]);
+
+//   // Update cell states based on responseData and dcCsuResponseData
 //   useEffect(() => {
 //     console.log('DashBoard: responseData changed:', responseData);
 //     Object.entries(responseData).forEach(([cellNo, dataItems]) => {
@@ -209,7 +235,52 @@
 //         return updatedCells;
 //       });
 //     });
-//   }, [responseData]);
+
+//     // Handle dcCsuResponseData
+//     console.log('DashBoard: dcCsuResponseData changed:', dcCsuResponseData);
+//     Object.entries(dcCsuResponseData).forEach(([dcIc, cellData]) => {
+//       Object.entries(cellData).forEach(([cellNo, dataItems]) => {
+//         const cellId = parseInt(cellNo);
+//         if (cellId < 0 || cellId >= 24) return;
+
+//         const isCSU1 = cellId < 12;
+//         const cellIndex = isCSU1 ? cellId : cellId - 12;
+//         const setCells = isCSU1 ? setCSU1Cells : setCSU2Cells;
+
+//         setCells(prev => {
+//           const updatedCells = [...prev];
+//           const updatedCell = { ...updatedCells[cellIndex] };
+//           dataItems.forEach((item) => {
+//             switch (item.command) {
+//               case "get_dc_csu_volt":
+//                 const newVoltage = parseFloat(item.value);
+//                 if (!isNaN(newVoltage)) {
+//                   updatedCell.voltage = newVoltage;
+//                 }
+//                 break;
+//               case "get_dc_csu_temp":
+//                 const newTemp = parseFloat(item.value.replace(" °C", ""));
+//                 if (!isNaN(newTemp)) {
+//                   updatedCell.temperature = newTemp;
+//                 }
+//                 break;
+//               case "get_dc_csu_balance":
+//                 updatedCell.balancing = item.value === "On";
+//                 break;
+//               case "get_dc_csu_ow":
+//                 updatedCell.openWire = item.value === "On";
+//                 break;
+//             }
+//           });
+
+//           updatedCell.status = calculateStatus(updatedCell.voltage, updatedCell.temperature);
+//           updatedCells[cellIndex] = updatedCell;
+//           console.log(`Renderer: Updated DC CSU cell ${cellId} (DC IC ${dcIc}) with data`, updatedCell);
+//           return updatedCells;
+//         });
+//       });
+//     });
+//   }, [responseData, dcCsuResponseData]);
 
 //   const validateInstruction = (
 //     instruction: any,
@@ -463,18 +534,19 @@
 //                 <CSU2 />
 //               </div>
 //               <div className="flex flex-col gap-1">
-//                 <Daicy/>
+//                 <Daicy />
 //               </div>
 //             </div>
 //             <div className="bg-white rounded-md shadow p-4 min-w-[510px] mt-10">
-//               <ErrorWarningPanel csu1Cells={csu1Cells} csu2Cells={csu2Cells} />
+//               <ErrorWarningPanel csu1Cells={csu1Cells} csu2Cells={csu2Cells} daisyChainData={dcCsuResponseData} />
 //             </div>
 //           </div>
-         
 //           <div className="">
 //             <SerialTerminal
 //               responseData={responseData}
 //               setResponseData={setResponseData}
+//               dcCsuResponseData={dcCsuResponseData}
+//               setDcCsuResponseData={setDcCsuResponseData}
 //               updateCellVoltage={updateCellVoltage}
 //             />
 //           </div>
@@ -506,9 +578,6 @@
 
 
 
-
-
-//correct upto now
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import MenuBar from "../components/MenuBar";
 import Battery from "../components/Battery";
@@ -517,7 +586,8 @@ import CSU2 from "../components/CSU2";
 import ErrorWarningPanel from "../components/ErrorWarningPanel";
 import SerialTerminal from "../components/test";
 import Daicy from "../components/Daicy";
-import "../index.css"
+import { useBatteryContext } from "../BatteryContext";
+import "../index.css";
 
 declare global {
   interface Window {
@@ -573,26 +643,13 @@ const validCommands = [
 ];
 
 const DashBoard: React.FC = () => {
+  const { csu1ResponseData, csu2ResponseData } = useBatteryContext();
   const [csu1Cells, setCSU1Cells] = useState<BatteryCell[]>([]);
   const [csu2Cells, setCSU2Cells] = useState<BatteryCell[]>([]);
   const [dcCsuResponseData, setDcCsuResponseData] = useState<Record<number, Record<number, ResponseData[]>>>({});
   const [instructions, setInstructions] = useState<SetInstruction[]>([]);
   const [responseData, setResponseData] = useState<Record<number, ResponseData[]>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
-  // const {
-  //   baudRate,
-  //   availablePorts,
-  //   selectedPort,
-  //   isPortOpen,
-  //   lastSerialData,
-  //   setBaudRate,
-  //   setSelectedPort,
-  //   setLastSerialData,
-  //   refreshPorts,
-  //   initializePort,
-  //   closePort,
-  //   writeSerialData,
-  // } = useSerial();
 
   // Initialize cell data with null values
   useEffect(() => {
@@ -630,16 +687,16 @@ const DashBoard: React.FC = () => {
   const calculateStatus = (voltage: number | null, temperature: number | null): CellStatus => {
     let status: CellStatus = "normal";
     if (voltage !== null) {
-      if (voltage < 2.0 || voltage > 5.0) {
+      if (voltage > 1.0) {
         status = "critical";
-      } else if (voltage < 1.8 || voltage > 4.4) {
+      } else if (voltage < 1.0) {
         status = "warning";
       }
     }
     if (temperature !== null) {
-      if (temperature < -20 || temperature > 60) {
+      if (temperature > 60) {
         status = "critical";
-      } else if ((temperature < 0 || temperature > 45) && status !== "critical") {
+      } else if (temperature > 45 && status !== "critical") {
         status = "warning";
       }
     }
@@ -656,6 +713,88 @@ const DashBoard: React.FC = () => {
       cell.id === cellId ? { ...cell, voltage, status: calculateStatus(voltage, cell.temperature) } : cell
     ) : prev);
   };
+
+  // Update csu1Cells based on csu1ResponseData
+  useEffect(() => {
+    console.log('DashBoard: csu1ResponseData changed:', csu1ResponseData);
+    Object.entries(csu1ResponseData).forEach(([cellNo, dataItems]) => {
+      const cellId = parseInt(cellNo);
+      if (cellId < 0 || cellId >= 12) return;
+
+      setCSU1Cells(prev => {
+        const updatedCells = [...prev];
+        const updatedCell = { ...updatedCells[cellId] };
+        dataItems.forEach((item) => {
+          switch (item.command) {
+            case "get_11_csu_volt":
+              const newVoltage = parseFloat(item.value);
+              if (!isNaN(newVoltage)) {
+                updatedCell.voltage = newVoltage;
+              }
+              break;
+            case "get_11_csu_temp":
+              const newTemp = parseFloat(item.value.replace(" °C", ""));
+              if (!isNaN(newTemp)) {
+                updatedCell.temperature = newTemp;
+              }
+              break;
+            case "get_11_csu_balance_reg":
+              updatedCell.balancing = item.value === "On";
+              break;
+            case "get_11_csu_ow":
+              updatedCell.openWire = item.value === "On";
+              break;
+          }
+        });
+
+        updatedCell.status = calculateStatus(updatedCell.voltage, updatedCell.temperature);
+        updatedCells[cellId] = updatedCell;
+        console.log(`Renderer: Updated CSU1 cell ${cellId} with response data`, updatedCell);
+        return updatedCells;
+      });
+    });
+  }, [csu1ResponseData]);
+
+  // Update csu2Cells based on csu2ResponseData
+  useEffect(() => {
+    console.log('DashBoard: csu2ResponseData changed:', csu2ResponseData);
+    Object.entries(csu2ResponseData).forEach(([cellNo, dataItems]) => {
+      const cellId = parseInt(cellNo);
+      if (cellId < 0 || cellId >= 12) return;
+
+      setCSU2Cells(prev => {
+        const updatedCells = [...prev];
+        const updatedCell = { ...updatedCells[cellId] };
+        dataItems.forEach((item) => {
+          switch (item.command) {
+            case "get_12_csu_volt":
+              const newVoltage = parseFloat(item.value);
+              if (!isNaN(newVoltage)) {
+                updatedCell.voltage = newVoltage;
+              }
+              break;
+            case "get_12_csu_temp":
+              const newTemp = parseFloat(item.value.replace(" °C", ""));
+              if (!isNaN(newTemp)) {
+                updatedCell.temperature = newTemp;
+              }
+              break;
+            case "get_12_csu_balance_reg":
+              updatedCell.balancing = item.value === "On";
+              break;
+            case "get_12_csu_ow":
+              updatedCell.openWire = item.value === "On";
+              break;
+          }
+        });
+
+        updatedCell.status = calculateStatus(updatedCell.voltage, updatedCell.temperature);
+        updatedCells[cellId] = updatedCell;
+        console.log(`Renderer: Updated CSU2 cell ${cellId} with response data`, updatedCell);
+        return updatedCells;
+      });
+    });
+  }, [csu2ResponseData]);
 
   // Update cell states based on responseData and dcCsuResponseData
   useEffect(() => {
@@ -994,7 +1133,6 @@ const DashBoard: React.FC = () => {
       console.log(`Renderer: Updated cell ${cellNo} for command ${instruction.command}`, updatedCell);
       return updatedCells;
     });
-    
   };
 
   // Memoize batteryCells to prevent unnecessary re-renders
@@ -1018,14 +1156,12 @@ const DashBoard: React.FC = () => {
               </div>
               <div className="flex flex-col gap-1">
                 <Daicy />
-
               </div>
             </div>
             <div className="bg-white rounded-md shadow p-4 min-w-[510px] mt-10">
-              <ErrorWarningPanel csu1Cells={csu1Cells} csu2Cells={csu2Cells} />
+              <ErrorWarningPanel csu1Cells={csu1Cells} csu2Cells={csu2Cells} daisyChainData={dcCsuResponseData} />
             </div>
           </div>
-         
           <div className="">
             <SerialTerminal
               responseData={responseData}

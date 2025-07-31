@@ -306,7 +306,7 @@
 // update with dc data
 import React, { useEffect, useState, useRef } from 'react';
 import { useBatteryContext } from '../BatteryContext';
-import { ResponseData } from './test';
+
 
 type CellStatus = 'normal' | 'warning' | 'critical';
 
