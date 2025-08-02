@@ -1,6 +1,18 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 import { ResponseData } from "./components/test";
 
+interface SetInstruction {
+  id: number;
+  command: string;
+  param1: string;
+  param2: string;
+  cellNo: string;
+  cycleNo: string;
+  voltage: string;
+  temperature: string;
+  time: string;
+}
+
 interface BatteryContextType {
   daisyChainData: Record<number, ResponseData[]>;
   setDaisyChainData: (data: Record<number, ResponseData[]>) => void;
@@ -12,7 +24,8 @@ interface BatteryContextType {
   setCsu2ResponseData: (data: Record<number, ResponseData[]>) => void;
   responseData: Record<number, ResponseData[]>;
   setResponseData: (data: Record<number, ResponseData[]>) => void;
-  
+  instructions: SetInstruction[];
+  setInstructions: (data: SetInstruction[]) => void;
 }
 
 const BatteryContext = createContext<BatteryContextType | undefined>(undefined);
@@ -31,6 +44,7 @@ export const BatteryProvider = ({ children }: { children: ReactNode }) => {
   const [responseData, setResponseData] = useState<
     Record<number, ResponseData[]>
   >({});
+  const [instructions, setInstructions] = useState<SetInstruction[]>([]);
 
   return (
     <BatteryContext.Provider
@@ -45,6 +59,8 @@ export const BatteryProvider = ({ children }: { children: ReactNode }) => {
         setCsu2ResponseData,
         responseData,
         setResponseData,
+        instructions,
+        setInstructions,
       }}
     >
       {children}
