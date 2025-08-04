@@ -1,220 +1,147 @@
-import { ipcMain, app, BrowserWindow } from "electron";
-import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
-import path from "node:path";
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-process.chdir(__dirname);
-const require2 = createRequire(import.meta.url);
-const { SerialPort } = require2("serialport");
-ipcMain.handle("list-ports", async () => {
+import { ipcMain as p, app as m, BrowserWindow as E } from "electron";
+import { createRequire as T } from "node:module";
+import { fileURLToPath as V } from "node:url";
+import a from "node:path";
+const u = a.dirname(V(import.meta.url)), I = T(import.meta.url), { SerialPort: C } = I("serialport");
+p.handle("list-ports", async () => {
   try {
-    const ports = await SerialPort.list();
-    console.log(
+    const r = await C.list();
+    return console.log(
       "Ports found:",
-      ports.map((port) => port.path)
-    );
-    return ports.map((port) => port.path);
-  } catch (error) {
-    console.error("Error listing ports:", error);
-    return [];
+      r.map((t) => t.path)
+    ), r.map((t) => t.path);
+  } catch (r) {
+    return console.error("Error listing ports:", r), [];
   }
 });
-const calculateCRC16 = (data) => {
-  let crc = 65535;
-  const polynomial = 40961;
-  for (const byte of data) {
-    crc ^= byte;
-    for (let i = 0; i < 8; i++) {
-      const lsb = crc & 1;
-      crc >>= 1;
-      if (lsb) crc ^= polynomial;
+const L = (r) => {
+  let t = 65535;
+  const i = 40961;
+  for (const c of r) {
+    t ^= c;
+    for (let l = 0; l < 8; l++) {
+      const n = t & 1;
+      t >>= 1, n && (t ^= i);
     }
   }
-  return crc;
+  return t;
 };
-let serialPort = null;
-ipcMain.handle(
+let s = null;
+p.handle(
   "open-port",
-  async (_event, portPath, baudRate = 9600) => {
-    return new Promise((resolve, reject) => {
-      if (serialPort && serialPort.isOpen) {
-        return resolve({
-          success: false,
-          error: "Another port is already open"
-        });
-      }
-      serialPort = new SerialPort({
-        path: portPath,
-        baudRate,
-        autoOpen: false
+  async (r, t, i = 9600) => new Promise((c, l) => {
+    if (s && s.isOpen)
+      return c({
+        success: !1,
+        error: "Another port is already open"
       });
-      let byteBuffer = [];
-      serialPort.open((err) => {
-        if (err) {
-          console.error("Error opening port:", err);
-          serialPort = null;
-          return reject({ success: false, error: err.message });
+    s = new C({
+      path: t,
+      baudRate: i,
+      autoOpen: !1
+    });
+    let n = [];
+    s.open((w) => {
+      if (w)
+        return console.error("Error opening port:", w), s = null, l({ success: !1, error: w.message });
+      console.log(`Serial port ${t} opened at baud rate ${i}`), c({ success: !0 }), s.on("data", (f) => {
+        const v = Array.from(f);
+        for (n = [...n, ...v]; n.length >= 8; ) {
+          const o = n.slice(0, 8);
+          if (n = n.slice(8), o[0] !== 7) {
+            console.warn("Invalid frame start:", o), e && !e.isDestroyed() && e.webContents.send("serial-error", `Invalid frame start: ${o}`);
+            continue;
+          }
+          const _ = o[7] << 8 | o[6], P = L(o.slice(0, 6));
+          if (_ !== P) {
+            console.warn("CRC mismatch:", o), e && !e.isDestroyed() && e.webContents.send("serial-error", `CRC mismatch: ${o}`);
+            continue;
+          }
+          const R = o.map((d) => d.toString(16).padStart(2, "0")).join(" ").toUpperCase(), D = o.map((d) => d.toString(10).padStart(3, "0")).join(" ");
+          console.log("Serial HEX data received:", R), console.log("Serial DECIMAL data received:", D);
+          let g;
+          o[0] === 7 && (o[2] === 166 || o[2] === 167) && (g = ((o[4] << 8 | o[5]) / 1e4).toFixed(3), console.log(`Voltage: ${g} V`));
+          let y;
+          o[0] === 7 && o[2] === 165 && (y = ((o[4] << 8 | o[5]) / 100).toFixed(1), console.log(`Temperature: ${y} °C`)), e && !e.isDestroyed() && e.webContents.send("serial-data", {
+            hex: R,
+            parsed: g
+          });
         }
-        console.log(`Serial port ${portPath} opened at baud rate ${baudRate}`);
-        resolve({ success: true });
-        serialPort.on("data", (data) => {
-          const bytes = Array.from(data);
-          byteBuffer = [...byteBuffer, ...bytes];
-          while (byteBuffer.length >= 8) {
-            const frame = byteBuffer.slice(0, 8);
-            byteBuffer = byteBuffer.slice(8);
-            if (frame[0] !== 7) {
-              console.warn("Invalid frame start:", frame);
-              if (win && !win.isDestroyed()) {
-                win.webContents.send("serial-error", `Invalid frame start: ${frame}`);
-              }
-              continue;
-            }
-            const receivedCRC = frame[7] << 8 | frame[6];
-            const calculatedCRC = calculateCRC16(frame.slice(0, 6));
-            if (receivedCRC !== calculatedCRC) {
-              console.warn("CRC mismatch:", frame);
-              if (win && !win.isDestroyed()) {
-                win.webContents.send("serial-error", `CRC mismatch: ${frame}`);
-              }
-              continue;
-            }
-            const hexString = frame.map((b) => b.toString(16).padStart(2, "0")).join(" ").toUpperCase();
-            const decimalString = frame.map((b) => b.toString(10).padStart(3, "0")).join(" ");
-            console.log("Serial HEX data received:", hexString);
-            console.log("Serial DECIMAL data received:", decimalString);
-            let voltageVolts = void 0;
-            if (frame.length >= 8 && frame[0] === 7 && (frame[2] === 166 || frame[2] === 167)) {
-              const voltageLimit = (frame[2] << 8 | frame[3]) / 1e4;
-              voltageVolts = voltageLimit.toFixed(3);
-              console.log(`Voltage: ${voltageVolts} V`);
-            }
-            let tempCelsius = void 0;
-            if (frame.length >= 8 && frame[0] === 7 && frame[2] === 165) {
-              const tempRaw = frame[4] << 8 | frame[5];
-              const tempC = tempRaw / 100;
-              tempCelsius = tempC.toFixed(1);
-              console.log(`Temperature: ${tempCelsius} °C`);
-            }
-            if (win && !win.isDestroyed()) {
-              win.webContents.send("serial-data", {
-                hex: hexString,
-                parsed: voltageVolts
-              });
-            }
-          }
-        });
-        serialPort.on("error", (err2) => {
-          console.error("Serial port error:", err2);
-          if (win && !win.isDestroyed()) {
-            win.webContents.send("serial-error", err2.message);
-          }
-        });
-        serialPort.on("close", () => {
-          console.log("Serial port closed");
-          serialPort = null;
-          byteBuffer = [];
-          if (win && !win.isDestroyed()) {
-            win.webContents.send("serial-closed");
-          }
-        });
+      }), s.on("error", (f) => {
+        console.error("Serial port error:", f), e && !e.isDestroyed() && e.webContents.send("serial-error", f.message);
+      }), s.on("close", () => {
+        console.log("Serial port closed"), s = null, n = [], e && !e.isDestroyed() && e.webContents.send("serial-closed");
       });
     });
-  }
+  })
 );
-ipcMain.handle("write-port-raw", async (_event, data) => {
-  return new Promise((resolve, reject) => {
-    if (!serialPort || !serialPort.isOpen) {
-      return resolve({ success: false, error: "No port is open" });
-    }
-    const buffer = Buffer.from(data);
-    serialPort.write(buffer, (err) => {
-      if (err) {
-        console.error("Error writing raw data to port:", err);
-        return reject({ success: false, error: err.message });
-      }
-      console.log("Raw data written to port:", buffer);
-      resolve({ success: true });
-    });
+p.handle("write-port-raw", async (r, t) => new Promise((i, c) => {
+  if (!s || !s.isOpen)
+    return i({ success: !1, error: "No port is open" });
+  const l = Buffer.from(t);
+  s.write(l, (n) => {
+    if (n)
+      return console.error("Error writing raw data to port:", n), c({ success: !1, error: n.message });
+    console.log("Raw data written to port:", l), i({ success: !0 });
   });
-});
-ipcMain.handle("close-port", async () => {
+}));
+p.handle("close-port", async () => {
   try {
-    if (serialPort && serialPort.isOpen) {
-      await serialPort.close();
-      serialPort = null;
-      console.log("Main: Port closed successfully");
-    } else {
-      console.log("Main: No open port to close");
-    }
-  } catch (error) {
-    console.error("Main: Error closing port:", error);
-    throw error;
+    s && s.isOpen ? (await s.close(), s = null, console.log("Main: Port closed successfully")) : console.log("Main: No open port to close");
+  } catch (r) {
+    throw console.error("Main: Error closing port:", r), r;
   }
 });
-process.env.APP_ROOT = path.join(__dirname, "..");
-const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
-const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
-const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
-process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, "public") : RENDERER_DIST;
-let win;
-function createWindow() {
-  win = new BrowserWindow({
+process.env.APP_ROOT = u;
+const h = process.env.VITE_DEV_SERVER_URL, U = a.join(process.env.APP_ROOT, "dist-electron"), S = a.join(u, "../dist");
+process.env.VITE_PUBLIC = h ? a.join(process.env.APP_ROOT, "public") : S;
+let e;
+function b() {
+  if (e = new E({
     width: 1920,
     height: 1080,
-    resizable: false,
-    center: true,
-    frame: false,
-    autoHideMenuBar: true,
-    icon: path.join(__dirname, "public/icon.ico"),
+    resizable: !1,
+    center: !0,
+    frame: !1,
+    autoHideMenuBar: !0,
+    icon: a.join(u, "public/icon.ico"),
     webPreferences: {
-      preload: path.join(__dirname, "preload.mjs")
+      preload: a.join(u, "preload.mjs")
     }
-  });
-  win.webContents.openDevTools();
-  win.webContents.on("did-finish-load", () => {
-    if (win && !win.isDestroyed()) {
-      win.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
-    }
-  });
-  if (VITE_DEV_SERVER_URL) {
-    win.loadURL(VITE_DEV_SERVER_URL);
-  } else {
-    win.loadFile(path.join(RENDERER_DIST, "index.html"));
-    win.setTitle("Electron Vite App");
+  }), e.webContents.openDevTools(), e.webContents.on("did-finish-load", () => {
+    e && !e.isDestroyed() && e.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
+  }), h)
+    e.loadURL(h);
+  else {
+    const r = a.join(S, "index.html");
+    console.log("Loading file:", r), e.loadFile(r), e.setTitle("Electron Vite App");
   }
-  ipcMain.on("minimize-window", () => {
-    win == null ? void 0 : win.minimize();
-  });
-  ipcMain.on("close-window", () => {
-    win == null ? void 0 : win.close();
+  p.on("minimize-window", () => {
+    e == null || e.minimize();
+  }), p.on("close-window", () => {
+    e == null || e.close();
   });
 }
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-    win = null;
-  }
+m.on("window-all-closed", () => {
+  process.platform !== "darwin" && (m.quit(), e = null);
 });
-app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
-  }
+m.on("activate", () => {
+  E.getAllWindows().length === 0 && b();
 });
-app.whenReady().then(async () => {
-  createWindow();
+m.whenReady().then(async () => {
+  b();
   try {
-    const ports = await SerialPort.list();
+    const r = await C.list();
     console.log(
       "Startup ports:",
-      ports.map((port) => port.path)
+      r.map((t) => t.path)
     );
-  } catch (error) {
-    console.error("Error listing ports at startup:", error);
+  } catch (r) {
+    console.error("Error listing ports at startup:", r);
   }
 });
 export {
-  MAIN_DIST,
-  RENDERER_DIST,
-  VITE_DEV_SERVER_URL
+  U as MAIN_DIST,
+  S as RENDERER_DIST,
+  h as VITE_DEV_SERVER_URL
 };
