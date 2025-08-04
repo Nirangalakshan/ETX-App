@@ -20,10 +20,14 @@ electron.contextBridge.exposeInMainWorld("ipcRenderer", {
 });
 electron.contextBridge.exposeInMainWorld("electronAPI", {
   minimize: () => electron.ipcRenderer.send("minimize-window"),
-  close: () => electron.ipcRenderer.send("close-window")
+  close: () => electron.ipcRenderer.send("close-window"),
+  fetchAIAnalysis: (dataSummary) => electron.ipcRenderer.invoke("fetch-ai-analysis", dataSummary)
 });
 electron.contextBridge.exposeInMainWorld("authAPI", {
   login: (username, password) => electron.ipcRenderer.invoke("login", username, password)
+});
+electron.contextBridge.exposeInMainWorld("config", {
+  OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY
 });
 electron.contextBridge.exposeInMainWorld("serialAPI", {
   writePortRaw: (data) => electron.ipcRenderer.invoke("write-port-raw", data),

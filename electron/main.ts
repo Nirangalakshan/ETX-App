@@ -259,11 +259,12 @@
 
 
 
-
+//setup for AI intergration
 import { app, BrowserWindow, ipcMain } from "electron";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -272,8 +273,128 @@ process.chdir(__dirname);
 
 // Use createRequire for CommonJS modules
 const require = createRequire(import.meta.url);
+const dotenv = require('dotenv');
+
+// Try multiple paths for .env file
+const envPaths = [
+  path.join(__dirname, '..', '.env'),
+  path.join(process.cwd(), '.env'),
+  '.env'
+];
+
+for (const envPath of envPaths) {
+  try {
+    const result = dotenv.config({ path: envPath });
+    if (!result.error) {
+      console.log(`Loaded .env from: ${envPath}`);
+      break;
+    }
+  } catch (error) {
+    console.log(`Failed to load .env from: ${envPath}`);
+  }
+}
 
 const { SerialPort } = require("serialport");
+const fetch = require('node-fetch');
+
+// Handle AI analysis requests
+ipcMain.handle("fetch-ai-analysis", async (_event, dataSummary) => {
+  try {
+    console.log("Environment variables:", Object.keys(process.env).filter(key => key.includes('OPENROUTER')));
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    console.log("API Key found:", apiKey ? "Yes" : "No");
+    if (!apiKey) {
+      throw new Error("OpenRouter API key not found in environment variables");
+    }
+
+    const prompt = `
+You are an AI assistant specialized in battery management systems. Analyze the following battery system data and provide:
+
+1. A brief summary of the overall system status
+
+Battery Data:
+${JSON.stringify(dataSummary, null, 2)}
+
+Please focus on:
+- Critical voltage or temperature issues
+- Balancing problems
+- Open wire detections
+- Voltage comparison mismatches
+- Overall system health
+
+Provide your response in the following JSON format:
+{
+  "summary": "Brief overall assessment",
+
+}
+`;
+
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "HTTP-Referer": "http://localhost:5173",
+        "X-Title": "Battery Management System",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        "model": "openrouter/horizon-beta",
+        "messages": [
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": prompt
+              }
+            ]
+          }
+        ],
+        "max_tokens": 1000,
+        "temperature": 0.3
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0]?.message?.content;
+    
+    if (!content) {
+      throw new Error("No content received from AI API");
+    }
+
+    // Try to parse the JSON response
+    try {
+      const parsedResponse = JSON.parse(content);
+      return {
+        summary: parsedResponse.summary || "No summary provided",
+        recommendations: Array.isArray(parsedResponse.recommendations)
+          ? parsedResponse.recommendations
+          : ["No specific recommendations provided"],
+        error: null
+      };
+    } catch (parseError) {
+      // If JSON parsing fails, return the raw content as summary
+      return {
+        summary: content,
+        recommendations: ["Please review the analysis above for detailed recommendations"],
+        error: null
+      };
+    }
+
+  } catch (error) {
+    console.error("Error fetching AI analysis:", error);
+    return {
+      summary: "",
+      recommendations: [],
+      error: error instanceof Error ? error.message : "Failed to fetch AI analysis"
+    };
+  }
+});
 
 
 

@@ -87,10 +87,15 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
 contextBridge.exposeInMainWorld('electronAPI', {
   minimize: () => ipcRenderer.send('minimize-window'),
   close: () => ipcRenderer.send('close-window'),
+  fetchAIAnalysis: (dataSummary: any) => ipcRenderer.invoke('fetch-ai-analysis', dataSummary),
 });
 
 contextBridge.exposeInMainWorld('authAPI', {
   login: (username: string, password: string) => ipcRenderer.invoke('login', username, password),
+});
+
+contextBridge.exposeInMainWorld('config', {
+  OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
 });
 
 contextBridge.exposeInMainWorld('serialAPI', {

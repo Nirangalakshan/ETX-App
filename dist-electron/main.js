@@ -5,7 +5,112 @@ import path from "node:path";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 process.chdir(__dirname);
 const require2 = createRequire(import.meta.url);
+const dotenv = require2("dotenv");
+const envPaths = [
+  path.join(__dirname, "..", ".env"),
+  path.join(process.cwd(), ".env"),
+  ".env"
+];
+for (const envPath of envPaths) {
+  try {
+    const result = dotenv.config({ path: envPath });
+    if (!result.error) {
+      console.log(`Loaded .env from: ${envPath}`);
+      break;
+    }
+  } catch (error) {
+    console.log(`Failed to load .env from: ${envPath}`);
+  }
+}
 const { SerialPort } = require2("serialport");
+const fetch = require2("node-fetch");
+ipcMain.handle("fetch-ai-analysis", async (_event, dataSummary) => {
+  var _a, _b;
+  try {
+    console.log("Environment variables:", Object.keys(process.env).filter((key) => key.includes("OPENROUTER")));
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    console.log("API Key found:", apiKey ? "Yes" : "No");
+    if (!apiKey) {
+      throw new Error("OpenRouter API key not found in environment variables");
+    }
+    const prompt = `
+You are an AI assistant specialized in battery management systems. Analyze the following battery system data and provide:
+
+1. A brief summary of the overall system status
+
+Battery Data:
+${JSON.stringify(dataSummary, null, 2)}
+
+Please focus on:
+- Critical voltage or temperature issues
+- Balancing problems
+- Open wire detections
+- Voltage comparison mismatches
+- Overall system health
+
+Provide your response in the following JSON format:
+{
+  "summary": "Brief overall assessment",
+
+}
+`;
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "HTTP-Referer": "http://localhost:5173",
+        "X-Title": "Battery Management System",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        "model": "openrouter/horizon-beta",
+        "messages": [
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": prompt
+              }
+            ]
+          }
+        ],
+        "max_tokens": 1e3,
+        "temperature": 0.3
+      })
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
+    }
+    const data = await response.json();
+    const content = (_b = (_a = data.choices[0]) == null ? void 0 : _a.message) == null ? void 0 : _b.content;
+    if (!content) {
+      throw new Error("No content received from AI API");
+    }
+    try {
+      const parsedResponse = JSON.parse(content);
+      return {
+        summary: parsedResponse.summary || "No summary provided",
+        recommendations: Array.isArray(parsedResponse.recommendations) ? parsedResponse.recommendations : ["No specific recommendations provided"],
+        error: null
+      };
+    } catch (parseError) {
+      return {
+        summary: content,
+        recommendations: ["Please review the analysis above for detailed recommendations"],
+        error: null
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching AI analysis:", error);
+    return {
+      summary: "",
+      recommendations: [],
+      error: error instanceof Error ? error.message : "Failed to fetch AI analysis"
+    };
+  }
+});
 ipcMain.handle("list-ports", async () => {
   try {
     const ports = await SerialPort.list();
