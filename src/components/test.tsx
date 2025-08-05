@@ -1562,7 +1562,7 @@ export default SerialTerminal;
 
 
 
-
+//show set values
 
 // import React, { useEffect, useState, useRef, useCallback } from "react";
 // import { useBatteryContext } from "../BatteryContext";
