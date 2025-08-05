@@ -300,41 +300,48 @@ const fetch = require('node-fetch');
 // Handle AI analysis requests
 ipcMain.handle("fetch-ai-analysis", async (_event, dataSummary) => {
   try {
-    console.log("Environment variables:", Object.keys(process.env).filter(key => key.includes('OPENROUTER')));
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    console.log("API Key found:", apiKey ? "Yes" : "No");
-    if (!apiKey) {
-      throw new Error("OpenRouter API key not found in environment variables");
+    // Direct hardcoded API key for testing
+    const finalApiKey = "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";
+    
+    console.log("Using hardcoded API key for testing");
+    console.log("API Key length:", finalApiKey.length);
+    console.log("API Key starts with:", finalApiKey.substring(0, 15) + "...");
+    
+    // Simple test request first
+    const testResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${finalApiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        "model": "openai/gpt-3.5-turbo",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Hello, this is a test message."
+          }
+        ],
+        "max_tokens": 50
+      })
+    });
+
+    console.log("Test response status:", testResponse.status);
+    
+    if (!testResponse.ok) {
+      const testErrorText = await testResponse.text();
+      console.log("Test error response:", testErrorText);
+      throw new Error(`API Key test failed: ${testResponse.status} - ${testErrorText}`);
     }
 
-    const prompt = `
-You are an AI assistant specialized in battery management systems. Analyze the following battery system data and provide:
+    console.log("API key test successful, proceeding with main request...");
 
-1. A brief summary of the overall system status
-
-Battery Data:
-${JSON.stringify(dataSummary, null, 2)}
-
-Please focus on:
-- Critical voltage or temperature issues
-- Balancing problems
-- Open wire detections
-- Voltage comparison mismatches
-- Overall system health
-
-Provide your response in the following JSON format:
-{
-  "summary": "Brief overall assessment",
-
-}
-`;
+    const prompt = `Analyze this battery system data and provide a brief summary: ${JSON.stringify(dataSummary, null, 2)}`;
 
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "HTTP-Referer": "http://localhost:5173",
-        "X-Title": "Battery Management System",
+        "Authorization": `Bearer ${finalApiKey}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
@@ -342,21 +349,20 @@ Provide your response in the following JSON format:
         "messages": [
           {
             "role": "user",
-            "content": [
-              {
-                "type": "text",
-                "text": prompt
-              }
-            ]
+            "content": prompt
           }
         ],
-        "max_tokens": 1000,
+        "max_tokens": 500,
         "temperature": 0.3
       })
     });
 
+    console.log("Response status:", response.status);
+    console.log("Response headers:", Object.fromEntries(response.headers.entries()));
+    
     if (!response.ok) {
       const errorText = await response.text();
+      console.log("Error response body:", errorText);
       throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
     }
 
