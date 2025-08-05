@@ -59,7 +59,7 @@ const Battery: React.FC = () => {
       voltage: null,
       temperature: null,
       status: null,
-      setVoltage: 3.65,
+      setVoltage:false,
       balancing: false,
       openWire: false,
       data: null,
