@@ -1,21 +1,19 @@
-
-// update with dc data
 import React, { useEffect, useState, useRef } from 'react';
 import { useBatteryContext } from '../BatteryContext';
-
 
 type CellStatus = 'normal' | 'warning' | 'critical';
 
 export interface BatteryCell {
   id: number;
-  voltage: number | null;
-  temperature: number | null;
+  voltage: number | null; // Received voltage
+  temperature: number | null; // Received temperature
   status: CellStatus;
-  setVoltage: number;
-  balancing: boolean;
-  openWire: boolean;
-  data: string | null;
-  voltageLimits: string | null;
+  setVoltage: number | null; // Sent set_voltage
+  setTemperature: number | null; // Sent set_temp
+  balancing: boolean; // Sent set_balance
+  openWire: boolean; // Sent set_ow
+  voltageLimits: string | null; // Received voltage limits
+  data: string | null; // Other raw data
 }
 
 interface PopupInfo {
@@ -45,21 +43,20 @@ const BatteryCellComponent: React.FC<{
 };
 
 const Battery: React.FC = () => {
-  const { responseData } = useBatteryContext();
+  const { responseData, instructions } = useBatteryContext();
   const [cells, setCells] = useState<BatteryCell[]>([]);
   const [popup, setPopup] = useState<PopupInfo | null>(null);
-  const [popupHeight, setPopupHeight] = useState(180);
+  const [popupHeight, setPopupHeight] = useState(200);
   const popupRef = useRef<HTMLDivElement>(null);
-  const [setVoltageInput, setSetVoltageInput] = useState<number>(3.65);
-  const [balancingActive, setBalancingActive] = useState<boolean>(false);
 
   useEffect(() => {
     const initialCells = Array.from({ length: 24 }, (_, i) => ({
       id: i,
       voltage: null,
       temperature: null,
-      status: null,
-      setVoltage: 3.65,
+      status: 'normal' as CellStatus,
+      setVoltage: null,
+      setTemperature: null,
       balancing: false,
       openWire: false,
       data: null,
@@ -69,20 +66,24 @@ const Battery: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!responseData) return;
+    if (!responseData && !instructions) return;
 
     setCells((prevCells) =>
       prevCells.map((cell) => {
         const cellData = responseData[cell.id] || [];
+        const cellInstructions = instructions.filter((instr) => parseInt(instr.cellNo) === cell.id);
+
         let voltage: number | null = cell.voltage;
         let temperature: number | null = cell.temperature;
         let status: CellStatus = cell.status;
-        let setVoltage: number = cell.setVoltage;
+        let setVoltage: number | null = cell.setVoltage;
+        let setTemperature: number | null = cell.setTemperature;
         let balancing: boolean = cell.balancing;
         let openWire: boolean = cell.openWire;
         let data: string | null = cell.data;
         let voltageLimits: string | null = cell.voltageLimits;
 
+        // Update from responseData (received values)
         const voltageData = cellData.find((item) => item.command === 'get_voltage');
         if (voltageData && voltageData.value) {
           const parsedVoltage = parseFloat(voltageData.value);
@@ -102,31 +103,46 @@ const Battery: React.FC = () => {
           }
         }
 
-        const setVoltageData = cellData.find((item) => item.command === 'set_voltage');
-        if (setVoltageData && setVoltageData.value) {
-          const parsedSetVoltage = parseFloat(setVoltageData.value);
-          if (!isNaN(parsedSetVoltage)) setVoltage = parsedSetVoltage;
-        }
-
-        const balanceData = cellData.find((item) => item.command === 'set_balance');
-        if (balanceData && balanceData.value) {
-          balancing = balanceData.value === 'On';
-        }
-
-        const openWireData = cellData.find((item) => item.command === 'set_ow');
-        if (openWireData && openWireData.value) {
-          openWire = openWireData.value === 'On';
-        }
-
         const voltageLimitsData = cellData.find((item) => item.command === 'get_voltage_limits');
         if (voltageLimitsData && voltageLimitsData.value) {
           voltageLimits = voltageLimitsData.value;
         }
 
-        return { ...cell, voltage, temperature, status, setVoltage, balancing, openWire, data, voltageLimits };
+        // Update from instructions (sent values)
+        const setVoltageInstruction = cellInstructions.find((instr) => instr.command === 'set_voltage');
+        if (setVoltageInstruction && setVoltageInstruction.voltage) {
+          const parsedSetVoltage = parseFloat(setVoltageInstruction.voltage);
+          if (!isNaN(parsedSetVoltage)) {
+            setVoltage = parsedSetVoltage / 1000; // Convert from mV to V
+          } else {
+            setVoltage = null;
+          }
+        } else {
+          setVoltage = null;
+        }
+
+        const setTempInstruction = cellInstructions.find((instr) => instr.command === 'set_temp');
+        if (setTempInstruction && setTempInstruction.temperature) {
+          const parsedSetTemp = parseFloat(setTempInstruction.temperature);
+          if (!isNaN(parsedSetTemp)) {
+            setTemperature = parsedSetTemp;
+          } else {
+            setTemperature = null;
+          }
+        } else {
+          setTemperature = null;
+        }
+
+        const balanceInstruction = cellInstructions.find((instr) => instr.command === 'set_balance');
+        balancing = balanceInstruction ? balanceInstruction.value === 'On' : false;
+
+        const openWireInstruction = cellInstructions.find((instr) => instr.command === 'set_ow');
+        openWire = openWireInstruction ? openWireInstruction.value === 'On' : false;
+
+        return { ...cell, voltage, temperature, status, setVoltage, setTemperature, balancing, openWire, data, voltageLimits };
       })
     );
-  }, [responseData]);
+  }, [responseData, instructions]);
 
   useEffect(() => {
     if (popupRef.current) {
@@ -136,7 +152,7 @@ const Battery: React.FC = () => {
 
   const handleCellClick = (e: React.MouseEvent, cell: BatteryCell) => {
     const targetRect = (e.target as HTMLElement).getBoundingClientRect();
-    const popupWidth = 220;
+    const popupWidth = 240;
     const padding = 10;
 
     const container = document.querySelector('.grid') as HTMLElement;
@@ -163,60 +179,6 @@ const Battery: React.FC = () => {
     if (left < 0) left = padding;
 
     setPopup({ cell, position: { top, left } });
-    setSetVoltageInput(cell.setVoltage);
-    setBalancingActive(cell.balancing);
-  };
-
-  const toggleBalancing = () => {
-    if (!popup) return;
-    const newBalancing = !balancingActive;
-    setBalancingActive(newBalancing);
-
-    setPopup((p) =>
-      p
-        ? {
-            ...p,
-            cell: { ...p.cell, balancing: newBalancing },
-          }
-        : null
-    );
-
-    // Dispatch command to SerialTerminal (if needed)
-    const command = {
-      command: 'set_balance',
-      cellNo: popup.cell.id,
-      value: newBalancing ? 1 : 0,
-    };
-    window.serialAPI?.writePortRaw(new Uint8Array([
-      0x07, 0x03, 0x03, popup.cell.id, newBalancing ? 1 : 0, 0, 0, 0
-    ]));
-  };
-
-  const onSetVoltageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value);
-    if (isNaN(val)) return;
-    setSetVoltageInput(val);
-
-    setPopup((p) =>
-      p
-        ? {
-            ...p,
-            cell: { ...p.cell, setVoltage: val },
-          }
-        : null
-    );
-
-    // Dispatch command to SerialTerminal (if needed)
-    if (popup) {
-      const command = {
-        command: 'set_voltage',
-        cellNo: popup.cell.id,
-        voltage: val,
-      };
-      window.serialAPI?.writePortRaw(new Uint8Array([
-        0x07, 0x03, 0x01, popup.cell.id, Math.floor(val * 10000) & 0xFF, 0, 0, 0
-      ]));
-    }
   };
 
   return (
@@ -254,30 +216,24 @@ const Battery: React.FC = () => {
 
           <div className="space-y-1 text-sm text-gray-700">
             <div>
-              <strong>Set Voltage:</strong>{' '}
-              <input
-                placeholder='Set voltage'
-                title='Set voltage'
-                type="number"
-                step="0.01"
-                min="0"
-                value={setVoltageInput}
-                onChange={onSetVoltageChange}
-                className="border border-gray-300 rounded px-2 py-1 w-24 text-sm"
-              />{' '}
-              V
+              <strong>Sent Voltage:</strong>{' '}
+              {popup.cell.setVoltage != null ? popup.cell.setVoltage : 'N/A'} V
             </div>
             <div>
-              <strong>Actual Voltage:</strong>{' '}
+              <strong>Received Voltage:</strong>{' '}
               {popup.cell.voltage != null ? popup.cell.voltage.toFixed(2) : 'N/A'} V
             </div>
             <div>
-              <strong>Temperature:</strong>{' '}
+              <strong>Sent Temperature:</strong>{' '}
+              {popup.cell.setTemperature != null ? popup.cell.setTemperature.toFixed(1) : 'N/A'}°C
+            </div>
+            <div>
+              <strong>Received Temperature:</strong>{' '}
               {popup.cell.temperature != null ? popup.cell.temperature.toFixed(1) : 'N/A'}°C
             </div>
             <div>
               <strong>Balancing:</strong>{' '}
-              {balancingActive ? (
+              {popup.cell.balancing ? (
                 <span className="text-green-600 font-semibold">ON</span>
               ) : (
                 <span className="text-gray-500">OFF</span>
@@ -290,6 +246,10 @@ const Battery: React.FC = () => {
               ) : (
                 <span className="text-green-600">No</span>
               )}
+            </div>
+            <div>
+              <strong>Voltage Limits:</strong>{' '}
+              {popup.cell.voltageLimits || 'N/A'}
             </div>
             <div>
               <strong>Raw Data:</strong>{' '}

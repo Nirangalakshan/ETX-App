@@ -94,6 +94,7 @@ interface SetInstruction {
   command: string;
   param1: string;
   param2: string;
+  value: string;
   cellNo: string;
   cycleNo: string;
   voltage: string;

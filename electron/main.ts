@@ -308,33 +308,33 @@ ipcMain.handle("fetch-ai-analysis", async (_event, dataSummary) => {
     console.log("API Key starts with:", finalApiKey.substring(0, 15) + "...");
     
     // Simple test request first
-    const testResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${finalApiKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        "model": "openai/gpt-3.5-turbo",
-        "messages": [
-          {
-            "role": "user",
-            "content": "Hello, this is a test message."
-          }
-        ],
-        "max_tokens": 50
-      })
-    });
+    // const testResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    //   method: "POST",
+    //   headers: {
+    //     "Authorization": `Bearer ${finalApiKey}`,
+    //     "Content-Type": "application/json"
+    //   },
+    //   body: JSON.stringify({
+    //     "model": "openai/gpt-3.5-turbo",
+    //     "messages": [
+    //       {
+    //         "role": "user",
+    //         "content": "Hello, this is a test message."
+    //       }
+    //     ],
+    //     "max_tokens": 50
+    //   })
+    // });
 
-    console.log("Test response status:", testResponse.status);
+    // console.log("Test response status:", testResponse.status);
     
-    if (!testResponse.ok) {
-      const testErrorText = await testResponse.text();
-      console.log("Test error response:", testErrorText);
-      throw new Error(`API Key test failed: ${testResponse.status} - ${testErrorText}`);
-    }
+    // if (!testResponse.ok) {
+    //   const testErrorText = await testResponse.text();
+    //   console.log("Test error response:", testErrorText);
+    //   throw new Error(`API Key test failed: ${testResponse.status} - ${testErrorText}`);
+    // }
 
-    console.log("API key test successful, proceeding with main request...");
+    // console.log("API key test successful, proceeding with main request...");
 
     const prompt = `Analyze this battery system data and provide a brief summary: ${JSON.stringify(dataSummary, null, 2)}`;
 
