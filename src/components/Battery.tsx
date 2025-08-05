@@ -29,6 +29,7 @@ const BatteryCellComponent: React.FC<{
   if (cell.status === 'warning') statusColor = 'bg-yellow-300/20 border-yellow-400';
   else if (cell.status === 'critical') statusColor = 'bg-red-300/20 border-red-400';
   else if (cell.status === 'normal') statusColor = 'bg-green-300/20 border-green-400';
+  else if (cell.status === 'no-data') statusColor = 'bg-gray-300/20 border-gray-300';
 
   return (
     <div
@@ -54,7 +55,7 @@ const Battery: React.FC = () => {
       id: i,
       voltage: null,
       temperature: null,
-      status: 'normal' as CellStatus,
+      status: "no-data",
       setVoltage: null,
       setTemperature: null,
       balancing: false,
@@ -113,7 +114,7 @@ const Battery: React.FC = () => {
         if (setVoltageInstruction && setVoltageInstruction.voltage) {
           const parsedSetVoltage = parseFloat(setVoltageInstruction.voltage);
           if (!isNaN(parsedSetVoltage)) {
-            setVoltage = parsedSetVoltage / 1000; // Convert from mV to V
+            setVoltage = parsedSetVoltage;
           } else {
             setVoltage = null;
           }
@@ -134,10 +135,10 @@ const Battery: React.FC = () => {
         }
 
         const balanceInstruction = cellInstructions.find((instr) => instr.command === 'set_balance');
-        balancing = balanceInstruction ? balanceInstruction.value === 'On' : false;
+        balancing = balanceInstruction ? balanceInstruction.value === '1' : false;
 
         const openWireInstruction = cellInstructions.find((instr) => instr.command === 'set_ow');
-        openWire = openWireInstruction ? openWireInstruction.value === 'On' : false;
+        openWire = openWireInstruction ? openWireInstruction.value === '1' : false;
 
         return { ...cell, voltage, temperature, status, setVoltage, setTemperature, balancing, openWire, data, voltageLimits };
       })
@@ -217,7 +218,7 @@ const Battery: React.FC = () => {
           <div className="space-y-1 text-sm text-gray-700">
             <div>
               <strong>Sent Voltage:</strong>{' '}
-              {popup.cell.setVoltage != null ? popup.cell.setVoltage : 'N/A'} V
+              {popup.cell.setVoltage != null ? popup.cell.setVoltage : 'N/A'} 
             </div>
             <div>
               <strong>Received Voltage:</strong>{' '}
