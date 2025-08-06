@@ -301,40 +301,40 @@ const fetch = require('node-fetch');
 ipcMain.handle("fetch-ai-analysis", async (_event, dataSummary) => {
   try {
     // Direct hardcoded API key for testing
-    const finalApiKey = "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";
+    const finalApiKey = "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";
     
     console.log("Using hardcoded API key for testing");
     console.log("API Key length:", finalApiKey.length);
     console.log("API Key starts with:", finalApiKey.substring(0, 15) + "...");
     
     // Simple test request first
-    // const testResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    //   method: "POST",
-    //   headers: {
-    //     "Authorization": `Bearer ${finalApiKey}`,
-    //     "Content-Type": "application/json"
-    //   },
-    //   body: JSON.stringify({
-    //     "model": "openai/gpt-3.5-turbo",
-    //     "messages": [
-    //       {
-    //         "role": "user",
-    //         "content": "Hello, this is a test message."
-    //       }
-    //     ],
-    //     "max_tokens": 50
-    //   })
-    // });
+    const testResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${finalApiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        "model": "openrouter/horizon-beta",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Hello, this is a test message."
+          }
+        ],
+        "max_tokens": 50
+      })
+    });
 
-    // console.log("Test response status:", testResponse.status);
+    console.log("Test response status:", testResponse.status);
     
-    // if (!testResponse.ok) {
-    //   const testErrorText = await testResponse.text();
-    //   console.log("Test error response:", testErrorText);
-    //   throw new Error(`API Key test failed: ${testResponse.status} - ${testErrorText}`);
-    // }
+    if (!testResponse.ok) {
+      const testErrorText = await testResponse.text();
+      console.log("Test error response:", testErrorText);
+      throw new Error(`API Key test failed: ${testResponse.status} - ${testErrorText}`);
+    }
 
-    // console.log("API key test successful, proceeding with main request...");
+    console.log("API key test successful, proceeding with main request...");
 
     const prompt = `Analyze this battery system data and provide a brief summary: ${JSON.stringify(dataSummary, null, 2)}`;
 

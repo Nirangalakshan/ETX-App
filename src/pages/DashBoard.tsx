@@ -583,7 +583,7 @@ const DashBoard: React.FC = () => {
   const batteryCells = useMemo(() => [...csu1Cells, ...csu2Cells], [csu1Cells, csu2Cells]);
 
   return (
-    <div className="flex flex-col h-screen bg-gray-150">
+    <div className="flex flex-col max-h-full bg-zinc-100">
       <MenuBar />
       <div className="flex-1 p-4">
         <div className="flex flex-row gap-4 items-start">

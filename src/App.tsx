@@ -5,7 +5,7 @@ import DashBoard from "./pages/DashBoard";
 
 function App() {
   return (
-    <div className="bg-gray-100">
+    <div className="">
       
         <DashBoard />
     
