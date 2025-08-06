@@ -1052,6 +1052,17 @@
 
 // export default Report;
 
+
+
+
+
+
+
+
+
+
+
+
 //AI Analysis
 import React, { useMemo, useEffect, useCallback } from "react";
 import CustomTitleBar from "../components/MenuBar";
@@ -1833,7 +1844,7 @@ const Report: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
+    <div className="flex flex-col max-h-full bg-gray-100">
       <CustomTitleBar />
       <div className="flex-1 p-6">
         <div className="flex justify-between items-center mb-6">
