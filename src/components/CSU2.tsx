@@ -1,47 +1,32 @@
-// import React, { useEffect, useState, useRef } from "react";
-// import { ResponseData } from "./test";
+// //update with dc data
+// import React, { useState, useRef } from 'react';
+// import { useBatteryContext } from '../BatteryContext';
+// import { ResponseData } from './test';
 
 // const CSU2: React.FC = () => {
-//   const [csu2Data, setCsu2Data] = useState<Record<number, ResponseData[]>>({});
+//   const { csu2ResponseData } = useBatteryContext();
 //   const [selectedCell, setSelectedCell] = useState<number | null>(null);
 //   const cellRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-//   useEffect(() => {
-//     const handleUpdate = (event: Event) => {
-//       const data = (event as CustomEvent).detail;
-//       if (data && typeof data === "object" && !Array.isArray(data)) {
-//         setCsu2Data(data as Record<number, ResponseData[]>);
-//       } else {
-//         console.warn("CSU2: Invalid responseData format received:", data);
-//       }
-//     };
-
-//     window.addEventListener("csu2CellsUpdate", handleUpdate);
-//     return () => window.removeEventListener("csu2CellsUpdate", handleUpdate);
-//   }, []);
-
 //   const getCellStatus = (dataItems: ResponseData[]) => {
-//     const voltageItem = dataItems.find((item) => item.command === "get_12_csu_volt");
-//     const tempItem = dataItems.find((item) => item.command === "get_12_csu_temp");
+//     const voltageItem = dataItems.find((item) => item.command === 'get_12_csu_volt');
+//     const tempItem = dataItems.find((item) => item.command === 'get_12_csu_temp');
 //     const voltage = voltageItem ? parseFloat(voltageItem.value) : null;
-//     const temp = tempItem ? parseFloat(tempItem.value) : null;
+//     const temp = tempItem ? parseFloat(tempItem.value.replace(' °C', '')) : null;
 
-//     if (voltage !== null && voltage < 3.3) return "critical";
-//     if (voltage !== null && voltage < 3.5) return "warning";
-//     if (temp !== null && temp > 60) return "critical";
-//     if (temp !== null && temp > 45) return "warning";
-//     if (dataItems == null || dataItems.length === 0) return "N/A";
-//     return "normal";
+//     if (voltage !== null && voltage < 3.3) return 'critical';
+//     if (voltage !== null && voltage < 3.5) return 'warning';
+//     if (temp !== null && temp > 60) return 'critical';
+//     if (temp !== null && temp > 45) return 'warning';
+//     if (dataItems.length === 0) return 'N/A';
+//     return 'normal';
 //   };
 
 //   const handleCellClick = (cellId: number) => {
 //     setSelectedCell(selectedCell === cellId ? null : cellId);
 //   };
 
-//   // Generate 12 cells with IDs from 0 to 11
 //   const cellIds = Array.from({ length: 12 }, (_, i) => i);
-
-//   // Split into 4 rows of 3 cells each
 //   const rows = [
 //     cellIds.slice(0, 3),
 //     cellIds.slice(3, 6),
@@ -59,22 +44,21 @@
 //           {rows.map((row, rowIndex) => (
 //             <div key={rowIndex} className="grid grid-cols-3 gap-2">
 //               {row.map((cellId) => {
-//                 const dataItems = csu2Data[cellId] || [];
+//                 const dataItems = csu2ResponseData[cellId] || [];
 //                 const status = getCellStatus(dataItems);
 //                 const statusColors = {
-//                   normal: "bg-green-100 text-green-800",
-//                   warning: "bg-yellow-100 text-yellow-800",
-//                   critical: "bg-red-100 text-red-800",
-//                   "N/A": "bg-gray-100 text-gray-800",
+//                   normal: 'bg-green-100 text-green-800',
+//                   warning: 'bg-yellow-100 text-yellow-800',
+//                   critical: 'bg-red-100 text-red-800',
+//                   'N/A': 'bg-gray-100 text-gray-800',
 //                 };
-//                 const voltageItem = dataItems.find((item) => item.command === "get_12_csu_volt");
-//                 const tempItem = dataItems.find((item) => item.command === "get_12_csu_temp");
+//                 const voltageItem = dataItems.find((item) => item.command === 'get_12_csu_volt');
+//                 const tempItem = dataItems.find((item) => item.command === 'get_12_csu_temp');
 
-//                 // Calculate popup position
 //                 const cellRef = cellRefs.current[cellId];
 //                 const popupStyle: React.CSSProperties = cellRef
 //                   ? {
-//                       position: "absolute",
+//                       position: 'absolute',
 //                       top: `${cellRef.offsetTop + cellRef.offsetHeight}px`,
 //                       left: `${cellRef.offsetLeft}px`,
 //                       zIndex: 10,
@@ -95,23 +79,23 @@
 //                           className={
 //                             voltageItem &&
 //                             (parseFloat(voltageItem.value) > 4.5 ||
-//                               (parseFloat(voltageItem.value) < 2.0 && voltageItem.value !== "1"))
-//                               ? "text-red-600"
-//                               : ""
+//                               (parseFloat(voltageItem.value) < 2.0 && voltageItem.value !== '1'))
+//                               ? 'text-red-600'
+//                               : ''
 //                           }
 //                         >
-//                           {voltageItem ? voltageItem.value : "-"}
+//                           {voltageItem ? voltageItem.value : '-'}
 //                         </span>
 //                       </div>
 //                       <div className="flex justify-between">
 //                         <span>T:</span>
-//                         <span>{tempItem ? tempItem.value : "-"}</span>
+//                         <span>{tempItem ? tempItem.value : '-'}</span>
 //                       </div>
 //                       <div className={`mt-1 p-1 text-center rounded-sm ${statusColors[status]}`}>
 //                         <span className="text-xs font-light">{status.charAt(0).toUpperCase() + status.slice(1)}</span>
 //                       </div>
 //                     </div>
-//                     {selectedCell === cellId && csu2Data[selectedCell] && (
+//                     {selectedCell === cellId && csu2ResponseData[selectedCell] && (
 //                       <div
 //                         style={popupStyle}
 //                         className="bg-white p-3 rounded-lg shadow-xl border border-gray-200 w-64 animate-fade-in"
@@ -126,22 +110,22 @@
 //                           </button>
 //                         </div>
 //                         <div className="space-y-1.5">
-//                           {csu2Data[selectedCell].map((item, idx) => (
+//                           {csu2ResponseData[selectedCell].map((item, idx) => (
 //                             <div key={idx} className="flex justify-between items-center">
 //                               <span className="text-xs font-medium capitalize">
 //                                 {item.command
-//                                   .replace("get_", "")
-//                                   .replace("_12_csu_", "CSU12 ")
-//                                   .replace(/_/g, " ")}
+//                                   .replace('get_', '')
+//                                   .replace('_12_csu_', 'CSU12 ')
+//                                   .replace(/_/g, ' ')}
 //                               </span>
 //                               <span
 //                                 className={`text-xs font-semibold ${
-//                                   item.command.includes("volt")
+//                                   item.command.includes('volt')
 //                                     ? parseFloat(item.value) > 4.5 ||
-//                                       (parseFloat(item.value) < 2.0 && item.value !== "1")
-//                                       ? "text-red-600"
-//                                       : ""
-//                                     : ""
+//                                       (parseFloat(item.value) < 2.0 && item.value !== '1')
+//                                       ? 'text-red-600'
+//                                       : ''
+//                                     : ''
 //                                 }`}
 //                               >
 //                                 {item.value}
@@ -157,7 +141,7 @@
 //             </div>
 //           ))}
 //         </div>
-//         {Object.keys(csu2Data).length === 0 && (
+//         {Object.keys(csu2ResponseData).length === 0 && (
 //           <p className="text-center text-gray-500 mt-3">No data available.</p>
 //         )}
 //       </div>
@@ -184,31 +168,51 @@
 
 
 
-
-
-
-//update with dc data
 import React, { useState, useRef } from 'react';
 import { useBatteryContext } from '../BatteryContext';
 import { ResponseData } from './test';
 
+// Mapping of setVoltage commands to expected voltage values
+const EXPECTED_SENT_VOLTAGES: Record<number, number> = {
+  1: 2.0,
+  2: 2.5,
+  3: 2.8,
+  4: 3.3,
+  5: 3.4,
+  6: 3.6,
+  7: 4.0,
+  8: 4.2,
+};
+
+let VOLTAGE_WARNING_THRESHOLD = 0.1;
+let VOLTAGE_CRITICAL_THRESHOLD = 0.2;
+const TEMPERATURE_WARNING_THRESHOLD = 5;
+const TEMPERATURE_CRITICAL_THRESHOLD = 10;
+
 const CSU2: React.FC = () => {
-  const { csu2ResponseData } = useBatteryContext();
+  const { csu2ResponseData, instructions } = useBatteryContext();
   const [selectedCell, setSelectedCell] = useState<number | null>(null);
   const cellRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  const getCellStatus = (dataItems: ResponseData[]) => {
+  const getCellStatus = (dataItems: ResponseData[], setVoltage: number | null, setTemperature: number | null) => {
     const voltageItem = dataItems.find((item) => item.command === 'get_12_csu_volt');
     const tempItem = dataItems.find((item) => item.command === 'get_12_csu_temp');
     const voltage = voltageItem ? parseFloat(voltageItem.value) : null;
     const temp = tempItem ? parseFloat(tempItem.value.replace(' °C', '')) : null;
 
-    if (voltage !== null && voltage < 3.3) return 'critical';
-    if (voltage !== null && voltage < 3.5) return 'warning';
-    if (temp !== null && temp > 60) return 'critical';
-    if (temp !== null && temp > 45) return 'warning';
-    if (dataItems.length === 0) return 'N/A';
-    return 'normal';
+    if (voltage !== null && setVoltage !== null && setVoltage in EXPECTED_SENT_VOLTAGES) {
+      const expectedVoltage = EXPECTED_SENT_VOLTAGES[setVoltage];
+      let voltageGap = Math.abs(expectedVoltage - voltage);
+      if (voltageGap >= VOLTAGE_CRITICAL_THRESHOLD) return 'critical';
+      if (voltageGap >= VOLTAGE_WARNING_THRESHOLD) return 'warning';
+      if (voltageGap = VOLTAGE_CRITICAL_THRESHOLD = VOLTAGE_WARNING_THRESHOLD) return 'normal';
+    }
+    if (temp !== null && setTemperature !== null) {
+      const tempGap = Math.abs(setTemperature - temp);
+      if (tempGap >= TEMPERATURE_CRITICAL_THRESHOLD) return 'critical';
+      if (tempGap >= TEMPERATURE_WARNING_THRESHOLD) return 'warning';
+    }
+    return 'N/A';
   };
 
   const handleCellClick = (cellId: number) => {
@@ -223,6 +227,27 @@ const CSU2: React.FC = () => {
     cellIds.slice(9, 12),
   ];
 
+  // Derive setVoltage from instructions
+  const getSetVoltage = (cellId: number) => {
+    const cellInstructions = instructions.filter((instr) => parseInt(instr.cellNo) === cellId);
+    const setVoltageInstruction = cellInstructions.find((instr) => instr.command === 'set_voltage');
+    if (setVoltageInstruction && setVoltageInstruction.voltage) {
+      const parsedSetVoltage = parseInt(setVoltageInstruction.voltage);
+      return !isNaN(parsedSetVoltage) && parsedSetVoltage >= 1 && parsedSetVoltage <= 8 ? parsedSetVoltage : null;
+    }
+    return null;
+  };
+
+  const getSetTemperature = (cellId: number) => {
+    const cellInstructions = instructions.filter((instr) => parseInt(instr.cellNo) === cellId);
+    const setTempInstruction = cellInstructions.find((instr) => instr.command === 'set_temp');
+    if (setTempInstruction && setTempInstruction.temperature) {
+      const parsedSetTemp = parseFloat(setTempInstruction.temperature);
+      return !isNaN(parsedSetTemp) ? parsedSetTemp : null;
+    }
+    return null;
+  };
+
   return (
     <div className="p-3 bg-gray-50 h-120 w-70 shadow-md flex justify-center border border-gray-200 rounded-md">
       <div className="w-full max-w-6xl relative">
@@ -234,7 +259,9 @@ const CSU2: React.FC = () => {
             <div key={rowIndex} className="grid grid-cols-3 gap-2">
               {row.map((cellId) => {
                 const dataItems = csu2ResponseData[cellId] || [];
-                const status = getCellStatus(dataItems);
+                const setVoltage = getSetVoltage(cellId);
+                const setTemperature = getSetTemperature(cellId);
+                const status = getCellStatus(dataItems, setVoltage, setTemperature);
                 const statusColors = {
                   normal: 'bg-green-100 text-green-800',
                   warning: 'bg-yellow-100 text-yellow-800',
@@ -321,6 +348,20 @@ const CSU2: React.FC = () => {
                               </span>
                             </div>
                           ))}
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs font-medium">Sent Voltage Command:</span>
+                            <span className="text-xs font-semibold">
+                              {setVoltage != null ? setVoltage.toString() : 'N/A'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs font-medium">Expected Voltage:</span>
+                            <span className="text-xs font-semibold">
+                              {setVoltage != null && setVoltage in EXPECTED_SENT_VOLTAGES
+                                ? `${EXPECTED_SENT_VOLTAGES[setVoltage]}V`
+                                : 'N/A'}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     )}

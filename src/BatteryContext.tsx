@@ -6,11 +6,20 @@
 //   command: string;
 //   param1: string;
 //   param2: string;
+//   value: string;
 //   cellNo: string;
 //   cycleNo: string;
 //   voltage: string;
 //   temperature: string;
 //   time: string;
+// }
+
+// interface AIAnalysis {
+//   summary: string;
+//   recommendations: string[];
+//   isLoading: boolean;
+//   error: string | null;
+//   dataHash?: string; // Store hash of data used for analysis
 // }
 
 // interface BatteryContextType {
@@ -26,6 +35,8 @@
 //   setResponseData: (data: Record<number, ResponseData[]>) => void;
 //   instructions: SetInstruction[];
 //   setInstructions: (data: SetInstruction[]) => void;
+//   aiAnalysis: AIAnalysis;
+//   setAIAnalysis: (data: AIAnalysis) => void;
 // }
 
 // const BatteryContext = createContext<BatteryContextType | undefined>(undefined);
@@ -45,6 +56,13 @@
 //     Record<number, ResponseData[]>
 //   >({});
 //   const [instructions, setInstructions] = useState<SetInstruction[]>([]);
+//   const [aiAnalysis, setAIAnalysis] = useState<AIAnalysis>({
+//     summary: "",
+//     recommendations: [],
+//     isLoading: false,
+//     error: null,
+//     dataHash: undefined,
+//   });
 
 //   return (
 //     <BatteryContext.Provider
@@ -61,6 +79,8 @@
 //         setResponseData,
 //         instructions,
 //         setInstructions,
+//         aiAnalysis,
+//         setAIAnalysis,
 //       }}
 //     >
 //       {children}
@@ -85,9 +105,8 @@
 
 
 
-
-import { createContext, useContext, useState, ReactNode } from "react";
-import { ResponseData } from "./components/test";
+import { createContext, useContext, useState, ReactNode } from 'react';
+import { ResponseData } from './components/test';
 
 interface SetInstruction {
   id: number;
@@ -125,6 +144,12 @@ interface BatteryContextType {
   setInstructions: (data: SetInstruction[]) => void;
   aiAnalysis: AIAnalysis;
   setAIAnalysis: (data: AIAnalysis) => void;
+  dcCsuInstructions: SetInstruction[];
+  setDcCsuInstructions: (data: SetInstruction[]) => void;
+  csu1Instructions: SetInstruction[];
+  setCsu1Instructions: (data: SetInstruction[]) => void;
+  csu2Instructions: SetInstruction[];
+  setCsu2Instructions: (data: SetInstruction[]) => void;
 }
 
 const BatteryContext = createContext<BatteryContextType | undefined>(undefined);
@@ -145,12 +170,15 @@ export const BatteryProvider = ({ children }: { children: ReactNode }) => {
   >({});
   const [instructions, setInstructions] = useState<SetInstruction[]>([]);
   const [aiAnalysis, setAIAnalysis] = useState<AIAnalysis>({
-    summary: "",
+    summary: '',
     recommendations: [],
     isLoading: false,
     error: null,
     dataHash: undefined,
   });
+  const [dcCsuInstructions, setDcCsuInstructions] = useState<SetInstruction[]>([]);
+  const [csu1Instructions, setCsu1Instructions] = useState<SetInstruction[]>([]);
+  const [csu2Instructions, setCsu2Instructions] = useState<SetInstruction[]>([]);
 
   return (
     <BatteryContext.Provider
@@ -169,6 +197,12 @@ export const BatteryProvider = ({ children }: { children: ReactNode }) => {
         setInstructions,
         aiAnalysis,
         setAIAnalysis,
+        dcCsuInstructions,
+        setDcCsuInstructions,
+        csu1Instructions,
+        setCsu1Instructions,
+        csu2Instructions,
+        setCsu2Instructions,
       }}
     >
       {children}
@@ -179,7 +213,7 @@ export const BatteryProvider = ({ children }: { children: ReactNode }) => {
 export const useBatteryContext = () => {
   const context = useContext(BatteryContext);
   if (!context) {
-    throw new Error("useBatteryContext must be used within a BatteryProvider");
+    throw new Error('useBatteryContext must be used within a BatteryProvider');
   }
   return context;
 };
