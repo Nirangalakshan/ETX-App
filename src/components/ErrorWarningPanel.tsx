@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { ResponseData } from './test';
-import { getCellStatus, CellStatus } from '../utils/cellStatusUtils';
+// ErrorWarningPanel.tsx
+import React from 'react';
+import { useBatteryContext } from '../BatteryContext';
+
+type CellStatus = 'normal' | 'warning' | 'critical' | 'N/A';
 
 interface ErrorWarningItem {
   label: string;
@@ -8,107 +10,26 @@ interface ErrorWarningItem {
   details?: string;
 }
 
-interface ErrorWarningPanelProps {
-  csu1Data?: Record<number, ResponseData[]>;
-  csu2Data?: Record<number, ResponseData[]>;
-  daisyData?: Record<number, Record<number, ResponseData[]>>;
-}
+const ErrorWarningPanel: React.FC = () => {
+  const { csu1Statuses, csu2Statuses, daisyStatuses } = useBatteryContext();
 
-const ErrorWarningPanel: React.FC<ErrorWarningPanelProps> = ({
-  csu1Data = {},
-  csu2Data = {},
-  daisyData = {}
-}) => {
-  const [errors, setErrors] = useState<ErrorWarningItem[]>([]);
-  const [warnings, setWarnings] = useState<ErrorWarningItem[]>([]);
-  const [normals, setNormals] = useState<ErrorWarningItem[]>([]);
+  const errors = [
+    ...csu1Statuses.filter(item => item.status === 'critical'),
+    ...csu2Statuses.filter(item => item.status === 'critical'),
+    ...daisyStatuses.filter(item => item.status === 'critical'),
+  ];
 
-  useEffect(() => {
-    const newErrors: ErrorWarningItem[] = [];
-    const newWarnings: ErrorWarningItem[] = [];
-    const newNormals: ErrorWarningItem[] = [];
+  const warnings = [
+    ...csu1Statuses.filter(item => item.status === 'warning'),
+    ...csu2Statuses.filter(item => item.status === 'warning'),
+    ...daisyStatuses.filter(item => item.status === 'warning'),
+  ];
 
-    // Log input data for debugging
-    console.log('Input data:', { csu1Data, csu2Data, daisyData });
-
-    // Process CSU1 cells
-    if (csu1Data && typeof csu1Data === 'object') {
-      Object.entries(csu1Data).forEach(([cellNo, dataItems]) => {
-        if (!dataItems || !Array.isArray(dataItems)) {
-          console.warn(`CSU1 - Cell ${cellNo}: Invalid dataItems`);
-          return;
-        }
-        console.log(`CSU1 - Cell ${cellNo} dataItems:`, dataItems);
-        const setVoltage = Number(cellNo);
-        const setTemperature = null; // Adjust if per-cell set temperature is available
-        const { status, details } = getCellStatus(dataItems, setVoltage, setTemperature, 'get_12_csu_volt', 'get_12_csu_temp');
-        console.log(`CSU1 - Cell ${cellNo} status:`, status);
-        
-        if (status === 'critical') {
-          newErrors.push({ label: `CSU1 - Cell ${cellNo}`, status, details });
-        } else if (status === 'warning') {
-          newWarnings.push({ label: `CSU1 - Cell ${cellNo}`, status, details });
-        } else if (status === 'normal') {
-          newNormals.push({ label: `CSU1 - Cell ${cellNo}`, status, details });
-        }
-      });
-    }
-
-    // Process CSU2 cells
-    if (csu2Data && typeof csu2Data === 'object') {
-      Object.entries(csu2Data).forEach(([cellNo, dataItems]) => {
-        if (!dataItems || !Array.isArray(dataItems)) {
-          console.warn(`CSU2 - Cell ${cellNo}: Invalid dataItems`);
-          return;
-        }
-        console.log(`CSU2 - Cell ${cellNo} dataItems:`, dataItems);
-        const setVoltage = Number(cellNo);
-        const setTemperature = null;
-        const { status, details } = getCellStatus(dataItems, setVoltage, setTemperature, 'get_12_csu_volt', 'get_12_csu_temp');
-        console.log(`CSU2 - Cell ${cellNo} status:`, status);
-        
-        if (status === 'critical') {
-          newErrors.push({ label: `CSU2 - Cell ${cellNo}`, status, details });
-        } else if (status === 'warning') {
-          newWarnings.push({ label: `CSU2 - Cell ${cellNo}`, status, details });
-        } else if (status === 'normal') {
-          newNormals.push({ label: `CSU2 - Cell ${cellNo}`, status, details });
-        }
-      });
-    }
-
-    // Process Daisy Chain cells
-    if (daisyData && typeof daisyData === 'object') {
-      Object.entries(daisyData).forEach(([icNo, cellMap]) => {
-        if (cellMap && typeof cellMap === 'object') {
-          Object.entries(cellMap).forEach(([cellNo, dataItems]) => {
-            if (!dataItems || !Array.isArray(dataItems)) {
-              console.warn(`Daisy Chain IC${icNo} - Cell ${cellNo}: Invalid dataItems`);
-              return;
-            }
-            console.log(`Daisy Chain IC${icNo} - Cell ${cellNo} dataItems:`, dataItems);
-            const setVoltage = Number(cellNo);
-            const setTemperature = null;
-            const { status, details } = getCellStatus(dataItems, setVoltage, setTemperature, 'get_dc_csu_volt', 'get_dc_csu_temp');
-            console.log(`Daisy Chain IC${icNo} - Cell ${cellNo} status:`, status);
-            
-            if (status === 'critical') {
-              newErrors.push({ label: `Daisy Chain IC${icNo} - Cell ${cellNo}`, status, details });
-            } else if (status === 'warning') {
-              newWarnings.push({ label: `Daisy Chain IC${icNo} - Cell ${cellNo}`, status, details });
-            } else if (status === 'normal') {
-              newNormals.push({ label: `Daisy Chain IC${icNo} - Cell ${cellNo}`, status, details });
-            }
-          });
-        }
-      });
-    }
-
-    console.log('Processed data:', { errors: newErrors, warnings: newWarnings, normals: newNormals });
-    setErrors(newErrors);
-    setWarnings(newWarnings);
-    setNormals(newNormals);
-  }, [csu1Data, csu2Data, daisyData]);
+  const normals = [
+    ...csu1Statuses.filter(item => item.status === 'normal'),
+    ...csu2Statuses.filter(item => item.status === 'normal'),
+    ...daisyStatuses.filter(item => item.status === 'normal'),
+  ];
 
   const renderList = (items: ErrorWarningItem[], color: string, bgColor: string) => (
     <ul className="space-y-2">
