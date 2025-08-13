@@ -170,7 +170,7 @@
 
 
 
-
+//almost correct
 import React, { useState, useRef } from 'react';
 import { useBatteryContext } from '../BatteryContext';
 import { ResponseData } from './test';
@@ -187,8 +187,8 @@ const EXPECTED_SENT_VOLTAGES: Record<number, number> = {
   8: 4.2,
 };
 
-let VOLTAGE_WARNING_THRESHOLD = 0.1;
-let VOLTAGE_CRITICAL_THRESHOLD = 0.2;
+const VOLTAGE_WARNING_THRESHOLD = 0.1;
+const VOLTAGE_CRITICAL_THRESHOLD = 0.2;
 const TEMPERATURE_WARNING_THRESHOLD = 5;
 const TEMPERATURE_CRITICAL_THRESHOLD = 10;
 
@@ -205,10 +205,10 @@ const CSU1: React.FC = () => {
 
     if (voltage !== null && setVoltage !== null && setVoltage in EXPECTED_SENT_VOLTAGES) {
       const expectedVoltage = EXPECTED_SENT_VOLTAGES[setVoltage];
-      let voltageGap = Math.abs(expectedVoltage - voltage);
+      const voltageGap = Math.abs(expectedVoltage - voltage);
       if (voltageGap >= VOLTAGE_CRITICAL_THRESHOLD) return 'critical';
       if (voltageGap >= VOLTAGE_WARNING_THRESHOLD) return 'warning';
-      if (voltageGap = VOLTAGE_CRITICAL_THRESHOLD = VOLTAGE_WARNING_THRESHOLD) return 'normal';
+      else return 'normal';
     }
     if (temp !== null && setTemperature !== null) {
       const tempGap = Math.abs(setTemperature - temp);

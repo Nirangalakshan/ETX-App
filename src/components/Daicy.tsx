@@ -276,7 +276,7 @@ const Daicy: React.FC = () => {
 
   // Derive setVoltage from instructions
   const getSetVoltage = (dcIc: number, cellNo: number) => {
-    const overallCellNo = (dcIc * 12) + (cellNo + 1);
+    const overallCellNo = (dcIc * 12) + (cellNo);
     console.log('getSetVoltage: Checking', { dcIc, cellNo, overallCellNo, instructions });
     const cellInstructions = instructions.filter((instr) => parseInt(instr.cellNo) === overallCellNo);
     console.log('getSetVoltage: Filtered instructions', cellInstructions);

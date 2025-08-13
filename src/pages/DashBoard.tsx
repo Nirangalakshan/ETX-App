@@ -1019,7 +1019,7 @@ const DashBoard: React.FC = () => {
   }, [csu1Cells, csu2Cells, dcCsuResponseData]);
 
   return (
-    <div className="flex flex-col max-h-full bg-zinc-100">
+    <div className="flex flex-col max-h-full max-w-full bg-zinc-100">
       <MenuBar />
       <div className="flex-1 p-4">
         <div className="flex flex-row gap-4 items-start">
@@ -1043,9 +1043,9 @@ const DashBoard: React.FC = () => {
               csu2Cells.length > 0 &&
               dcCsuResponseData ? (
                 <ErrorWarningPanel
-                  csu1Cells={csu1Cells}
-                  csu2Cells={csu2Cells}
-                  daisyChainData={dcCsuResponseData}
+                  csu1Data={csu1ResponseData}
+                  csu2Data={csu2ResponseData}
+                  daisyData={dcCsuResponseData}
                 />
               ) : (
                 <div className="text-gray-500 text-sm bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
