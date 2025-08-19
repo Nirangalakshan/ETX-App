@@ -3,112 +3,8 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-process.chdir(__dirname);
 const require2 = createRequire(import.meta.url);
-const dotenv = require2("dotenv");
-const envPaths = [
-  path.join(__dirname, "..", ".env"),
-  path.join(process.cwd(), ".env"),
-  ".env"
-];
-for (const envPath of envPaths) {
-  try {
-    const result = dotenv.config({ path: envPath });
-    if (!result.error) {
-      console.log(`Loaded .env from: ${envPath}`);
-      break;
-    }
-  } catch (error) {
-    console.log(`Failed to load .env from: ${envPath}`);
-  }
-}
 const { SerialPort } = require2("serialport");
-const fetch = require2("node-fetch");
-ipcMain.handle("fetch-ai-analysis", async (_event, dataSummary) => {
-  var _a, _b;
-  try {
-    const finalApiKey = "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";
-    console.log("Using hardcoded API key for testing");
-    console.log("API Key length:", finalApiKey.length);
-    console.log("API Key starts with:", finalApiKey.substring(0, 15) + "...");
-    const testResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${finalApiKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        "model": "openrouter/horizon-beta",
-        "messages": [
-          {
-            "role": "user",
-            "content": "Hello, this is a test message."
-          }
-        ],
-        "max_tokens": 50
-      })
-    });
-    console.log("Test response status:", testResponse.status);
-    if (!testResponse.ok) {
-      const testErrorText = await testResponse.text();
-      console.log("Test error response:", testErrorText);
-      throw new Error(`API Key test failed: ${testResponse.status} - ${testErrorText}`);
-    }
-    console.log("API key test successful, proceeding with main request...");
-    const prompt = `Analyze this battery system data and provide a brief summary: ${JSON.stringify(dataSummary, null, 2)}`;
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${finalApiKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        "model": "openrouter/horizon-beta",
-        "messages": [
-          {
-            "role": "user",
-            "content": prompt
-          }
-        ],
-        "max_tokens": 500,
-        "temperature": 0.3
-      })
-    });
-    console.log("Response status:", response.status);
-    console.log("Response headers:", Object.fromEntries(response.headers.entries()));
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.log("Error response body:", errorText);
-      throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
-    }
-    const data = await response.json();
-    const content = (_b = (_a = data.choices[0]) == null ? void 0 : _a.message) == null ? void 0 : _b.content;
-    if (!content) {
-      throw new Error("No content received from AI API");
-    }
-    try {
-      const parsedResponse = JSON.parse(content);
-      return {
-        summary: parsedResponse.summary || "No summary provided",
-        recommendations: Array.isArray(parsedResponse.recommendations) ? parsedResponse.recommendations : ["No specific recommendations provided"],
-        error: null
-      };
-    } catch (parseError) {
-      return {
-        summary: content,
-        recommendations: ["Please review the analysis above for detailed recommendations"],
-        error: null
-      };
-    }
-  } catch (error) {
-    console.error("Error fetching AI analysis:", error);
-    return {
-      summary: "",
-      recommendations: [],
-      error: error instanceof Error ? error.message : "Failed to fetch AI analysis"
-    };
-  }
-});
 ipcMain.handle("list-ports", async () => {
   try {
     const ports = await SerialPort.list();
@@ -187,13 +83,13 @@ ipcMain.handle(
             console.log("Serial HEX data received:", hexString);
             console.log("Serial DECIMAL data received:", decimalString);
             let voltageVolts = void 0;
-            if (frame.length >= 8 && frame[0] === 7 && (frame[2] === 166 || frame[2] === 167)) {
-              const voltageLimit = (frame[2] << 8 | frame[3]) / 1e4;
+            if (frame[0] === 7 && (frame[2] === 166 || frame[2] === 167)) {
+              const voltageLimit = (frame[4] << 8 | frame[5]) / 1e4;
               voltageVolts = voltageLimit.toFixed(3);
               console.log(`Voltage: ${voltageVolts} V`);
             }
             let tempCelsius = void 0;
-            if (frame.length >= 8 && frame[0] === 7 && frame[2] === 165) {
+            if (frame[0] === 7 && frame[2] === 165) {
               const tempRaw = frame[4] << 8 | frame[5];
               const tempC = tempRaw / 100;
               tempCelsius = tempC.toFixed(1);
@@ -255,10 +151,10 @@ ipcMain.handle("close-port", async () => {
     throw error;
   }
 });
-process.env.APP_ROOT = path.join(__dirname, "..");
+process.env.APP_ROOT = __dirname;
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
 const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
-const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
+const RENDERER_DIST = path.join(__dirname, "../dist");
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, "public") : RENDERER_DIST;
 let win;
 function createWindow() {
@@ -283,7 +179,9 @@ function createWindow() {
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);
   } else {
-    win.loadFile(path.join(RENDERER_DIST, "index.html"));
+    const filePath = path.join(RENDERER_DIST, "index.html");
+    console.log("Loading file:", filePath);
+    win.loadFile(filePath);
     win.setTitle("Electron Vite App");
   }
   ipcMain.on("minimize-window", () => {
