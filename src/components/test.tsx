@@ -2955,18 +2955,21 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
           frame.push(0);
         }
 
-        if (commandCode === "03") {
+         if (commandCode === "03") {
           if (command === "set_voltage") {
-            const value = parseFloat(entry.voltage);
-            const scaledValue = Math.round(value * 10000);
-            if (isNaN(value) || scaledValue < 0 || scaledValue > 65535) {
-              errors.push(
-                `Invalid voltage for ${command} at index ${index}: ${entry.voltage ?? "undefined"}`
+            const value = parseInt(entry.voltage, 10);
+            if (isNaN(value) || value < 0 || value > 255) {
+              setError(
+                `Invalid voltage for ${command}: ${
+                  entry.voltage ?? "undefined"
+                }`
               );
               continue;
             }
-            frame[4] = (scaledValue >> 8) & 0xff;
-            frame[5] = scaledValue & 0xff;
+            frame[4] = value & 0xff;
+            if (frame.length > 5) {
+              frame.fill(0, 5, totalFrameLength);
+            }
             if (cellNo !== undefined && cellNo >= 0 && cellNo <= 23) {
               newCellData[cellNo].setVoltage = value;
             }
