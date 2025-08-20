@@ -160,6 +160,7 @@ import MenuBar from "../components/MenuBar";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import icon from "../../public/icon.svg";
 
 localStorage.removeItem("IsLoggedIn");
 
@@ -233,7 +234,7 @@ const Login: React.FC = () => {
       <div className="flex-1 flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-sm sm:max-w-md p-6 sm:p-8 bg-white/80 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 transition-all duration-300 hover:shadow-3xl">
           <img
-            src="/icon.svg"
+            src={icon}
             alt="Logo"
             className="mx-auto mb-6 w-16 h-16 sm:w-20 sm:h-20 transition-transform duration-300 hover:scale-110 rounded-4xl"
           />
