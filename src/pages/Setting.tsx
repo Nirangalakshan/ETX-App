@@ -1,4 +1,3 @@
-//new updated code
 import React, { useState, useRef, useEffect } from "react";
 import MenuBar from "../components/MenuBar";
 
@@ -149,8 +148,12 @@ const Settings: React.FC = () => {
                   (item.command === "set_temp" ||
                   item.command === "get_temperature" ||
                   item.command === "get_11_csu_temp" ||
-                  item.command === "get_12_csu_temp"
+                  item.command === "get_12_csu_temp" ||
+                  item.command === "get_dc_csu_temp"
                     ? 5
+                    : item.command === "get_11_csu_volt" ||
+                      item.command === "get_12_csu_volt"
+                    ? 11
                     : 22)
                   ? item.cellNo
                   : "";
@@ -164,8 +167,8 @@ const Settings: React.FC = () => {
               return {
                 id: index + 1,
                 command: item.command || "",
-                param1: item.param1 || "",
-                param2: item.param2 || "",
+                param1: item.command === "cycle" ? item.param1 || "" : "",
+                param2: item.command === "cycle" ? item.param2 || "" : "",
                 value,
                 cellNo,
                 cycleNo: item.cycleNo || "",
@@ -216,13 +219,10 @@ const Settings: React.FC = () => {
       case "daisy_chain":
       case "set_balance":
         return field === "cellNo" || field === "value";
-     
-        
       case "cycle":
-        return field === "param1" || field === "param2" || field === "cycleNo";
+        return field === "param1" || field === "param2";
       case "set_delay":
         return field === "value" || field === "cellNo";
-      
       case "get_voltage":
       case "get_current":
       case "get_11_csu_volt":
@@ -235,7 +235,6 @@ const Settings: React.FC = () => {
       case "get_dc_csu_ow":
       case "get_dc_csu_balance":
       case "get_dc_csu_temp":
-      
         return field === "cellNo";
       case "get_temperature":
       case "get_temperature_res":
@@ -245,7 +244,6 @@ const Settings: React.FC = () => {
       case "end":
       case "reset":
         return false;
-
       case "set_automatic_sequence":
       case "set_cell_led":
         return field === "value" || field === "cellNo";
@@ -259,28 +257,14 @@ const Settings: React.FC = () => {
       command === "set_temp" ||
       command === "get_temperature" ||
       command === "get_11_csu_temp" ||
-      command === "get_dc_csu_temp" ||
-      command === "get_12_csu_temp"
+      command === "get_12_csu_temp" ||
+      command === "get_dc_csu_temp"
         ? 6
+        : command === "get_11_csu_volt" || command === "get_12_csu_volt"
+        ? 12
         : 24;
-    if (
-      command === "get_11_csu_volt" ||
-      command === "get_12_csu_volt" 
-    ) {
-      return Array.from({ length: 12 }, (_, i) => i);
-    }
     return Array.from({ length: maxCells }, (_, i) => i);
   };
-
-  // const csuVoltageOptions = (command: string) => {
-  //   const maxCells =
-  
-  //     command === "get_11_csu_volt" ||
-  //     command === "get_12_csu_volt"
-  //       ? 11
-  //       : 24;
-  //   return Array.from({ length: maxCells }, (_, i) => i);
-  // };
 
   const getVoltageOptions = () => {
     return Array.from({ length: 8 }, (_, i) => String(i + 1));
@@ -303,7 +287,7 @@ const Settings: React.FC = () => {
     <div className="flex flex-col h-screen bg-gray-50 font-inter">
       <MenuBar />
       <div className="flex-1 p-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+        <div className="bg-white p-6 rounded-xl toast-shadow-sm border border-gray-200">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-semibold text-gray-800">Set Instructions</h2>
             <div className="flex space-x-3">
@@ -406,36 +390,37 @@ const Settings: React.FC = () => {
                                 value:
                                   newCommand === "set_ow" ||
                                   newCommand === "set_balance" ||
-                                  newCommand === "daisy_chain"
+                                  newCommand === "daisy_chain" ||
+                                  newCommand === "set_automatic_sequence"
                                     ? row.value
                                     : "",
                                 cellNo:
                                   (newCommand === "set_temp" ||
                                   newCommand === "get_temperature" ||
                                   newCommand === "get_11_csu_temp" ||
-                                  newCommand === "get_dc_csu_temp" ||
-                                  newCommand === "get_12_csu_temp") &&
+                                  newCommand === "get_12_csu_temp" ||
+                                  newCommand === "get_dc_csu_temp") &&
                                   parseInt(row.cellNo) > 5
+                                    ? ""
+                                    : (newCommand === "get_11_csu_volt" ||
+                                      newCommand === "get_12_csu_volt") &&
+                                      parseInt(row.cellNo) > 11
                                     ? ""
                                     : [
                                         "delay",
                                         "end",
                                         "reset",
+                                        "cycle",
                                         "cell_led",
                                       ].includes(newCommand)
                                     ? ""
-                                    // : (newCommand === "get_11_csu_volt" ||
-                                    //   newCommand === "get_12_csu_volt") &&
-                                    //   parseInt(row.cellNo) > 11
-                                    // ? ""
                                     : row.cellNo,
-                                cycleNo:
-                                  newCommand === "cycle" ? row.cycleNo : "",
+                                cycleNo: "",
                                 voltage:
                                   newCommand === "set_voltage" ? row.voltage : "",
                                 temperature:
                                   newCommand === "set_temp" ? row.temperature : "",
-                                time: newCommand === "delay" ? row.time : "",
+                                time: newCommand === "set_delay" ? row.time : "",
                               };
                               return newInstructions;
                             });
@@ -473,9 +458,7 @@ const Settings: React.FC = () => {
                             GET DC CSU BALANCE
                           </option>
                           <option value="get_dc_csu_temp">GET DC CSU TEMP</option>
-                          
-                          
-
+                          <option value="cycle">CYCLE</option>
                         </select>
                       </td>
                       <td className="px-6 py-4">
@@ -564,7 +547,6 @@ const Settings: React.FC = () => {
                           disabled={!isFieldEnabled(row.command, "cellNo")}
                         >
                           <option value="">Select cell</option>
-
                           {getCellOptions(row.command).map((cell) => (
                             <option key={cell} value={String(cell)}>
                               {cell}
@@ -577,7 +559,9 @@ const Settings: React.FC = () => {
                           <select
                             value={row.voltage}
                             onChange={(e) =>
-                              handleInputChange(index, "voltage", e.target.value)
+                              handleInputChange(index, "voltage", e.target.value
+
+)
                             }
                             className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           >
@@ -609,7 +593,6 @@ const Settings: React.FC = () => {
                           />
                         )}
                       </td>
-
                       <td className="px-6 py-4">
                         <input
                           type="text"
@@ -637,7 +620,7 @@ const Settings: React.FC = () => {
                           onChange={(e) =>
                             handleInputChange(index, "time", e.target.value)
                           }
-                          className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                          className={`w-full p-2 border border-gray-300 rounded-md focus: ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
                             !isFieldEnabled(row.command, "time")
                               ? "bg-gray-100 text-gray-400"
                               : ""
@@ -735,7 +718,7 @@ const Settings: React.FC = () => {
                 >
                   <path
                     fillRule="evenodd"
-                    d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                    d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2 h5V4a1 1 0 011-1z"
                     clipRule="evenodd"
                   />
                 </svg>

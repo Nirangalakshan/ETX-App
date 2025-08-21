@@ -1,3 +1,5 @@
+
+//updated for save instructions to json file and run instructions in loop
 import React, { useEffect, useState, useRef } from "react";
 import { useBatteryContext } from "../BatteryContext";
 import { useSerial } from "../SerialContext";
@@ -56,31 +58,150 @@ const instructionToHexMap: Record<
     excludeFunctionCode?: boolean;
   }
 > = {
-  get_voltage: { commandCode: "04", functionCode: "01", cellNoRange: [0, 23], valueType: "float" },
-  get_temp: { commandCode: "04", functionCode: "02", cellNoRange: [0, 5], valueType: "temp" },
-  get_current: { commandCode: "04", functionCode: "03", cellNoRange: [0, 23], valueType: "current" },
-  get_temperature_res: { commandCode: "04", functionCode: "04", cellNoRange: [0, 23], valueType: "binary" },
-  get_dc_csu_volt: { commandCode: "04", functionCode: "05", cellNoRange: [0, 23], valueType: "dc_csu_voltage" },
-  get_dc_csu_temp: { commandCode: "04", functionCode: "06", cellNoRange: [0, 5], valueType: "int" },
-  get_dc_csu_balance: { commandCode: "04", functionCode: "07", cellNoRange: [0, 22], valueType: "binary" },
-  get_dc_csu_ow: { commandCode: "04", functionCode: "08", cellNoRange: [0, 23], valueType: "binary" },
-  get_11_csu_volt: { commandCode: "04", functionCode: "09", cellNoRange: [0, 24], valueType: "11_csu_voltage" },
-  get_11_csu_temp: { commandCode: "04", functionCode: "0A", cellNoRange: [0, 5], valueType: "int" },
-  get_11_csu_balance: { commandCode: "04", functionCode: "0B", cellNoRange: [0, 22], valueType: "binary" },
-  get_11_csu_ow: { commandCode: "04", functionCode: "0C", cellNoRange: [0, 23], valueType: "binary" },
-  get_12_csu_volt: { commandCode: "04", functionCode: "0D", cellNoRange: [0, 24], valueType: "12_csu_voltage" },
-  get_12_csu_temp: { commandCode: "04", functionCode: "0E", cellNoRange: [0, 5], valueType: "int" },
-  get_12_csu_balance: { commandCode: "04", functionCode: "0F", cellNoRange: [0, 22], valueType: "binary" },
-  get_12_csu_ow: { commandCode: "04", functionCode: "10", cellNoRange: [0, 23], valueType: "binary" },
-  set_voltage: { commandCode: "03", functionCode: "01", cellNoRange: [0, 23], valueType: "float" },
-  set_temp: { commandCode: "03", functionCode: "02", cellNoRange: [0, 5], valueType: "temp" },
-  set_balance: { commandCode: "03", functionCode: "03", cellNoRange: [0, 23], valueType: "binary" },
-  set_ow: { commandCode: "03", functionCode: "04", cellNoRange: [0, 23], valueType: "binary" },
-  daisy_chain: { commandCode: "03", functionCode: "05", cellNoRange: [0, 23], valueType: "binary" },
-  set_delay: { commandCode: "03", functionCode: "06", cellNoRange: [0, 23], valueType: "int" },
+  get_voltage: {
+    commandCode: "04",
+    functionCode: "01",
+    cellNoRange: [0, 23],
+    valueType: "float",
+  },
+  get_temp: {
+    commandCode: "04",
+    functionCode: "02",
+    cellNoRange: [0, 5],
+    valueType: "temp",
+  },
+  get_current: {
+    commandCode: "04",
+    functionCode: "03",
+    cellNoRange: [0, 23],
+    valueType: "current",
+  },
+  get_temperature_res: {
+    commandCode: "04",
+    functionCode: "04",
+    cellNoRange: [0, 23],
+    valueType: "binary",
+  },
+  get_dc_csu_volt: {
+    commandCode: "04",
+    functionCode: "05",
+    cellNoRange: [0, 23],
+    valueType: "dc_csu_voltage",
+  },
+  get_dc_csu_temp: {
+    commandCode: "04",
+    functionCode: "06",
+    cellNoRange: [0, 5],
+    valueType: "int",
+  },
+  get_dc_csu_balance: {
+    commandCode: "04",
+    functionCode: "07",
+    cellNoRange: [0, 22],
+    valueType: "binary",
+  },
+  get_dc_csu_ow: {
+    commandCode: "04",
+    functionCode: "08",
+    cellNoRange: [0, 23],
+    valueType: "binary",
+  },
+  get_11_csu_volt: {
+    commandCode: "04",
+    functionCode: "09",
+    cellNoRange: [0, 24],
+    valueType: "11_csu_voltage",
+  },
+  get_11_csu_temp: {
+    commandCode: "04",
+    functionCode: "0A",
+    cellNoRange: [0, 5],
+    valueType: "int",
+  },
+  get_11_csu_balance: {
+    commandCode: "04",
+    functionCode: "0B",
+    cellNoRange: [0, 22],
+    valueType: "binary",
+  },
+  get_11_csu_ow: {
+    commandCode: "04",
+    functionCode: "0C",
+    cellNoRange: [0, 23],
+    valueType: "binary",
+  },
+  get_12_csu_volt: {
+    commandCode: "04",
+    functionCode: "0D",
+    cellNoRange: [0, 24],
+    valueType: "12_csu_voltage",
+  },
+  get_12_csu_temp: {
+    commandCode: "04",
+    functionCode: "0E",
+    cellNoRange: [0, 5],
+    valueType: "int",
+  },
+  get_12_csu_balance: {
+    commandCode: "04",
+    functionCode: "0F",
+    cellNoRange: [0, 22],
+    valueType: "binary",
+  },
+  get_12_csu_ow: {
+    commandCode: "04",
+    functionCode: "10",
+    cellNoRange: [0, 23],
+    valueType: "binary",
+  },
+  set_voltage: {
+    commandCode: "03",
+    functionCode: "01",
+    cellNoRange: [0, 23],
+    valueType: "float",
+  },
+  set_temp: {
+    commandCode: "03",
+    functionCode: "02",
+    cellNoRange: [0, 5],
+    valueType: "temp",
+  },
+  set_balance: {
+    commandCode: "03",
+    functionCode: "03",
+    cellNoRange: [0, 23],
+    valueType: "binary",
+  },
+  set_ow: {
+    commandCode: "03",
+    functionCode: "04",
+    cellNoRange: [0, 23],
+    valueType: "binary",
+  },
+  daisy_chain: {
+    commandCode: "03",
+    functionCode: "05",
+    cellNoRange: [0, 23],
+    valueType: "binary",
+  },
+  set_delay: {
+    commandCode: "03",
+    functionCode: "06",
+    cellNoRange: [0, 23],
+    valueType: "int",
+  },
   set_cell_led: { commandCode: "03", functionCode: "07", valueType: "binary" },
-  set_automatic_sequence: { commandCode: "03", functionCode: "08", valueType: "binary" },
-  get_voltage_limits: { commandCode: "A6", functionCode: "00", cellNoRange: [0, 24], valueType: "voltage_limits" },
+  set_automatic_sequence: {
+    commandCode: "03",
+    functionCode: "08",
+    valueType: "binary",
+  },
+  get_voltage_limits: {
+    commandCode: "A6",
+    functionCode: "00",
+    cellNoRange: [0, 24],
+    valueType: "voltage_limits",
+  },
 };
 
 const calculateCRC16 = (data: number[]): number => {
@@ -276,7 +397,9 @@ const parseSentSetCommand = (
 
   if (!commandEntry) {
     console.warn(
-      `SerialTerminal: Unknown set command (functionCode: ${functionCode.toString(16)})`
+      `SerialTerminal: Unknown set command (functionCode: ${functionCode.toString(
+        16
+      )})`
     );
     return null;
   }
@@ -423,6 +546,8 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
     DCCSU: [],
     DaisyChain: [],
   });
+  const [cycleCount, setCycleCount] = useState(1);
+  const [currentCycle, setCurrentCycle] = useState(0);
   const [fileName, setFileName] = useState<string>("");
   const [hexLines, setHexLines] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -432,6 +557,7 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
     cellNo?: number;
   } | null>(null);
   const [cellData, setCellData] = useState<CellData[]>([]);
+  const [cycleData, setCycleData] = useState<Record<string, any>[]>([]);
 
   const setReceivedRef = useRef(setReceived);
   const lastSentCommandRef = useRef(lastSentCommand);
@@ -465,7 +591,7 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
       daisyChain: null,
     }));
     setCellData(initialCellData);
-    console.log('SerialTerminal: Initialized cellData:', initialCellData);
+    console.log("SerialTerminal: Initialized cellData:", initialCellData);
   }, []);
 
   useEffect(() => {
@@ -669,7 +795,10 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
         return;
       }
 
-      if (cellNoRange && (isNaN(cellNo) || cellNo < cellNoRange[0] || cellNo > cellNoRange[1])) {
+      if (
+        cellNoRange &&
+        (isNaN(cellNo) || cellNo < cellNoRange[0] || cellNo > cellNoRange[1])
+      ) {
         console.warn(
           `SerialTerminal: Invalid cellNo ${cellNo} for command ${command}`
         );
@@ -686,7 +815,9 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
         return;
       }
 
-      console.log(`SerialTerminal: Parsed cellNo: ${cellNo}, value: ${parsedValue} for command ${command}`);
+      console.log(
+        `SerialTerminal: Parsed cellNo: ${cellNo}, value: ${parsedValue} for command ${command}`
+      );
 
       logHexCommand(
         "Received",
@@ -714,7 +845,9 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
                       ? parseFloat(parsedValue.replace(" °C", ""))
                       : cell.temperature,
                   voltageLimits:
-                    command === "get_voltage_limits" ? parsedValue : cell.voltageLimits,
+                    command === "get_voltage_limits"
+                      ? parsedValue
+                      : cell.voltageLimits,
                   csu11Voltage:
                     command === "get_11_csu_volt" && parsedValue
                       ? parseFloat(parsedValue)
@@ -817,7 +950,9 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
       console.log(`SerialTerminal: Categorizing command: ${command}`);
       if (command.includes("_11_csu_")) {
         setCsu1ResponseData((prevData) => {
-          const existingDataForCell = Array.isArray(prevData[cellNo]) ? prevData[cellNo] : [];
+          const existingDataForCell = Array.isArray(prevData[cellNo])
+            ? prevData[cellNo]
+            : [];
           const newData = {
             ...prevData,
             [cellNo]: [...existingDataForCell, newResponseEntry],
@@ -830,7 +965,9 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
         });
       } else if (command.includes("_12_csu_")) {
         setCsu2ResponseData((prevData) => {
-          const existingDataForCell = Array.isArray(prevData[cellNo]) ? prevData[cellNo] : [];
+          const existingDataForCell = Array.isArray(prevData[cellNo])
+            ? prevData[cellNo]
+            : [];
           const newData = {
             ...prevData,
             [cellNo]: [...existingDataForCell, newResponseEntry],
@@ -843,7 +980,9 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
         });
       } else if (command === "daisy_chain") {
         setDaisyChainData((prevData) => {
-          const existingDataForCell = Array.isArray(prevData[cellNo]) ? prevData[cellNo] : [];
+          const existingDataForCell = Array.isArray(prevData[cellNo])
+            ? prevData[cellNo]
+            : [];
           const newData = {
             ...prevData,
             [cellNo]: [...existingDataForCell, newResponseEntry],
@@ -858,7 +997,9 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
         const dcIc = hexArray[2];
         setDcCsuResponseData((prevData) => {
           const existingDataForDcIc = prevData[dcIc] || {};
-          const existingDataForCell = Array.isArray(existingDataForDcIc[cellNo]) ? existingDataForDcIc[cellNo] : [];
+          const existingDataForCell = Array.isArray(existingDataForDcIc[cellNo])
+            ? existingDataForDcIc[cellNo]
+            : [];
           const newDataForCell = [...existingDataForCell, newResponseEntry];
           const newData = {
             ...prevData,
@@ -875,7 +1016,9 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
         });
       } else {
         setResponseData((prevData) => {
-          const existingDataForCell = Array.isArray(prevData[cellNo]) ? prevData[cellNo] : [];
+          const existingDataForCell = Array.isArray(prevData[cellNo])
+            ? prevData[cellNo]
+            : [];
           const newData = {
             ...prevData,
             [cellNo]: [...existingDataForCell, newResponseEntry],
@@ -964,6 +1107,8 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
       }
 
       setInstructions(json);
+      console.log("✅ Uploaded instructions:", json.map(i => i.command));
+
 
       const newCellData = Array.from({ length: 24 }, (_, i) => ({
         id: i,
@@ -1008,7 +1153,9 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
 
         if (!command || !instructionToHexMap[command]) {
           errors.push(
-            `Invalid or unmapped command at index ${index}: ${entry.command || "undefined"}`
+            `Invalid or unmapped command at index ${index}: ${
+              entry.command || "undefined"
+            }`
           );
           continue;
         }
@@ -1030,7 +1177,9 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
             cellNo > cellNoRange[1]
           ) {
             errors.push(
-              `Invalid cellNo for ${command} at index ${index}: ${entry.cellNo || "undefined"}`
+              `Invalid cellNo for ${command} at index ${index}: ${
+                entry.cellNo || "undefined"
+              }`
             );
             continue;
           }
@@ -1044,12 +1193,12 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
           frame.push(0);
         }
 
-         if (commandCode === "03") {
+        if (commandCode === "03") {
           if (command === "set_voltage") {
             const value = parseInt(entry.voltage, 10);
             if (isNaN(value) || value < 0 || value > 255) {
-              setError(
-                `Invalid voltage for ${command}: ${
+              errors.push(
+                `Invalid voltage for ${command} at index ${index}: ${
                   entry.voltage ?? "undefined"
                 }`
               );
@@ -1089,7 +1238,9 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
               entry.value !== undefined ? parseInt(entry.value, 10) : 1;
             if (value !== 0 && value !== 1) {
               errors.push(
-                `Invalid binary value for ${command} at index ${index}: ${entry.value ?? "undefined"}`
+                `Invalid binary value for ${command} at index ${index}: ${
+                  entry.value ?? "undefined"
+                }`
               );
               continue;
             }
@@ -1112,7 +1263,9 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
               entry.value !== undefined ? parseInt(entry.value, 10) : 0;
             if (isNaN(value) || value < 0 || value > 255) {
               errors.push(
-                `Invalid delay value for ${command} at index ${index}: ${entry.value ?? "undefined"}`
+                `Invalid delay value for ${command} at index ${index}: ${
+                  entry.value ?? "undefined"
+                }`
               );
               continue;
             }
@@ -1145,15 +1298,23 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
         setReceived((prev) => {
           const newReceived = { ...prev };
           for (const hexFrame of allHex) {
-            const hexArray = hexFrame.split(" ").map((hex) => parseInt(hex, 16));
+            const hexArray = hexFrame
+              .split(" ")
+              .map((hex) => parseInt(hex, 16));
             const [, commandCode, functionCodeOrCellNo] = hexArray;
             const commandEntry = Object.entries(instructionToHexMap).find(
-              ([, { commandCode: cc, functionCode: fc, excludeFunctionCode }]) =>
+              ([
+                ,
+                { commandCode: cc, functionCode: fc, excludeFunctionCode },
+              ]) =>
                 parseInt(cc, 16) === commandCode &&
-                (excludeFunctionCode || parseInt(fc, 16) === functionCodeOrCellNo)
+                (excludeFunctionCode ||
+                  parseInt(fc, 16) === functionCodeOrCellNo)
             );
             const command = commandEntry ? commandEntry[0] : "unknown";
-            console.log(`SerialTerminal: Processing command in handleFileChange: ${command}`);
+            console.log(
+              `SerialTerminal: Processing command in handleFileChange: ${command}`
+            );
             if (typeof command !== "string") {
               newReceived.Individual = [
                 ...newReceived.Individual,
@@ -1194,99 +1355,507 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
     }
   };
 
+// ⬇️ Add this inside your SerialTerminal component
+const handleSaveCellData = () => {
+  try {
+    const dataToSave: Record<string, any> = {};
+
+    const cycleKey = `cycle_${currentCycle || 1}`;
+    const individualData: Record<string, any> = {};
+    const csu1Data: Record<string, any> = {};
+    const csu2Data: Record<string, any> = {};
+    const daisyChainDataExport: Record<string, any> = {};
+
+    cellData.forEach((cell) => {
+      const cellKey = `cell_${cell.id}`;
+
+      // ✅ Save both received and expected voltages
+      if (cell.voltage !== null || cell.setVoltage !== null) {
+        individualData[cellKey] = {
+          receivedVoltage: cell.voltage ?? null,
+          expectedVoltage: cell.setVoltage ?? null,
+        };
+      }
+
+      // CSU1
+      if (
+        cell.csu11Voltage !== null ||
+        cell.csu11Temperature !== null ||
+        cell.csu11Balance ||
+        cell.csu11OpenWire
+      ) {
+        csu1Data[cellKey] = {
+          voltage: cell.csu11Voltage,
+          temperature: cell.csu11Temperature,
+          balance: cell.csu11Balance,
+          openWire: cell.csu11OpenWire,
+        };
+      }
+
+      // CSU2
+      if (
+        cell.csu12Voltage !== null ||
+        cell.csu12Temperature !== null ||
+        cell.csu12Balance ||
+        cell.csu12OpenWire
+      ) {
+        csu2Data[cellKey] = {
+          voltage: cell.csu12Voltage,
+          temperature: cell.csu12Temperature,
+          balance: cell.csu12Balance,
+          openWire: cell.csu12OpenWire,
+        };
+      }
+
+      // DaisyChain
+      if (cell.daisyChain !== null) {
+        daisyChainDataExport[cellKey] = {
+          value: cell.daisyChain,
+        };
+      }
+    });
+
+    dataToSave[cycleKey] = {
+      individual: individualData,
+      csu1: csu1Data,
+      csu2: csu2Data,
+      daisyChain: daisyChainDataExport,
+    };
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const filename = `cell_data_${timestamp}.json`;
+
+    const jsonString = JSON.stringify(dataToSave, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    const logTime = new Date().toLocaleTimeString();
+    setReceived((prev) => ({
+      ...prev,
+      Individual: [
+        ...prev.Individual,
+        `[${logTime}] ✅ Data saved to ${filename}`,
+      ],
+    }));
+  } catch (err: any) {
+    setError(`❌ Failed to save data: ${err.message}`);
+  }
+};
+
+
+
+const saveCellDataToJson = (data: Record<string, any>[], isManualSave: boolean = false) => {
+  try {
+    // Create a timestamp and filename early to ensure availability
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const filename = `cell_data_${timestamp}.json`;
+
+    // For manual save, use cellData; for cycle save, use provided data
+    const dataToSave = isManualSave
+      ? cellData.reduce((acc, cell) => {
+          const individual: Record<string, any> = {};
+          const csu: Record<string, any> = {};
+          const daisychain: Record<string, any> = {};
+
+          // Individual data
+          if (cell.voltage !== null) individual.voltage = cell.voltage;
+          if (cell.temperature !== null) individual.temperature = cell.temperature;
+          if (cell.setVoltage !== null) individual.setVoltage = cell.setVoltage;
+          if (cell.setTemperature !== null) individual.setTemperature = cell.setTemperature;
+          if (cell.balancing) individual.balancing = cell.balancing;
+          if (cell.openWire) individual.openWire = cell.openWire;
+          if (cell.delay !== null) individual.delay = cell.delay;
+          if (cell.cellLed) individual.cellLed = cell.cellLed;
+          if (cell.automaticSequence) individual.automaticSequence = cell.automaticSequence;
+          if (cell.voltageLimits !== null) individual.voltageLimits = cell.voltageLimits;
+
+          // CSU data
+          if (
+            cell.csu11Voltage !== null ||
+            cell.csu11Temperature !== null ||
+            cell.csu11Balance ||
+            cell.csu11OpenWire ||
+            cell.csu12Voltage !== null ||
+            cell.csu12Temperature !== null ||
+            cell.csu12Balance ||
+            cell.csu12OpenWire ||
+            cell.dcCsuVoltage !== null ||
+            cell.dcCsuTemperature !== null ||
+            cell.dcCsuBalance ||
+            cell.dcCsuOpenWire
+          ) {
+            csu.csu11 = {};
+            csu.csu12 = {};
+            csu.dcCsu = {};
+            if (cell.csu11Voltage !== null) csu.csu11.voltage = cell.csu11Voltage;
+            if (cell.csu11Temperature !== null) csu.csu11.temperature = cell.csu11Temperature;
+            if (cell.csu11Balance) csu.csu11.balance = cell.csu11Balance;
+            if (cell.csu11OpenWire) csu.csu11.openWire = cell.csu11OpenWire;
+            if (cell.csu12Voltage !== null) csu.csu12.voltage = cell.csu12Voltage;
+            if (cell.csu12Temperature !== null) csu.csu12.temperature = cell.csu12Temperature;
+            if (cell.csu12Balance) csu.csu12.balance = cell.csu12Balance;
+            if (cell.csu12OpenWire) csu.csu12.openWire = cell.csu12OpenWire;
+            if (cell.dcCsuVoltage !== null) csu.dcCsu.voltage = cell.dcCsuVoltage;
+            if (cell.dcCsuTemperature !== null) csu.dcCsu.temperature = cell.dcCsuTemperature;
+            if (cell.dcCsuBalance) csu.dcCsu.balance = cell.dcCsuBalance;
+            if (cell.dcCsuOpenWire) csu.dcCsu.openWire = cell.dcCsuOpenWire;
+            // Remove empty CSU objects
+            if (Object.keys(csu.csu11).length === 0) delete csu.csu11;
+            if (Object.keys(csu.csu12).length === 0) delete csu.csu12;
+            if (Object.keys(csu.dcCsu).length === 0) delete csu.dcCsu;
+          }
+
+          // Daisychain data
+          if (cell.daisyChain !== null) daisychain.daisyChain = cell.daisyChain;
+
+          // Only include cell if it has data in any category
+          if (
+            Object.keys(individual).length > 0 ||
+            Object.keys(csu).length > 0 ||
+            Object.keys(daisychain).length > 0
+          ) {
+            acc[`cell_${cell.id}`] = {
+              id: cell.id,
+              ...(Object.keys(individual).length > 0 && { individual }),
+              ...(Object.keys(csu).length > 0 && { csu }),
+              ...(Object.keys(daisychain).length > 0 && { daisychain }),
+            };
+          }
+          return acc;
+        }, {} as Record<string, any>)
+      : data;
+
+    // Check if there's any data to save
+    const dataKeys = isManualSave ? Object.keys(dataToSave) : data.length;
+    if (dataKeys.length === 0) {
+      const timestampLog = new Date().toLocaleTimeString();
+      setReceived((prev) => ({
+        ...prev,
+        Individual: [
+          ...prev.Individual,
+          `[${timestampLog}] No cell data available to save${isManualSave ? "" : " for cycles"}.`,
+        ],
+      }));
+      return;
+    }
+
+    // For cycle data, restructure into individual, csu, and daisychain
+    const jsonToSave = isManualSave
+      ? { individual: dataToSave, csu: {}, daisychain: {} }
+      : data.reduce((acc, cycleData, index) => {
+          const individual: Record<string, any> = {};
+          const csu: Record<string, any> = {};
+          const daisychain: Record<string, any> = {};
+
+          Object.entries(cycleData).forEach(([cellKey, cell]) => {
+            const cellIndividual: Record<string, any> = {};
+            const cellCsu: Record<string, any> = {};
+            const cellDaisychain: Record<string, any> = {};
+
+            // Individual data
+            if (cell.voltage !== null) cellIndividual.voltage = cell.voltage;
+            if (cell.temperature !== null) cellIndividual.temperature = cell.temperature;
+            if (cell.setVoltage !== null) cellIndividual.setVoltage = cell.setVoltage;
+            if (cell.setTemperature !== null) cellIndividual.setTemperature = cell.setTemperature;
+            if (cell.balancing) cellIndividual.balancing = cell.balancing;
+            if (cell.openWire) cellIndividual.openWire = cell.openWire;
+            if (cell.delay !== null) cellIndividual.delay = cell.delay;
+            if (cell.cellLed) cellIndividual.cellLed = cell.cellLed;
+            if (cell.automaticSequence) cellIndividual.automaticSequence = cell.automaticSequence;
+            if (cell.voltageLimits !== null) cellIndividual.voltageLimits = cell.voltageLimits;
+
+            // CSU data
+            if (
+              cell.csu11?.voltage !== null ||
+              cell.csu11?.temperature !== null ||
+              cell.csu11?.balance ||
+              cell.csu11?.openWire ||
+              cell.csu12?.voltage !== null ||
+              cell.csu12?.temperature !== null ||
+              cell.csu12?.balance ||
+              cell.csu12?.openWire ||
+              cell.dcCsu?.voltage !== null ||
+              cell.dcCsu?.temperature !== null ||
+              cell.dcCsu?.balance ||
+              cell.dcCsu?.openWire
+            ) {
+              cellCsu.csu11 = {};
+              cellCsu.csu12 = {};
+              cellCsu.dcCsu = {};
+              if (cell.csu11?.voltage !== null) cellCsu.csu11.voltage = cell.csu11.voltage;
+              if (cell.csu11?.temperature !== null) cellCsu.csu11.temperature = cell.csu11.temperature;
+              if (cell.csu11?.balance) cellCsu.csu11.balance = cell.csu11.balance;
+              if (cell.csu11?.openWire) cellCsu.csu11.openWire = cell.csu11.openWire;
+              if (cell.csu12?.voltage !== null) cellCsu.csu12.voltage = cell.csu12.voltage;
+              if (cell.csu12?.temperature !== null) cellCsu.csu12.temperature = cell.csu12.temperature;
+              if (cell.csu12?.balance) cellCsu.csu12.balance = cell.csu12.balance;
+              if (cell.csu12?.openWire) cellCsu.csu12.openWire = cell.csu12.openWire;
+              if (cell.dcCsu?.voltage !== null) cellCsu.dcCsu.voltage = cell.dcCsu.voltage;
+              if (cell.dcCsu?.temperature !== null) cellCsu.dcCsu.temperature = cell.dcCsu.temperature;
+              if (cell.dcCsu?.balance) cellCsu.dcCsu.balance = cell.dcCsu.balance;
+              if (cell.dcCsu?.openWire) cellCsu.dcCsu.openWire = cell.dcCsu.openWire;
+              // Remove empty CSU objects
+              if (Object.keys(cellCsu.csu11).length === 0) delete cellCsu.csu11;
+              if (Object.keys(cellCsu.csu12).length === 0) delete cellCsu.csu12;
+              if (Object.keys(cellCsu.dcCsu).length === 0) delete cellCsu.dcCsu;
+            }
+
+            // Daisychain data
+            if (cell.daisyChain !== null) cellDaisychain.daisyChain = cell.daisyChain;
+
+            // Add to respective categories if data exists
+            if (Object.keys(cellIndividual).length > 0) {
+              individual[cellKey] = { id: cell.id, ...cellIndividual };
+            }
+            if (Object.keys(cellCsu).length > 0) {
+              csu[cellKey] = { id: cell.id, ...cellCsu };
+            }
+            if (Object.keys(cellDaisychain).length > 0) {
+              daisychain[cellKey] = { id: cell.id, ...cellDaisychain };
+            }
+          });
+
+          // Only include cycle if it has data
+          if (
+            Object.keys(individual).length > 0 ||
+            Object.keys(csu).length > 0 ||
+            Object.keys(daisychain).length > 0
+          ) {
+            acc[`cycle_${index + 1}`] = {
+              ...(Object.keys(individual).length > 0 && { individual }),
+              ...(Object.keys(csu).length > 0 && { csu }),
+              ...(Object.keys(daisychain).length > 0 && { daisychain }),
+            };
+          }
+          return acc;
+        }, {} as Record<string, any>);
+
+    // Check if there's any filtered data to save
+    if (Object.keys(jsonToSave).length === 0) {
+      const timestampLog = new Date().toLocaleTimeString();
+      setReceived((prev) => ({
+        ...prev,
+        Individual: [
+          ...prev.Individual,
+          `[${timestampLog}] No valid cell data available to save${isManualSave ? "" : " for cycles"}.`,
+        ],
+      }));
+      return;
+    }
+
+    // Create a Blob with the JSON data
+    const jsonString = JSON.stringify(jsonToSave, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    // Create a temporary anchor element to trigger the download
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    // Log the save action
+    const timestampLog = new Date().toLocaleTimeString();
+    setReceived((prev) => ({
+      ...prev,
+      Individual: [
+        ...prev.Individual,
+        `[${timestampLog}] Cell data saved to ${filename}`,
+      ],
+    }));
+  } catch (err: any) {
+    const timestampLog = new Date().toLocaleTimeString();
+    setError(`Failed to save cell data${isManualSave ? "" : " for cycles"}: ${err.message}`);
+    setReceived((prev) => ({
+      ...prev,
+      Individual: [
+        ...prev.Individual,
+        `[${timestampLog}] Failed to save cell data${isManualSave ? "" : " for cycles"}: ${err.message}`,
+      ],
+    }));
+  }
+};
+
+
+  // const handleSaveCellData = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void => {
+  //   saveCellDataToJson([], true);
+  // };
+
   const handleRunTest = async () => {
     setError(null);
     setIsLoading(true);
+    setCurrentCycle(0);
+    setCycleData([]); // Reset cycleData before starting
+
     try {
-      for (const hexLine of hexLines) {
-        const hexArray = hexLine.split(" ").map((hex) => parseInt(hex, 16));
-        const [, commandCode, functionCodeOrCellNo, cellNo] = hexArray;
-        const commandEntry = Object.entries(instructionToHexMap).find(
-          ([, { commandCode: cc, functionCode: fc, excludeFunctionCode }]) =>
-            parseInt(cc, 16) === commandCode &&
-            (excludeFunctionCode || parseInt(fc, 16) === functionCodeOrCellNo)
-        );
+      const allCycleData: Record<string, any>[] = [];
 
-        const command = commandEntry ? commandEntry[0] : "unknown";
-        console.log(`SerialTerminal: Processing command in handleRunTest: ${command}`);
+      for (let cycle = 1; cycle <= cycleCount; cycle++) {
+        setCurrentCycle(cycle);
 
-        if (typeof command !== "string") {
-          console.warn(`SerialTerminal: Invalid command in handleRunTest: ${command}`);
-          setReceived((prev) => ({
-            ...prev,
-            Individual: [
-              ...prev.Individual,
-              `[${new Date().toLocaleTimeString()}] Error: Invalid command: ${command}`,
-            ],
-          }));
-          continue;
-        }
-
-        if (commandEntry) {
-          console.log(
-            `SerialTerminal: Setting lastSentCommand to ${commandEntry[0]} for cell ${cellNo}`
+        for (const hexLine of hexLines) {
+          const hexArray = hexLine.split(" ").map((hex) => parseInt(hex, 16));
+          const [, commandCode, functionCodeOrCellNo, cellNo] = hexArray;
+          const commandEntry = Object.entries(instructionToHexMap).find(
+            ([, { commandCode: cc, functionCode: fc, excludeFunctionCode }]) =>
+              parseInt(cc, 16) === commandCode &&
+              (excludeFunctionCode || parseInt(fc, 16) === functionCodeOrCellNo)
           );
-          setLastSentCommand({ command: commandEntry[0], cellNo });
-        } else {
-          setLastSentCommand(null);
-        }
 
-        const byteBuffer = new Uint8Array(hexArray);
-        await window.serialAPI?.writePortRaw(byteBuffer);
-
-        const timestamp = new Date().toLocaleTimeString();
-        const setDetails = parseSentSetCommand(hexArray, timestamp);
-        if (setDetails) {
-          setReceived((prev) => {
-            let category: keyof typeof prev = "Individual";
-            if (command.includes("_11_csu_")) {
-              category = "CSU11";
-            } else if (command.includes("_12_csu_")) {
-              category = "CSU12";
-            } else if (command.includes("_dc_csu_")) {
-              category = "DCCSU";
-            } else if (command === "daisy_chain") {
-              category = "DaisyChain";
-            }
-            const newReceived = {
+          const command = commandEntry ? commandEntry[0] : "unknown";
+          if (typeof command !== "string") {
+            setReceived((prev) => ({
               ...prev,
-              [category]: [...prev[category], setDetails],
-            };
-            console.log(
-              `SerialTerminal: Updated received state with sent set command (${category}):`,
-              newReceived[category]
+              Individual: [
+                ...prev.Individual,
+                `[${new Date().toLocaleTimeString()}] Error: Invalid command: ${command}`,
+              ],
+            }));
+            continue;
+          }
+
+          if (commandEntry) {
+            setLastSentCommand({ command: commandEntry[0], cellNo });
+          } else {
+            setLastSentCommand(null);
+          }
+
+          const byteBuffer = new Uint8Array(hexArray);
+          await window.serialAPI?.writePortRaw(byteBuffer);
+
+          const timestamp = new Date().toLocaleTimeString();
+          const setDetails = parseSentSetCommand(hexArray, timestamp);
+          if (setDetails) {
+            setReceived((prev) => {
+              let category: keyof typeof prev = "Individual";
+              if (command.includes("_11_csu_")) {
+                category = "CSU11";
+              } else if (command.includes("_12_csu_")) {
+                category = "CSU12";
+              } else if (command.includes("_dc_csu_")) {
+                category = "DCCSU";
+              } else if (command === "daisy_chain") {
+                category = "DaisyChain";
+              }
+              const newReceived = {
+                ...prev,
+                [category]: [...prev[category], setDetails],
+              };
+              return newReceived;
+            });
+          } else {
+            logHexCommand(
+              "Sent",
+              hexArray,
+              timestamp,
+              command,
+              cellNo,
+              null,
+              setReceived
             );
-            return newReceived;
-          });
-        } else {
-          logHexCommand(
-            "Sent",
-            hexArray,
-            timestamp,
-            command,
-            cellNo,
-            null,
-            setReceived
-          );
+          }
+
+          if (
+            commandCode === 0x04 ||
+            commandCode === 0xa6 ||
+            commandCode === 0x0d
+          ) {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          } else {
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
         }
 
-        if (
-          commandCode === 0x04 ||
-          commandCode === 0xa6 ||
-          commandCode === 0x0d
-        ) {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-        } else {
-          await new Promise((resolve) => setTimeout(resolve, 100));
-        }
+        // Store cell data for this cycle
+        const cycleCellData = cellData.reduce((acc, cell) => {
+          if (
+            cell.voltage !== null ||
+            cell.temperature !== null ||
+            cell.setVoltage !== null ||
+            cell.setTemperature !== null ||
+            cell.balancing ||
+            cell.openWire ||
+            cell.delay !== null ||
+            cell.cellLed ||
+            cell.automaticSequence ||
+            cell.voltageLimits !== null ||
+            cell.csu11Voltage !== null ||
+            cell.csu11Temperature !== null ||
+            cell.csu11Balance ||
+            cell.csu11OpenWire ||
+            cell.csu12Voltage !== null ||
+            cell.csu12Temperature !== null ||
+            cell.csu12Balance ||
+            cell.csu12OpenWire ||
+            cell.dcCsuVoltage !== null ||
+            cell.dcCsuTemperature !== null ||
+            cell.dcCsuBalance ||
+            cell.dcCsuOpenWire ||
+            cell.daisyChain !== null
+          ) {
+            acc[`cell_${cell.id}`] = {
+              id: cell.id,
+              voltage: cell.voltage,
+              temperature: cell.temperature,
+              setVoltage: cell.setVoltage,
+              setTemperature: cell.setTemperature,
+              balancing: cell.balancing,
+              openWire: cell.openWire,
+              delay: cell.delay,
+              cellLed: cell.cellLed,
+              automaticSequence: cell.automaticSequence,
+              voltageLimits: cell.voltageLimits,
+              csu11: {
+                voltage: cell.csu11Voltage,
+                temperature: cell.csu11Temperature,
+                balance: cell.csu11Balance,
+                openWire: cell.csu11OpenWire,
+              },
+              csu12: {
+                voltage: cell.csu12Voltage,
+                temperature: cell.csu12Temperature,
+                balance: cell.csu12Balance,
+                openWire: cell.csu12OpenWire,
+              },
+              dcCsu: {
+                voltage: cell.dcCsuVoltage,
+                temperature: cell.dcCsuTemperature,
+                balance: cell.dcCsuBalance,
+                openWire: cell.dcCsuOpenWire,
+              },
+              daisyChain: cell.daisyChain,
+            };
+          }
+          return acc;
+        }, {} as Record<string, any>);
+        allCycleData.push(cycleCellData);
       }
+
+      // Update cycleData state
+      setCycleData(allCycleData);
+
+      // Save all cycle data to a single JSON file
+      saveCellDataToJson(allCycleData);
+
+      setCurrentCycle(0); // Reset indicator after completion
 
       const timestamp = new Date().toLocaleTimeString();
       setReceived((prev) => ({
         ...prev,
         Individual: [
           ...prev.Individual,
-          `[${timestamp}] ✅ Test sent successfully.`,
+          `[${timestamp}] ✅ Test sent successfully for ${cycleCount} cycle(s).`,
         ],
       }));
 
@@ -1302,6 +1871,7 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
     } finally {
       setIsLoading(false);
       setLastSentCommand(null);
+      setCurrentCycle(0);
     }
   };
 
@@ -1346,6 +1916,7 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
         daisyChain: null,
       }))
     );
+    setCycleData([]);
   };
 
   return (
@@ -1500,11 +2071,58 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
           disabled={!connectedPorts.includes(selectedPort) || isLoading}
           className="block mt-1 text-xs text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-blue-600 hover:file:bg-blue-200 disabled:file:bg-gray-200 disabled:file:text-gray-500"
         />
-        <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 mt-1">
+        {/* <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 mt-1">
           Upload a JSON file with BMS commands (e.g., set_voltage, get_voltage)
-        </div>
+        </div> */}
         {fileName && (
           <p className="text-xs text-gray-500 mt-1">Loaded: {fileName}</p>
+        )}
+
+        <button
+          onClick={handleSaveCellData}
+          disabled={!connectedPorts.includes(selectedPort) || isLoading}
+          className="mt-2 w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-sm disabled:opacity-50 flex items-center justify-center text-sm transition-colors font-sans"
+        >
+          {isLoading ? (
+            <svg
+              className="animate-spin h-4 w-4 mr-2 text-white"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+                fill="none"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8v-8H4z"
+              />
+            </svg>
+          ) : null}
+          💾 Save Cell Data
+        </button>
+      </div>
+
+      <div className="flex items-center gap-2 mb-2">
+        <label className="text-xs font-medium text-gray-700">Cycles</label>
+        <input
+          type="number"
+          min={1}
+          max={1000}
+          value={cycleCount}
+          onChange={(e) => setCycleCount(Number(e.target.value))}
+          className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm w-20"
+          disabled={isLoading}
+        />
+        {currentCycle > 0 && (
+          <span className="text-xs text-blue-700 ml-2">
+            Running cycle {currentCycle} / {cycleCount}
+          </span>
         )}
       </div>
 
@@ -1547,9 +2165,7 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
 
       <div className="space-y-2">
         <div className="flex justify-between items-center">
-          <label className="text-xs font-medium text-gray-700">
-            Cell Data
-          </label>
+          <label className="text-xs font-medium text-gray-700">Cell Data</label>
           <button
             onClick={handleClearOutput}
             className="text-xs text-blue-600 hover:text-blue-800 font-inter justify-center"
@@ -1599,117 +2215,88 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
                   <div className="ml-4">Set Voltage: {cell.setVoltage}</div>
                 )}
                 {cell.setTemperature !== null && (
-                  <div className="ml-4">
-                    Set Temperature: {cell.setTemperature} °C
-                  </div>
-                )}
-                {cell.balancing && (
-                  <div className="ml-4">Balancing: {cell.balancing.toString()}</div>
-                )}
-                {cell.openWire && (
-                  <div className="ml-4">Open Wire: {cell.openWire.toString()}</div>
-                )}
-                {cell.delay !== null && (
-                  <div className="ml-4">Delay: {cell.delay} ms</div>
-                )}
-                {cell.cellLed && (
-                  <div className="ml-4">Cell LED: {cell.cellLed.toString()}</div>
-                )}
-                {cell.automaticSequence && (
-                  <div className="ml-4">
-                    Automatic Sequence: {cell.automaticSequence.toString()}
-                  </div>
-                )}
-                {cell.voltageLimits !== null && (
-                  <div className="ml-4">
-                    Voltage Limits: {cell.voltageLimits}
-                  </div>
-                )}
-                {cell.csu11Voltage !== null && (
-                  <div className="ml-4">CSU11 Voltage: {cell.csu11Voltage} V</div>
-                )}
-                {cell.csu11Temperature !== null && (
-                  <div className="ml-4">
-                    CSU11 Temperature: {cell.csu11Temperature} °C
-                  </div>
-                )}
-                {cell.csu11Balance && (
-                  <div className="ml-4">
-                    CSU11 Balance: {cell.csu11Balance.toString()}
-                  </div>
-                )}
-                {cell.csu11OpenWire && (
-                  <div className="ml-4">
-                    CSU11 Open Wire: {cell.csu11OpenWire.toString()}
-                  </div>
-                )}
-                {cell.csu12Voltage !== null && (
-                  <div className="ml-4">CSU12 Voltage: {cell.csu12Voltage} V</div>
-                )}
-                {cell.csu12Temperature !== null && (
-                  <div className="ml-4">
-                    CSU12 Temperature: {cell.csu12Temperature} °C
-                  </div>
-                )}
-                {cell.csu12Balance && (
-                  <div className="ml-4">
-                    CSU12 Balance: {cell.csu12Balance.toString()}
-                  </div>
-                )}
-                {cell.csu12OpenWire && (
-                  <div className="ml-4">
-                    CSU12 Open Wire: {cell.csu12OpenWire.toString()}
-                  </div>
-                )}
-                {cell.dcCsuVoltage !== null && (
-                  <div className="ml-4">
-                    DC CSU Voltage: {cell.dcCsuVoltage} V
-                  </div>
-                )}
-                {cell.dcCsuTemperature !== null && (
-                  <div className="ml-4">
-                    DC CSU Temperature: {cell.dcCsuTemperature} °C
-                  </div>
-                )}
-                {cell.dcCsuBalance && (
-                  <div className="ml-4">
-                    DC CSU Balance: {cell.dcCsuBalance.toString()}
-                  </div>
-                )}
-                {cell.dcCsuOpenWire && (
-                  <div className="ml-4">
-                    DC CSU Open Wire: {cell.dcCsuOpenWire.toString()}
-                  </div>
-                )}
-                {cell.daisyChain !== null && (
-                  <div className="ml-4">Daisy Chain: {cell.daisyChain}</div>
-                )}
-              </div>
-            ))
-          )}
+                                  <div className="ml-4">Set Temperature: {cell.setTemperature} °C</div>
+              )}
+              {cell.balancing && (
+                <div className="ml-4">Balancing: {cell.balancing.toString()}</div>
+              )}
+              {cell.openWire && (
+                <div className="ml-4">Open Wire: {cell.openWire.toString()}</div>
+              )}
+              {cell.delay !== null && (
+                <div className="ml-4">Delay: {cell.delay} ms</div>
+              )}
+              {cell.cellLed && (
+                <div className="ml-4">Cell LED: {cell.cellLed.toString()}</div>
+              )}
+              {cell.automaticSequence && (
+                <div className="ml-4">Automatic Sequence: {cell.automaticSequence.toString()}</div>
+              )}
+              {cell.voltageLimits !== null && (
+                <div className="ml-4">Voltage Limits: {cell.voltageLimits}</div>
+              )}
+              {cell.csu11Voltage !== null && (
+                <div className="ml-4">CSU11 Voltage: {cell.csu11Voltage} V</div>
+              )}
+              {cell.csu11Temperature !== null && (
+                <div className="ml-4">CSU11 Temperature: {cell.csu11Temperature} °C</div>
+              )}
+              {cell.csu11Balance && (
+                <div className="ml-4">CSU11 Balance: {cell.csu11Balance.toString()}</div>
+              )}
+              {cell.csu11OpenWire && (
+                <div className="ml-4">CSU11 Open Wire: {cell.csu11OpenWire.toString()}</div>
+              )}
+              {cell.csu12Voltage !== null && (
+                <div className="ml-4">CSU12 Voltage: {cell.csu12Voltage} V</div>
+              )}
+              {cell.csu12Temperature !== null && (
+                <div className="ml-4">CSU12 Temperature: {cell.csu12Temperature} °C</div>
+              )}
+              {cell.csu12Balance && (
+                <div className="ml-4">CSU12 Balance: {cell.csu12Balance.toString()}</div>
+              )}
+              {cell.csu12OpenWire && (
+                <div className="ml-4">CSU12 Open Wire: {cell.csu12OpenWire.toString()}</div>
+              )}
+              {cell.dcCsuVoltage !== null && (
+                <div className="ml-4">DC CSU Voltage: {cell.dcCsuVoltage} V</div>
+              )}
+              {cell.dcCsuTemperature !== null && (
+                <div className="ml-4">DC CSU Temperature: {cell.dcCsuTemperature} °C</div>
+              )}
+              {cell.dcCsuBalance && (
+                <div className="ml-4">DC CSU Balance: {cell.dcCsuBalance.toString()}</div>
+              )}
+              {cell.dcCsuOpenWire && (
+                <div className="ml-4">DC CSU Open Wire: {cell.dcCsuOpenWire.toString()}</div>
+              )}
+              {cell.daisyChain !== null && (
+                <div className="ml-4">Daisy Chain: {cell.daisyChain}</div>
+              )}
+            </div>
+          ))
+        )}
         </div>
       </div>
 
       <div className="space-y-2">
-        <label className="text-xs font-medium text-gray-700">Hex Commands</label>
+        <label className="text-xs font-medium text-gray-700">Serial Output</label>
         <div className="h-40 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50 font-mono text-xs shadow-inner">
-          {Object.values(received).every((category) => category.length === 0) ? (
-            <p className="text-gray-400">No hex commands logged yet.</p>
-          ) : (
-            <div>
-              {Object.entries(received).map(([category, logs]) => (
-                logs.length > 0 && (
-                  <div key={category} className="mb-4">
-                    <div className="font-semibold text-blue-600">{category}</div>
-                    {logs.map((log, index) => (
-                      <div key={index} className="ml-4 text-gray-700 break-words">
-                        {log}
-                      </div>
-                    ))}
-                  </div>
-                )
-              ))}
-            </div>
+          {Object.entries(received).map(([category, logs]) =>
+            logs.length > 0 ? (
+              <div key={category} className="mb-2">
+                <h3 className="font-semibold text-gray-800">{category}</h3>
+                {logs.map((log, index) => (
+                  <p key={index} className="text-gray-600 break-all">
+                    {log}
+                  </p>
+                ))}
+              </div>
+            ) : null
+          )}
+          {Object.values(received).every((logs) => logs.length === 0) && (
+            <p className="text-gray-400">No serial data received yet.</p>
           )}
         </div>
       </div>
