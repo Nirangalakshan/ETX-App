@@ -68,8 +68,7 @@ import DashBoard from "./pages/DashBoard";
 import Login from "./pages/Login";
 import Setting from "./pages/Setting";
 import Report from "./pages/Report";
-import { SerialProvider } from "./SerialContext";
-import { BatteryProvider } from "./BatteryContext";
+
 
 function RequireAuth({ children }: { children: JSX.Element }) {
   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
@@ -78,8 +77,7 @@ function RequireAuth({ children }: { children: JSX.Element }) {
 
 function App() {
   return (
-    <SerialProvider>
-      <BatteryProvider>
+    
         <Router>
           <Routes>
             <Route path="/" element={<Login />} />
@@ -111,8 +109,7 @@ function App() {
             <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
         </Router>
-      </BatteryProvider>
-    </SerialProvider>
+      
   );
 }
 
