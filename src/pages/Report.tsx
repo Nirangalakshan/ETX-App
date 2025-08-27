@@ -34,7 +34,6 @@ interface CellData {
 const Report: React.FC = () => {
   const {
     instructions,
-    aiAnalysis,
     dcCsuInstructions,
     csu1Instructions,
     csu2Instructions,
@@ -117,11 +116,12 @@ const Report: React.FC = () => {
     setSelectedCell(event.target.value);
   };
 
-  // Calculate cell status
-  const calculateStatus = (voltage: number | null): CellStatus => {
-    if (voltage === null) return "N/A";
-    if (voltage > 4.2) return "critical";
-    if (voltage < 3.0) return "warning";
+  // Calculate cell status based on voltage difference
+  const calculateStatus = (actualVoltage: number | null, expectedVoltage: number | null): CellStatus => {
+    if (actualVoltage === null || expectedVoltage === null) return "N/A";
+    const difference = Math.abs(actualVoltage - expectedVoltage);
+    if (difference > 0.3) return "critical";
+    if (difference > 0.1) return "warning";
     return "normal";
   };
 
@@ -141,7 +141,7 @@ const Report: React.FC = () => {
       const dcCsuVoltage = data.dcCsu?.receivedVoltage ?? null;
 
       // Determine status based on the selected voltage source
-      const statusVoltage =
+      const actualVoltage =
         selectedVoltageSource === "individual" ? individualVoltage :
         selectedVoltageSource === "csu11" ? csu11Voltage :
         selectedVoltageSource === "csu12" ? csu12Voltage :
@@ -155,7 +155,7 @@ const Report: React.FC = () => {
         csu11Voltage,
         csu12Voltage,
         dcCsuVoltage,
-        status: calculateStatus(statusVoltage),
+        status: calculateStatus(actualVoltage, expectedVoltage),
       });
     });
 
@@ -361,8 +361,8 @@ const Report: React.FC = () => {
                   y: {
                     beginAtZero: true,
                     title: { display: true, text: "Voltage (V)" },
-                    suggestedMin: 0.5,
-                    suggestedMax: 5,
+                    suggestedMin: 0,
+                    suggestedMax: 10,
                   },
                   x: {
                     title: { display: true, text: `Cell ID (Cycle: ${selectedCycle || 'N/A'}, Source: ${selectedVoltageSource})` },
@@ -400,19 +400,21 @@ const Report: React.FC = () => {
               data: cellVoltageData.map((d) => d.actualVoltage),
               borderColor: "rgba(75, 192, 192, 1)",
               backgroundColor: "rgba(75, 192, 192, 0.2)",
-              fill: false,
+              fill: true,
               skipNull: true,
               spanGaps: true,
               pointRadius: 5,
               pointHoverRadius: 7,
               lineTension: 0.3,
+
+              
             },
             {
               label: "Expected Voltage (V)",
               data: cellVoltageData.map((d) => d.expectedVoltage),
               borderColor: "rgba(255, 99, 132, 1)",
               backgroundColor: "rgba(255, 99, 132, 0.2)",
-              fill: false,
+              fill: true,
               skipNull: true,
               spanGaps: true,
               pointRadius: 5,
@@ -440,11 +442,17 @@ const Report: React.FC = () => {
                   y: {
                     beginAtZero: true,
                     title: { display: true, text: "Voltage (V)" },
-                    suggestedMin: 0.5,
-                    suggestedMax: 5,
+                    suggestedMin: 0.3,
+                    suggestedMax: 6,
                   },
                   x: {
                     title: { display: true, text: `Cycle Number (Cell: ${selectedCell || 'N/A'}, Source: ${selectedVoltageSource})` },
+                    ticks: {
+                      maxTicksLimit: 50,
+                      autoSkip: false,
+                      maxRotation: 45,
+                      minRotation: 45,
+                    },
                   },
                 },
                 plugins: {
@@ -579,32 +587,6 @@ const Report: React.FC = () => {
 
     let finalY = 20;
 
-    // AI Analysis
-    if (aiAnalysis.summary || aiAnalysis.recommendations.length > 0) {
-      doc.setFontSize(12);
-      doc.text("AI Analysis", 20, finalY + 10);
-      finalY += 15;
-      if (aiAnalysis.summary) {
-        doc.setFontSize(10);
-        doc.text("Summary:", 20, finalY);
-        doc.text(aiAnalysis.summary, 20, finalY + 5, { maxWidth: 170 });
-        finalY += doc.getTextDimensions(aiAnalysis.summary, { maxWidth: 170 }).h + 10;
-      }
-      if (aiAnalysis.recommendations.length > 0) {
-        doc.setFontSize(10);
-        doc.text("Recommendations:", 20, finalY);
-        autoTable(doc, {
-          startY: finalY + 5,
-          head: [["Recommendation"]],
-          body: aiAnalysis.recommendations.map((rec) => [rec]),
-          styles: { fontSize: 8 },
-          headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0] },
-          alternateRowStyles: { fillColor: [240, 240, 240] },
-        });
-        finalY = (doc as any).lastAutoTable.finalY;
-      }
-    }
-
     // Cells Table
     if (cells.some((cell) => cell.status !== "N/A")) {
       doc.setFontSize(12);
@@ -627,94 +609,6 @@ const Report: React.FC = () => {
       });
       finalY = (doc as any).lastAutoTable.finalY;
     }
-
-    // Issues Table
-    if (issues.length > 0) {
-      doc.setFontSize(12);
-      doc.text("Issues Detected", 20, finalY + 10);
-      autoTable(doc, {
-        startY: finalY + 15,
-        head: [["Type", "Cell ID", "Status", "Details"]],
-        body: issues.map((issue) => [
-          issue.type,
-          issue.cellId,
-          issue.status,
-          issue.details,
-        ]),
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0] },
-        alternateRowStyles: { fillColor: [240, 240, 240] },
-      });
-      finalY = (doc as any).lastAutoTable.finalY;
-    }
-
-    // Voltage Comparison Table
-    if (voltageComparisons.length > 0) {
-      doc.setFontSize(12);
-      doc.text("Voltage Comparison", 20, finalY + 10);
-      autoTable(doc, {
-        startY: finalY + 15,
-        head: [["Cell ID", "Set Voltage (V)", "Actual Voltage (V)", "Variance (V)", "Status"]],
-        body: voltageComparisons.map((comp) => [
-          comp.cellId,
-          comp.setVoltage !== null ? comp.setVoltage.toFixed(2) : "N/A",
-          comp.actualVoltage !== null ? comp.actualVoltage.toFixed(2) : "N/A",
-          comp.variance !== null ? comp.variance.toFixed(2) : "N/A",
-          comp.status,
-        ]),
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0] },
-        alternateRowStyles: { fillColor: [240, 240, 240] },
-      });
-      finalY = (doc as any).lastAutoTable.finalY;
-    }
-
-    // Status Summary
-    if (allStatuses.length > 0) {
-      doc.setFontSize(12);
-      doc.text("Status Summary", 20, finalY + 10);
-      autoTable(doc, {
-        startY: finalY + 15,
-        head: [["Type", "Label", "Status", "Details"]],
-        body: allStatuses.map((status) => [
-          status.type,
-          status.label,
-          status.status,
-          status.details || "N/A",
-        ]),
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0] },
-        alternateRowStyles: { fillColor: [240, 240, 240] },
-      });
-      finalY = (doc as any).lastAutoTable.finalY;
-    }
-
-    // Instructions Tables
-    const instructionSets = [
-      { title: "General Instructions", data: instructions },
-      { title: "CSU1 Instructions", data: csu1Instructions },
-      { title: "CSU2 Instructions", data: csu2Instructions },
-      { title: "DC CSU Instructions", data: dcCsuInstructions },
-    ];
-
-    instructionSets.forEach(({ title, data }) => {
-      if (data.length > 0) {
-        doc.setFontSize(12);
-        doc.text(title, 20, finalY + 10);
-        autoTable(doc, {
-          startY: finalY + 15,
-          head: [["ID", "Instruction"]],
-          body: data.map((instruction) => [
-            instruction.id,
-            formatInstruction(instruction),
-          ]),
-          styles: { fontSize: 8 },
-          headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0] },
-          alternateRowStyles: { fillColor: [240, 240, 240] },
-        });
-        finalY = (doc as any).lastAutoTable.finalY;
-      }
-    });
 
     // Add charts to PDF
     if (voltageChartRef.current && voltageChartInstance.current) {
@@ -741,18 +635,6 @@ const Report: React.FC = () => {
       }
     }
 
-    if (issueChartRef.current && issueChartInstance.current) {
-      try {
-        doc.setFontSize(12);
-        doc.text("Issue Distribution", xOffset, finalY + 10);
-        const imgData = issueChartRef.current.toDataURL("image/png");
-        doc.addImage(imgData, "PNG", xOffset, finalY + 15, chartWidth, 50);
-        finalY += 60;
-      } catch (e) {
-        console.error("Report: Error adding issue chart to PDF:", e);
-      }
-    }
-
     doc.save(`BMS_Report_Cycle_${selectedCycle}_${new Date().toISOString().replace(/[:.]/g, "-")}.pdf`);
   };
 
@@ -772,8 +654,8 @@ const Report: React.FC = () => {
       <CustomTitleBar />
       <div className="max-w-7xl p-2 mx-auto space-y-6 mt-10 shadow-lg">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-900 font-inter">
-            📊 BMS Test Run Summary
+          <h1 className="text-2xl font-bold text-gray-900 font-inter">
+            TEST SUMMARY
           </h1>
           <div className="flex gap-2 items-center">
             <input
@@ -820,47 +702,10 @@ const Report: React.FC = () => {
 
         {uploadedData && selectedCycle && (
           <div className="space-y-6">
-            {/* AI Analysis */}
-            {aiAnalysis.summary || aiAnalysis.recommendations.length > 0 ? (
-              <div>
-                <h2 className="text-xl font-semibold font-inter text-gray-700 mb-4 flex items-center gap-2">
-                  🤖 AI Analysis
-                </h2>
-                {aiAnalysis.isLoading ? (
-                  <div className="text-gray-500 text-sm bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
-                    Loading AI analysis...
-                  </div>
-                ) : aiAnalysis.error ? (
-                  <div className="text-red-500 text-sm bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-                    Error in AI analysis: {aiAnalysis.error}
-                  </div>
-                ) : (
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                    {aiAnalysis.summary && (
-                      <div className="mb-4">
-                        <h3 className="text-lg font-semibold text-gray-700">Summary</h3>
-                        <p className="text-sm text-gray-800">{aiAnalysis.summary}</p>
-                      </div>
-                    )}
-                    {aiAnalysis.recommendations.length > 0 && (
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-700">Recommendations</h3>
-                        <ul className="list-disc list-inside text-sm text-gray-800">
-                          {aiAnalysis.recommendations.map((rec, index) => (
-                            <li key={`rec-${index}`}>{rec}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            ) : null}
-
             {/* Voltage Trends Chart */}
             <div>
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold font-inter text-gray-700">📈 Voltage Trends</h2>
+                <h2 className="text-xl font-semibold font-inter text-gray-700"> Voltage Trends</h2>
                 <select
                   value={selectedVoltageSource}
                   onChange={handleVoltageSourceChange}
@@ -884,8 +729,8 @@ const Report: React.FC = () => {
 
             {/* Cell Voltage Trends Chart */}
             <div>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold font-inter text-gray-700">📉 Cell Voltage Trends</h2>
+              <div className="flex justify-between items-center mb-4 ">
+                <h2 className="text-xl font-semibold font-inter text-gray-700">Cell Voltage Trends</h2>
                 <div className="flex gap-2">
                   <select
                     value={selectedCell}
@@ -910,7 +755,7 @@ const Report: React.FC = () => {
                   </select>
                 </div>
               </div>
-              <div style={{ display: hasCellVoltageData ? "block" : "none" }}>
+              <div className="" style={{ display: hasCellVoltageData ? "block" : "none" }}>
                 <canvas ref={cellVoltageChartRef} className="w-3/4 h-40 mx-auto"></canvas>
               </div>
               {!hasCellVoltageData && (
@@ -922,7 +767,7 @@ const Report: React.FC = () => {
 
             {/* Issue Distribution Chart */}
             <div>
-              <h2 className="text-xl font-inter font-semibold text-gray-700 mb-4">⚠️ Issue Distribution</h2>
+              <h2 className="text-xl font-inter font-semibold text-gray-700 mb-4"> Issue Distribution</h2>
               <div style={{ display: hasIssueData ? "block" : "none" }}>
                 <canvas ref={issueChartRef} className="w-3/4 h-40 mx-auto"></canvas>
               </div>
@@ -942,7 +787,7 @@ const Report: React.FC = () => {
                     {cells.filter((cell) => cell.status !== "N/A").length}
                   </span>
                 </h2>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto overflow-y-auto max-h-100">
                   <table className="min-w-full bg-gray-50 rounded-lg border border-gray-200">
                     <thead>
                       <tr className="bg-gray-100">
@@ -989,7 +834,7 @@ const Report: React.FC = () => {
             {issues.length > 0 && (
               <div>
                 <h2 className="text-xl font-inter font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                  ⚠️ Issues Detected
+                   Issues Detected
                   <span className="text-sm bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
                     {issues.length}
                   </span>
@@ -1021,7 +866,7 @@ const Report: React.FC = () => {
             {voltageComparisons.length > 0 && (
               <div>
                 <h2 className="text-xl font-inter font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                  ⚡ Voltage Comparison
+                   Voltage Comparison
                   <span className="text-sm bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
                     {voltageComparisons.length}
                   </span>
@@ -1067,12 +912,12 @@ const Report: React.FC = () => {
             {allStatuses.length > 0 && (
               <div>
                 <h2 className="text-xl font-inter font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                  📋 Status Summary
+                  Status Summary
                   <span className="text-sm bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
                     {allStatuses.length}
                   </span>
                 </h2>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto overflow-y-auto max-h-100">
                   <table className="min-w-full bg-gray-50 rounded-lg border border-gray-200">
                     <thead>
                       <tr className="bg-gray-100">
@@ -1121,7 +966,7 @@ const Report: React.FC = () => {
                   <h2 className="text-xl font-inter font-semibold text-gray-700 mb-4">
                     {title}
                   </h2>
-                  <ul className="space-y-3">
+                  <ul className="space-y-3 overflow-y-auto max-h-100">
                     {data.map((instruction, i) => (
                       <li
                         key={`instruction-${i}`}

@@ -4169,8 +4169,8 @@ if (command === "set_voltage") {
 
   return (
     <div className="w-80 mx-2 p-2 bg-white shadow-lg rounded-xl space-y-4 border border-gray-200">
-      <h2 className="text-2xl font-bold text-gray-900 text-center font-inter">
-        🔌 BMS TEST RUN
+      <h2 className="text-xl font-bold text-gray-900 text-center font-inter">
+         BMS TEST RUN
       </h2>
 
       <div className="flex justify-center">
