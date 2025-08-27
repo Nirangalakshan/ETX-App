@@ -505,7 +505,7 @@ const EXPECTED_SENT_VOLTAGES: Record<number, number> = {
 };
 
 const ErrorWarningPanel: React.FC = () => {
-  const { cellData, responseData, instructions, csu1Statuses, csu2Statuses, daisyStatuses } = useBatteryContext();
+  const { cellData, responseData, instructions, csu1Statuses, csu2Statuses, daisyStatuses,  } = useBatteryContext();
   const [localStatuses, setLocalStatuses] = useState<{
     csu1: ErrorWarningItem[];
     csu2: ErrorWarningItem[];
@@ -802,7 +802,7 @@ const ErrorWarningPanel: React.FC = () => {
   ];
 
   return (
-    <div className="w-full bg-white border border-gray-200 rounded-xl p-5 shadow-md mt-4 space-y-4 overflow-y-auto" style={{ height: 'calc(22vh - 20px)' }}>
+    <div className="w-full bg-white border border-gray-200 rounded-xl p-5 shadow-md mt-4 space-y-4 overflow-y-auto" style={{ height: 'calc(37vh - 20px)' }}>
       <h2 className="text-xl font-bold text-gray-800">⚠️ Cell Status</h2>
 
       {errors.length > 0 && (

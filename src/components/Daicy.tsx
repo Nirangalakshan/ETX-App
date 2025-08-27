@@ -106,7 +106,7 @@ const Daicy: React.FC = () => {
     <div className="p-3 bg-gray-50 h-120 w-70 shadow-md flex justify-center border border-gray-200 rounded-md overflow-y-auto">
       <div className="w-full max-w-6xl relative">
         <h2 className="text-lg font-inter text-gray-800 mb-3 text-center font-semibold py-1 rounded-md shadow-md">
-          Daisy Chain
+          DAISY CHAIN
         </h2>
         {dcIcs.map((dcIc) => (
           <div key={dcIc} className="mb-4">

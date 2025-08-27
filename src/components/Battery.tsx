@@ -578,10 +578,13 @@ const Battery: React.FC = () => {
 
   return (
     <div className="relative w-64"> {/* Changed w-68 to w-64 */}
+     <h2 className="text-lg font-inter text-gray-800 mb-3 text-center font-semibold py-1 rounded-md shadow-md">
+          TESTER READINGS
+        </h2>
       <div
-        className="grid grid-cols-2 gap-1 bg-white/60 border-2 border-gray-300 p-4 rounded-lg shadow-lg backdrop-blur-sm"
+        className="grid grid-cols-2 gap-2 bg-white/60 border-2 border-gray-300 p-3 rounded-lg shadow-lg backdrop-blur-sm"
         style={{
-          height: 'calc(100vh - 80px)',
+          height: 'calc(109vh - 80px)',
           overflow: 'hidden',
           position: 'relative',
         }}

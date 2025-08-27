@@ -231,6 +231,7 @@ interface BatteryContextType {
   setCsu2Statuses: (data: CellStatusData[]) => void;
   daisyStatuses: CellStatusData[];
   setDaisyStatuses: (data: CellStatusData[]) => void;
+  
 }
 
 const BatteryContext = createContext<BatteryContextType | undefined>(undefined);
