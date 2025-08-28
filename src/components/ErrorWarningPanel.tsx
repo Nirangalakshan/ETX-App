@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useBatteryContext } from '../BatteryContext';
-import { Cell } from 'jspdf-autotable';
 
 type CellStatus = 'normal' | 'warning' | 'critical' | 'N/A';
 

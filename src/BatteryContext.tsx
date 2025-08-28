@@ -231,6 +231,8 @@ interface BatteryContextType {
   setCsu2Statuses: (data: CellStatusData[]) => void;
   daisyStatuses: CellStatusData[];
   setDaisyStatuses: (data: CellStatusData[]) => void;
+  cellStatuses: CellStatusData[];
+  setCellStatuses: (data: CellStatusData[]) => void;
   
 }
 
