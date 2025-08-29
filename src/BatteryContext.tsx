@@ -231,7 +231,8 @@ interface BatteryContextType {
   setCsu2Statuses: (data: CellStatusData[]) => void;
   daisyStatuses: CellStatusData[];
   setDaisyStatuses: (data: CellStatusData[]) => void;
-  
+  statuses: CellStatusData[];
+  setStatuses: (data: CellStatusData[]) => void;
 }
 
 const BatteryContext = createContext<BatteryContextType | undefined>(undefined);
@@ -293,6 +294,8 @@ export const BatteryProvider = ({ children }: { children: ReactNode }) => {
   const [csu2Statuses, setCsu2Statuses] = useState<CellStatusData[]>([]);
   const [daisyStatuses, setDaisyStatuses] = useState<CellStatusData[]>([]);
 
+  const [statuses, setStatuses] = useState<CellStatusData[]>([]);
+
   console.log("BatteryContext: Initialized with cellData:", cellData);
 
   return (
@@ -326,6 +329,8 @@ export const BatteryProvider = ({ children }: { children: ReactNode }) => {
         setCsu2Statuses,
         daisyStatuses,
         setDaisyStatuses,
+        statuses,
+        setStatuses,
       }}
     >
       {children}
