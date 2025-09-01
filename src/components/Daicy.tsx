@@ -229,7 +229,7 @@ const Daicy: React.FC = () => {
               ))}
             </div>
             {Object.keys(dcCsuResponseData[dcIc] || {}).length === 0 && (
-          <p className="text-center text-gray-500 mt-3">No data available.</p>
+               <p className="text-center text-gray-500 mt-3">No data available.</p>
         )}
           </div>
           

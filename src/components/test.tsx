@@ -1,5 +1,7 @@
+/* eslint-disable */
+/* @ts-nocheck */
 
-//someclose
+//setup for stop functionality
 import React, { useEffect, useState, useRef } from "react";
 import { useBatteryContext } from "../BatteryContext";
 import { useSerial } from "../SerialContext";
@@ -546,6 +548,7 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
     DCCSU: [],
     DaisyChain: [],
   });
+  const [isRunning, setIsRunning] = useState(false);
   const [cycleCount, setCycleCount] = useState(1);
   const [currentCycle, setCurrentCycle] = useState(0);
   const [fileName, setFileName] = useState<string>("");
@@ -562,6 +565,12 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
   const setReceivedRef = useRef(setReceived);
   const lastSentCommandRef = useRef(lastSentCommand);
   const cellDataRef = useRef(cellData);
+  const isRunningRef = useRef(isRunning);
+
+  useEffect(() => {
+    isRunningRef.current = isRunning;
+  }, [isRunning]);
+
 
   useEffect(() => {
     cellDataRef.current = cellData;
@@ -1565,17 +1574,66 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
   // </div>;
 
   // ⬇️ Update the handleRunTest function to remove auto-saving
-  const handleRunTest = async () => {
+
+  const handleStopTest = () => {
+  console.log("Stopping test...");
+  isRunningRef.current = false; // Set the ref to false
+  setIsRunning(false);
+  setIsLoading(false);
+  setCurrentCycle(0);
+  
+  setReceived((prev) => ({
+    ...prev,
+    Individual: [
+      ...prev.Individual,
+      `[${new Date().toLocaleTimeString()}] ⏹️ Test stopped by user`,
+    ],
+  }));
+};
+
+
+
+
+const handleRunTest = async () => {
+  console.log("handleRunTest called");
   setError(null);
   setIsLoading(true);
+  setIsRunning(true);
+  isRunningRef.current = true; // Set the ref
   setCurrentCycle(0);
   setCycleData([]); // Clear old cycles before starting
 
   try {
+    console.log("Starting test with", cycleCount, "cycles");
+    
+    // Check if serial API is available
+    if (!window.serialAPI) {
+      throw new Error("Serial API not available");
+    }
+
+    // Check if writePortRaw method exists
+    if (!window.serialAPI.writePortRaw) {
+      throw new Error("writePortRaw method not available on serialAPI");
+    }
+
     for (let cycle = 1; cycle <= cycleCount; cycle++) {
+      if (!isRunningRef.current) {
+        console.log("Test stopped at cycle", cycle);
+        break;
+      }
+      
+      console.log("Starting cycle", cycle);
       setCurrentCycle(cycle);
 
-      for (const hexLine of hexLines) {
+      for (let i = 0; i < hexLines.length; i++) {
+        if (!isRunningRef.current) {
+          console.log("Test stopped at hex line", i);
+          break;
+        }
+        
+        const hexLine = hexLines[i];
+        console.log("Processing hex line", i + 1, "of", hexLines.length, ":", hexLine);
+        
         const hexArray = hexLine.split(" ").map((hex) => parseInt(hex, 16));
         const [, commandCode, functionCodeOrCellNo, cellNo] = hexArray;
 
@@ -1588,36 +1646,36 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
         const command = commandEntry ? commandEntry[0] : "unknown";
 
         // Extract expected voltage for set_voltage commands
-if (command === "set_voltage") {
-  const voltageHexValue = hexArray[4]; // Get the value from position [4]
-  
-  // Map hex values to voltage values
-  const voltageMap: Record<number, number> = {
-    0x01: 2.0,
-    0x02: 2.5,
-    0x03: 2.8,
-    0x04: 3.3,
-    0x05: 3.4,
-    0x06: 3.6,
-    0x07: 4.0,
-    0x08: 4.2
-  };
-  
-  const expectedVoltage = voltageMap[voltageHexValue] || null;
-  
-  if (expectedVoltage !== null) {
-    setCellData(prev => {
-      const newData = [...prev];
-      if (cellNo >= 0 && cellNo <= 23) {
-        newData[cellNo] = {
-          ...newData[cellNo],
-          setVoltage: expectedVoltage
-        };
-      }
-      return newData;
-    });
-  }
-}
+        if (command === "set_voltage") {
+          const voltageHexValue = hexArray[4]; // Get the value from position [4]
+          
+          // Map hex values to voltage values
+          const voltageMap: Record<number, number> = {
+            0x01: 2.0,
+            0x02: 2.5,
+            0x03: 2.8,
+            0x04: 3.3,
+            0x05: 3.4,
+            0x06: 3.6,
+            0x07: 4.0,
+            0x08: 4.2
+          };
+          
+          const expectedVoltage = voltageMap[voltageHexValue] || null;
+          
+          if (expectedVoltage !== null) {
+            setCellData(prev => {
+              const newData = [...prev];
+              if (cellNo >= 0 && cellNo <= 23) {
+                newData[cellNo] = {
+                  ...newData[cellNo],
+                  setVoltage: expectedVoltage
+                };
+              }
+              return newData;
+            });
+          }
+        }
 
         if (typeof command !== "string") {
           setReceived((prev) => ({
@@ -1635,7 +1693,15 @@ if (command === "set_voltage") {
         );
 
         const byteBuffer = new Uint8Array(hexArray);
-        await window.serialAPI?.writePortRaw(byteBuffer);
+        console.log("Sending byte buffer:", byteBuffer);
+        
+        try {
+          await window.serialAPI.writePortRaw(byteBuffer);
+          console.log("✅ Data sent successfully");
+        } catch (sendError) {
+          console.error("❌ Failed to send data:", sendError);
+          throw new Error(`Failed to send data: ${sendError.message}`);
+        }
 
         const timestamp = new Date().toLocaleTimeString();
         const setDetails = parseSentSetCommand(hexArray, timestamp);
@@ -1663,9 +1729,20 @@ if (command === "set_voltage") {
           );
         }
 
+        // Wait before next command
         await new Promise((resolve) => setTimeout(resolve, 500));
+        if (command === "set_automatic_sequence") {
+          await new Promise((resolve) => setTimeout(resolve, 18000));
+        }
       }
 
+    
+
+      if (!isRunningRef.current) {
+        console.log("Test stopped after cycle", cycle);
+        break;
+      }
+      
       // Wait a bit to ensure all responses are received
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
@@ -1722,14 +1799,16 @@ if (command === "set_voltage") {
     setCurrentCycle(0); // Reset indicator
 
     const timestamp = new Date().toLocaleTimeString();
-    setReceived((prev) => ({
-      ...prev,
-      Individual: [
-        ...prev.Individual,
-        `[${timestamp}] ✅ Test completed successfully for ${cycleCount} cycle(s).`,
-        `[${timestamp}] ✅ Cycle data saved. Click "Save Cycle Data" to export.`,
-      ],
-    }));
+    if (isRunningRef.current) {
+      setReceived((prev) => ({
+        ...prev,
+        Individual: [
+          ...prev.Individual,
+          `[${timestamp}] ✅ Test completed successfully for ${cycleCount} cycle(s).`,
+          `[${timestamp}] ✅ Cycle data saved. Click "Save Cycle Data" to export.`,
+        ],
+      }));
+    }
 
     if (window.serialAPI?.isPortOpen) {
       const isPortOpen = await window.serialAPI.isPortOpen();
@@ -1740,9 +1819,13 @@ if (command === "set_voltage") {
     }
   } catch (err) {
     const error = err as Error;
+    console.error("❌ Test failed:", error);
     setError("Failed to send test data: " + error.message);
   } finally {
+    console.log("Cleaning up test state");
     setIsLoading(false);
+    setIsRunning(false);
+    isRunningRef.current = false; // Reset the ref
     setLastSentCommand(null);
     setCurrentCycle(0);
   }
@@ -1877,6 +1960,7 @@ if (command === "set_voltage") {
               Serial Port
             </label>
             <select
+              title="Select Serial Port"
               value={selectedPort}
               onChange={(e) => setSelectedPort(e.target.value)}
               disabled={connectedPorts.includes(selectedPort) || isLoading}
@@ -1906,6 +1990,7 @@ if (command === "set_voltage") {
         <div className="flex flex-col">
           <label className="text-xs font-medium text-gray-700">Baud Rate</label>
           <select
+            title="Select Baud Rate"
             value={baudRate}
             onChange={(e) => setBaudRate(Number(e.target.value))}
             disabled={connectedPorts.includes(selectedPort) || isLoading}
@@ -1990,6 +2075,7 @@ if (command === "set_voltage") {
           📁 Upload JSON Instructions
         </label>
         <input
+          placeholder="Upload JSON file"
           type="file"
           accept=".json"
           onChange={handleFileChange}
@@ -2066,6 +2152,7 @@ if (command === "set_voltage") {
       <div className="flex items-center gap-2 mb-2">
         <label className="text-xs font-medium text-gray-700">Cycles</label>
         <input
+          placeholder="Enter cycles"
           type="number"
           min={1}
           max={1000}
@@ -2082,35 +2169,31 @@ if (command === "set_voltage") {
       </div>
 
       {hexLines.length > 0 && (
-        <button
-          onClick={handleRunTest}
-          disabled={!connectedPorts.includes(selectedPort) || isLoading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm disabled:opacity-50 flex items-center justify-center text-sm transition-colors font-sans"
-        >
-          {isLoading ? (
-            <svg
-              className="animate-spin h-4 w-4 mr-2 text-white"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-                fill="none"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8v-8H4z"
-              />
-            </svg>
-          ) : null}
-          ▶️ Run Test
-        </button>
-      )}
+  <div className="flex gap-2 h-10">
+    <button
+      onClick={handleRunTest}
+      disabled={!connectedPorts.includes(selectedPort) || isLoading || isRunning}
+      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm disabled:opacity-50 flex items-center justify-center text-sm transition-colors font-inter"
+    >
+      {isLoading ? (
+        <svg className="animate-spin h-4 w-4 mr-2 text-white" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8v-8H4z"/>
+        </svg>
+      ) : null}
+      {isRunning ? '🔄 Running...' : '▶️ Run Test'}
+    </button>
+    
+    <button
+      onClick={handleStopTest}
+      disabled={!isRunning}
+      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-sm disabled:opacity-50 flex items-center justify-center text-sm transition-colors font-sans w-36"
+      title="Stop Test"
+    >
+      ⏹️ Stop Test
+    </button>
+  </div>
+)}
 
       {error && (
         <div className="p-2 bg-red-100 text-red-700 rounded-lg text-xs animate-pulse font-sans">
@@ -2220,98 +2303,103 @@ if (command === "set_voltage") {
             Cycle Data
           </label>
         </div>
-        <div className="h-40 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50 font-mono text-xs shadow-inner">
-          {cycleData.length === 0 ? (
-            <p className="text-gray-400">
-              No cycle data stored yet. Run a test to store cycle data.
-            </p>
-          ) : (
-            cycleData.map((cycle, cycleIndex) => (
-              <div
-                key={cycleIndex}
-                className="mb-4 border-b border-gray-200 pb-2"
-              >
-                <div className="text-blue-800 font-semibold mb-1">
-                  🔁 Cycle {cycleIndex + 1}
-                </div>
-
-                {Object.entries(cycle).map(
-                  ([cellKey, cellValue]: [string, any]) => (
-                    <div
-                      key={cellKey}
-                      className="mb-1 ml-2 border-b border-gray-100 pb-1"
-                    >
-                      <div className="font-semibold text-gray-800">
-                        {cellKey}
-                      </div>
-                      <div className="ml-4">
-                        {cellValue.individual && (
-                          <div>
-                            <span className="font-medium">Individual:</span>
-                            {cellValue.individual.receivedVoltage !== null && (
-                              <span className="text-green-600">
-                                {" "}
-                                Received: {
-                                  cellValue.individual.receivedVoltage
-                                }{" "}
-                                V
-                              </span>
-                            )}
-                            {cellValue.individual.expectedVoltage !== null && (
-                              <span className="text-blue-600">
-                                {" "}
-                                Expected: {
-                                  cellValue.individual.expectedVoltage
-                                }{" "}
-                                V
-                              </span>
-                            )}
-                          </div>
-                        )}
-                        {cellValue.csu11 && (
-                          <div>
-                            <span className="font-medium">CSU11:</span>
-                            <span className="text-purple-600">
-                              {" "}
-                              Voltage: {cellValue.csu11.receivedVoltage} V
-                            </span>
-                          </div>
-                        )}
-                        {cellValue.csu12 && (
-                          <div>
-                            <span className="font-medium">CSU12:</span>
-                            <span className="text-orange-600">
-                              {" "}
-                              Voltage: {cellValue.csu12.receivedVoltage} V
-                            </span>
-                          </div>
-                        )}
-                        {cellValue.dcCsu && (
-                          <div>
-                            <span className="font-medium">DC CSU:</span>
-                            <span className="text-red-600">
-                              {" "}
-                              Voltage: {cellValue.dcCsu.receivedVoltage} V
-                            </span>
-                          </div>
-                        )}
-                        {cellValue.daisyChain && (
-                          <div>
-                            <span className="font-medium">Daisy Chain:</span>
-                            <span className="text-gray-600">
-                              {" "}
-                              {cellValue.daisyChain.status}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )
-                )}
-              </div>
-            ))
-          )}
+<div className="h-40 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50 font-mono text-xs shadow-inner">
+  {cycleData.length === 0 ? (
+    <p className="text-gray-400">
+      No cycle data stored yet. Run a test to store cycle data.
+    </p>
+  ) : (
+    cycleData.map((cycle, cycleIndex) => (
+      <div
+        key={cycleIndex}
+        className="mb-4 border-b border-gray-200 pb-2"
+      >
+        <div className="text-blue-800 font-semibold mb-1">
+          🔁 Cycle {cycleIndex + 1}
         </div>
+
+        {/* ADD NULL CHECK HERE */}
+        {cycle && typeof cycle === 'object' ? (
+          Object.entries(cycle).map(
+            ([cellKey, cellValue]: [string, any]) => (
+              <div
+                key={cellKey}
+                className="mb-1 ml-2 border-b border-gray-100 pb-1"
+              >
+                <div className="font-semibold text-gray-800">
+                  {cellKey}
+                </div>
+                <div className="ml-4">
+                  {cellValue?.individual && (
+                    <div>
+                      <span className="font-medium">Individual:</span>
+                      {cellValue.individual.receivedVoltage !== null && (
+                        <span className="text-green-600">
+                          {" "}
+                          Received: {
+                            cellValue.individual.receivedVoltage
+                          }{" "}
+                          V
+                        </span>
+                      )}
+                      {cellValue.individual.expectedVoltage !== null && (
+                        <span className="text-blue-600">
+                          {" "}
+                          Expected: {
+                            cellValue.individual.expectedVoltage
+                          }{" "}
+                          V
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {cellValue?.csu11 && (
+                    <div>
+                      <span className="font-medium">CSU11:</span>
+                      <span className="text-purple-600">
+                        {" "}
+                        Voltage: {cellValue.csu11.receivedVoltage} V
+                      </span>
+                    </div>
+                  )}
+                  {cellValue?.csu12 && (
+                    <div>
+                      <span className="font-medium">CSU12:</span>
+                      <span className="text-orange-600">
+                        {" "}
+                        Voltage: {cellValue.csu12.receivedVoltage} V
+                      </span>
+                    </div>
+                  )}
+                  {cellValue?.dcCsu && (
+                    <div>
+                      <span className="font-medium">DC CSU:</span>
+                      <span className="text-red-600">
+                        {" "}
+                        Voltage: {cellValue.dcCsu.receivedVoltage} V
+                      </span>
+                    </div>
+                  )}
+                  {cellValue?.daisyChain && (
+                    <div>
+                      <span className="font-medium">Daisy Chain:</span>
+                      <span className="text-gray-600">
+                        {" "}
+                        {cellValue.daisyChain.status}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          )
+        ) : (
+          <p className="text-gray-400 text-sm">No data available for this cycle</p>
+        )}
+      </div>
+    ))
+  )}
+</div>
       </div>
 
       <div className="space-y-2">

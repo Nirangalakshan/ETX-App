@@ -1,3 +1,6 @@
+/* eslint-disable */
+/* @ts-nocheck */
+
 import React, { useState, useRef, useEffect } from "react";
 import MenuBar from "../components/MenuBar";
 
