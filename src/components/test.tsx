@@ -521,6 +521,10 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
     daisyChainData,
     setDaisyChainData,
     setInstructions,
+    criticalState,
+    csu1Statuses,
+    csu2Statuses,
+    daisyStatuses
   } = useBatteryContext();
 
   const {
@@ -561,6 +565,7 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
   } | null>(null);
   const [cellData, setCellData] = useState<CellData[]>([]);
   const [cycleData, setCycleData] = useState<Record<string, any>[]>([]);
+  const [showCriticalErrorPopup, setShowCriticalErrorPopup] = useState(false);
 
   const setReceivedRef = useRef(setReceived);
   const lastSentCommandRef = useRef(lastSentCommand);
@@ -570,6 +575,14 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
   useEffect(() => {
     isRunningRef.current = isRunning;
   }, [isRunning]);
+
+  useEffect(() => {
+  if (criticalState && isRunning) {
+    handleStopTest();
+    setError("Test stopped due to critical cell status");
+    setShowCriticalErrorPopup(true);
+  }
+  }, [criticalState, isRunning]);
 
 
   useEffect(() => {
@@ -637,6 +650,7 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
       console.warn("SerialTerminal: serialAPI.onSerialData not available");
       return;
     }
+
 
     const handler = (data: { hex: string; parsed: string | null }) => {
       console.log("SerialTerminal: Received serial data:", data);
@@ -2424,6 +2438,43 @@ const handleRunTest = async () => {
           )}
         </div>
       </div>
+
+      
+      {showCriticalErrorPopup && (
+        <div
+          className="fixed z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-red-500/90 text-white rounded-lg shadow-2xl p-6 backdrop-blur-sm"
+          style={{ minWidth: 300 }}
+        >
+          <h3 className="text-lg font-semibold mb-3">Test Stopped</h3>
+          <p className="text-base">Test stopped due to critical cell status!</p>
+          <div className="mt-3">
+            <strong>Critical Cells:</strong>
+            <ul className="list-disc pl-5 mt-1 text-sm">
+              {csu1Statuses
+                .filter((status) => status.status === 'critical')
+                .map((status) => (
+                  <li key={status.label}>{status.label}</li>
+                ))}
+              {csu2Statuses
+                .filter((status) => status.status === 'critical')
+                .map((status) => (
+                  <li key={status.label}>{status.label}</li>
+                ))}
+              {daisyStatuses
+                .filter((status) => status.status === 'critical')
+                .map((status) => (
+                  <li key={status.label}>{status.label}</li>
+                ))}
+            </ul>
+          </div>
+          <button
+            onClick={() => setShowCriticalErrorPopup(false)}
+            className="mt-4 bg-white text-red-500 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      )}
     </div>
   );
 };
