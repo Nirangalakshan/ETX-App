@@ -1870,7 +1870,7 @@ const Report: React.FC = () => {
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-sm text-sm transition-colors"
               disabled={!uploadedData}
             >
-              📊 Generate Excel
+               📄 Generate Excel
             </button>
           </div>
         </div>

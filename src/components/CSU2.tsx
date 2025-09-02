@@ -295,25 +295,32 @@ const CSU2: React.FC = () => {
   };
 
   const getSetVoltage = (cellId: number) => {
-    const cellInstructions = instructions.filter((instr) => parseInt(instr.cellNo) === cellId);
-    const setVoltageInstruction = cellInstructions.find((instr) => instr.command === 'set_voltage');
-    if (setVoltageInstruction && setVoltageInstruction.voltage) {
-      const parsedSetVoltage = parseInt(setVoltageInstruction.voltage);
-      return !isNaN(parsedSetVoltage) && parsedSetVoltage >= 1 && parsedSetVoltage <= 8 ? parsedSetVoltage : null;
-    }
-    return null;
-  };
+  const globalCellId = cellId + 12; // shift to 12–23
+  const cellInstructions = instructions.filter(
+    (instr) => parseInt(instr.cellNo) === globalCellId
+  );
+  const setVoltageInstruction = cellInstructions.find((instr) => instr.command === 'set_voltage');
+  if (setVoltageInstruction && setVoltageInstruction.voltage) {
+    const parsedSetVoltage = parseInt(setVoltageInstruction.voltage);
+    return !isNaN(parsedSetVoltage) && parsedSetVoltage >= 1 && parsedSetVoltage <= 8
+      ? parsedSetVoltage
+      : null;
+  }
+  return null;
+};
 
-  const getSetTemperature = (cellId: number) => {
-    const cellInstructions = instructions.filter((instr) => parseInt(instr.cellNo) === cellId);
-    const setTempInstruction = cellInstructions.find((instr) => instr.command === 'set_temp');
-    if (setTempInstruction && setTempInstruction.temperature) {
-      const parsedSetTemp = parseFloat(setTempInstruction.temperature);
-      return !isNaN(parsedSetTemp) ? parsedSetTemp : null;
-    }
-    return null;
-  };
-
+const getSetTemperature = (cellId: number) => {
+  const globalCellId = cellId + 12; // shift to 12–23
+  const cellInstructions = instructions.filter(
+    (instr) => parseInt(instr.cellNo) === globalCellId
+  );
+  const setTempInstruction = cellInstructions.find((instr) => instr.command === 'set_temp');
+  if (setTempInstruction && setTempInstruction.temperature) {
+    const parsedSetTemp = parseFloat(setTempInstruction.temperature);
+    return !isNaN(parsedSetTemp) ? parsedSetTemp : null;
+  }
+  return null;
+};
   useEffect(() => {
     const statuses = Array.from({ length: 12 }, (_, cellId) => {
       const dataItems = csu2ResponseData[cellId] || [];
