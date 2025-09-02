@@ -99,7 +99,7 @@ const CSU2: React.FC = () => {
     <div className="p-3 bg-gray-50 h-120 w-70 shadow-md flex justify-center border border-gray-200 rounded-md">
       <div className="w-full max-w-6xl relative">
         <h2 className="text-lg font-inter text-gray-800 mb-3 text-center font-semibold py-1 rounded-md shadow-md">
-          CSU2
+          CSU12
         </h2>
         <div className="space-y-2">
           {rows.map((row, rowIndex) => (
