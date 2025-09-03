@@ -295,24 +295,33 @@ const CSU1: React.FC = () => {
   };
 
   const getSetVoltage = (cellId: number) => {
-    const cellInstructions = instructions.filter((instr) => parseInt(instr.cellNo) === cellId);
-    const setVoltageInstruction = cellInstructions.find((instr) => instr.command === 'set_voltage');
-    if (setVoltageInstruction && setVoltageInstruction.voltage) {
-      const parsedSetVoltage = parseInt(setVoltageInstruction.voltage);
-      return !isNaN(parsedSetVoltage) && parsedSetVoltage >= 1 && parsedSetVoltage <= 8 ? parsedSetVoltage : null;
-    }
-    return null;
-  };
+  const globalCellId = cellId + 12; // CSU1 -> global 12–23
+  const cellInstructions = instructions.filter(
+    (instr) => parseInt(instr.cellNo) === globalCellId
+  );
+  const setVoltageInstruction = cellInstructions.find((instr) => instr.command === 'set_voltage');
+  if (setVoltageInstruction && setVoltageInstruction.voltage) {
+    const parsedSetVoltage = parseInt(setVoltageInstruction.voltage);
+    return !isNaN(parsedSetVoltage) && parsedSetVoltage >= 1 && parsedSetVoltage <= 8
+      ? parsedSetVoltage
+      : null;
+  }
+  return null;
+};
 
-  const getSetTemperature = (cellId: number) => {
-    const cellInstructions = instructions.filter((instr) => parseInt(instr.cellNo) === cellId);
-    const setTempInstruction = cellInstructions.find((instr) => instr.command === 'set_temp');
-    if (setTempInstruction && setTempInstruction.temperature) {
-      const parsedSetTemp = parseFloat(setTempInstruction.temperature);
-      return !isNaN(parsedSetTemp) ? parsedSetTemp : null;
-    }
-    return null;
-  };
+const getSetTemperature = (cellId: number) => {
+  const globalCellId = cellId + 12; // CSU1 -> global 12–23
+  const cellInstructions = instructions.filter(
+    (instr) => parseInt(instr.cellNo) === globalCellId
+  );
+  const setTempInstruction = cellInstructions.find((instr) => instr.command === 'set_temp');
+  if (setTempInstruction && setTempInstruction.temperature) {
+    const parsedSetTemp = parseFloat(setTempInstruction.temperature);
+    return !isNaN(parsedSetTemp) ? parsedSetTemp : null;
+  }
+  return null;
+};
+
 
   useEffect(() => {
     const statuses = Array.from({ length: 12 }, (_, cellId) => {
@@ -355,7 +364,7 @@ const CSU1: React.FC = () => {
     <div className="p-3 bg-gray-50 h-120 w-70 shadow-md flex justify-center border border-gray-200 rounded-md">
       <div className="w-full max-w-6xl relative">
         <h2 className="text-lg font-inter text-gray-800 mb-3 text-center font-semibold py-1 rounded-md shadow-md">
-          CSU1
+          CSU11
         </h2>
         <div className="space-y-2">
           {rows.map((row, rowIndex) => (

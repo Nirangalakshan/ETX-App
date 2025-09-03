@@ -295,7 +295,7 @@ const CSU2: React.FC = () => {
   };
 
   const getSetVoltage = (cellId: number) => {
-  const globalCellId = cellId + 12; // shift to 12–23
+  const globalCellId = cellId; // CSU2 -> global 0–11
   const cellInstructions = instructions.filter(
     (instr) => parseInt(instr.cellNo) === globalCellId
   );
@@ -310,7 +310,7 @@ const CSU2: React.FC = () => {
 };
 
 const getSetTemperature = (cellId: number) => {
-  const globalCellId = cellId + 12; // shift to 12–23
+  const globalCellId = cellId; // CSU2 -> global 0–11
   const cellInstructions = instructions.filter(
     (instr) => parseInt(instr.cellNo) === globalCellId
   );
@@ -321,6 +321,7 @@ const getSetTemperature = (cellId: number) => {
   }
   return null;
 };
+
   useEffect(() => {
     const statuses = Array.from({ length: 12 }, (_, cellId) => {
       const dataItems = csu2ResponseData[cellId] || [];
@@ -362,7 +363,7 @@ const getSetTemperature = (cellId: number) => {
     <div className="p-3 bg-gray-50 h-120 w-70 shadow-md flex justify-center border border-gray-200 rounded-md">
       <div className="w-full max-w-6xl relative">
         <h2 className="text-lg font-inter text-gray-800 mb-3 text-center font-semibold py-1 rounded-md shadow-md">
-          CSU2
+          CSU12
         </h2>
         <div className="space-y-2">
           {rows.map((row, rowIndex) => (

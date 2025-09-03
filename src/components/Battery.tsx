@@ -678,6 +678,7 @@ const Battery: React.FC = () => {
   >
     <h3 className="text-lg font-semibold mb-3">Error</h3>
     <p className="text-base">Tester board failed due to critical cell status!</p>
+    <p className="text-sm">Please check the following cells:</p>
     <div className="mt-3">
       <strong>Critical Cells:</strong>
       <ul className="list-disc pl-5 mt-1 text-sm">
