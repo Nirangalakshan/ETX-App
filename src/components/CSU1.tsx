@@ -1,4 +1,5 @@
-// // CSU1.tsx
+// /* eslint-disable */
+// /* @ts-nocheck */
 // import React, { useState, useRef, useEffect } from 'react';
 // import { useBatteryContext } from '../BatteryContext';
 // import { ResponseData } from './test';
@@ -20,7 +21,7 @@
 // const TEMPERATURE_CRITICAL_THRESHOLD = 10;
 
 // const CSU1: React.FC = () => {
-//   const { csu1ResponseData, instructions, setCsu1Statuses } = useBatteryContext();
+//   const { csu1ResponseData, instructions, setCsu1Statuses, setCriticalState } = useBatteryContext();
 //   const [selectedCell, setSelectedCell] = useState<number | null>(null);
 //   const cellRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -45,24 +46,33 @@
 //   };
 
 //   const getSetVoltage = (cellId: number) => {
-//     const cellInstructions = instructions.filter((instr) => parseInt(instr.cellNo) === cellId);
-//     const setVoltageInstruction = cellInstructions.find((instr) => instr.command === 'set_voltage');
-//     if (setVoltageInstruction && setVoltageInstruction.voltage) {
-//       const parsedSetVoltage = parseInt(setVoltageInstruction.voltage);
-//       return !isNaN(parsedSetVoltage) && parsedSetVoltage >= 1 && parsedSetVoltage <= 8 ? parsedSetVoltage : null;
-//     }
-//     return null;
-//   };
+//   const globalCellId = cellId + 12; // CSU1 -> global 12–23
+//   const cellInstructions = instructions.filter(
+//     (instr) => parseInt(instr.cellNo) === globalCellId
+//   );
+//   const setVoltageInstruction = cellInstructions.find((instr) => instr.command === 'set_voltage');
+//   if (setVoltageInstruction && setVoltageInstruction.voltage) {
+//     const parsedSetVoltage = parseInt(setVoltageInstruction.voltage);
+//     return !isNaN(parsedSetVoltage) && parsedSetVoltage >= 1 && parsedSetVoltage <= 8
+//       ? parsedSetVoltage
+//       : null;
+//   }
+//   return null;
+// };
 
-//   const getSetTemperature = (cellId: number) => {
-//     const cellInstructions = instructions.filter((instr) => parseInt(instr.cellNo) === cellId);
-//     const setTempInstruction = cellInstructions.find((instr) => instr.command === 'set_temp');
-//     if (setTempInstruction && setTempInstruction.temperature) {
-//       const parsedSetTemp = parseFloat(setTempInstruction.temperature);
-//       return !isNaN(parsedSetTemp) ? parsedSetTemp : null;
-//     }
-//     return null;
-//   };
+// const getSetTemperature = (cellId: number) => {
+//   const globalCellId = cellId + 12; // CSU1 -> global 12–23
+//   const cellInstructions = instructions.filter(
+//     (instr) => parseInt(instr.cellNo) === globalCellId
+//   );
+//   const setTempInstruction = cellInstructions.find((instr) => instr.command === 'set_temp');
+//   if (setTempInstruction && setTempInstruction.temperature) {
+//     const parsedSetTemp = parseFloat(setTempInstruction.temperature);
+//     return !isNaN(parsedSetTemp) ? parsedSetTemp : null;
+//   }
+//   return null;
+// };
+
 
 //   useEffect(() => {
 //     const statuses = Array.from({ length: 12 }, (_, cellId) => {
@@ -81,7 +91,13 @@
 //       };
 //     });
 //     setCsu1Statuses(statuses);
-//   }, [csu1ResponseData, instructions, setCsu1Statuses]);
+    
+//     // Check for critical state and update context
+//     const hasCritical = statuses.some(status => status.status === 'critical');
+//     if (hasCritical) {
+//       setCriticalState(true);
+//     }
+//   }, [csu1ResponseData, instructions, setCsu1Statuses, setCriticalState]);
 
 //   const handleCellClick = (cellId: number) => {
 //     setSelectedCell(selectedCell === cellId ? null : cellId);
@@ -99,7 +115,7 @@
 //     <div className="p-3 bg-gray-50 h-120 w-70 shadow-md flex justify-center border border-gray-200 rounded-md">
 //       <div className="w-full max-w-6xl relative">
 //         <h2 className="text-lg font-inter text-gray-800 mb-3 text-center font-semibold py-1 rounded-md shadow-md">
-//           CSU1
+//           CSU11
 //         </h2>
 //         <div className="space-y-2">
 //           {rows.map((row, rowIndex) => (
@@ -245,98 +261,57 @@
 
 
 
-
-
 /* eslint-disable */
 /* @ts-nocheck */
 import React, { useState, useRef, useEffect } from 'react';
 import { useBatteryContext } from '../BatteryContext';
 import { ResponseData } from './test';
 
-const EXPECTED_SENT_VOLTAGES: Record<number, number> = {
-  1: 2.0,
-  2: 2.5,
-  3: 2.8,
-  4: 3.3,
-  5: 3.4,
-  6: 3.6,
-  7: 4.0,
-  8: 4.2,
-};
-
 const VOLTAGE_WARNING_THRESHOLD = 0.1;
 const VOLTAGE_CRITICAL_THRESHOLD = 0.2;
-const TEMPERATURE_WARNING_THRESHOLD = 5;
-const TEMPERATURE_CRITICAL_THRESHOLD = 10;
 
 const CSU1: React.FC = () => {
-  const { csu1ResponseData, instructions, setCsu1Statuses, setCriticalState } = useBatteryContext();
+  const { csu1ResponseData, responseData, setCsu1Statuses, setCriticalState } = useBatteryContext();
   const [selectedCell, setSelectedCell] = useState<number | null>(null);
   const cellRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  const getCellStatus = (dataItems: ResponseData[], setVoltage: number | null, setTemperature: number | null) => {
+  const getCellStatus = (dataItems: ResponseData[], expectedVoltage: number | null) => {
     const voltageItem = dataItems.find((item) => item.command === 'get_11_csu_volt');
-    const tempItem = dataItems.find((item) => item.command === 'get_11_csu_temp');
     const voltage = voltageItem ? parseFloat(voltageItem.value) : null;
-    const temp = tempItem ? parseFloat(tempItem.value.replace(' °C', '')) : null;
 
-    if (voltage !== null && setVoltage !== null && setVoltage in EXPECTED_SENT_VOLTAGES) {
-      const expectedVoltage = EXPECTED_SENT_VOLTAGES[setVoltage];
+    if (voltage !== null && expectedVoltage !== null) {
       const voltageGap = Math.abs(expectedVoltage - voltage);
       if (voltageGap >= VOLTAGE_CRITICAL_THRESHOLD) return 'critical';
       if (voltageGap >= VOLTAGE_WARNING_THRESHOLD) return 'warning';
     }
-    if (temp !== null && setTemperature !== null) {
-      const tempGap = Math.abs(setTemperature - temp);
-      if (tempGap >= TEMPERATURE_CRITICAL_THRESHOLD) return 'critical';
-      if (tempGap >= TEMPERATURE_WARNING_THRESHOLD) return 'warning';
-    }
     return dataItems.length === 0 ? 'N/A' : 'normal';
   };
 
-  const getSetVoltage = (cellId: number) => {
-  const globalCellId = cellId + 12; // CSU1 -> global 12–23
-  const cellInstructions = instructions.filter(
-    (instr) => parseInt(instr.cellNo) === globalCellId
-  );
-  const setVoltageInstruction = cellInstructions.find((instr) => instr.command === 'set_voltage');
-  if (setVoltageInstruction && setVoltageInstruction.voltage) {
-    const parsedSetVoltage = parseInt(setVoltageInstruction.voltage);
-    return !isNaN(parsedSetVoltage) && parsedSetVoltage >= 1 && parsedSetVoltage <= 8
-      ? parsedSetVoltage
-      : null;
-  }
-  return null;
-};
-
-const getSetTemperature = (cellId: number) => {
-  const globalCellId = cellId + 12; // CSU1 -> global 12–23
-  const cellInstructions = instructions.filter(
-    (instr) => parseInt(instr.cellNo) === globalCellId
-  );
-  const setTempInstruction = cellInstructions.find((instr) => instr.command === 'set_temp');
-  if (setTempInstruction && setTempInstruction.temperature) {
-    const parsedSetTemp = parseFloat(setTempInstruction.temperature);
-    return !isNaN(parsedSetTemp) ? parsedSetTemp : null;
-  }
-  return null;
-};
-
+  const getExpectedVoltage = (cellId: number) => {
+    const globalCellId = cellId + 12; // CSU1 -> global 12–23
+    const cellData = responseData[globalCellId] || [];
+    const voltageData = cellData.find((item) => item.command === 'get_voltage');
+    if (voltageData && voltageData.value) {
+      const parsedVoltage = parseFloat(voltageData.value);
+      return isNaN(parsedVoltage) ? null : parsedVoltage;
+    }
+    return null;
+  };
 
   useEffect(() => {
+    console.log('CSU1 Response Data:', csu1ResponseData);
+    console.log('Global Response Data:', responseData);
     const statuses = Array.from({ length: 12 }, (_, cellId) => {
       const dataItems = csu1ResponseData[cellId] || [];
-      const setVoltage = getSetVoltage(cellId);
-      const setTemperature = getSetTemperature(cellId);
-      const status = getCellStatus(dataItems, setVoltage, setTemperature);
+      const expectedVoltage = getExpectedVoltage(cellId);
+      const status = getCellStatus(dataItems, expectedVoltage);
+      const voltageItem = dataItems.find((item) => item.command === 'get_11_csu_volt');
       return {
         label: `CSU1 - Cell ${cellId}`,
         status,
-        details: setVoltage != null && status !== 'N/A'
-          ? `Voltage: ${dataItems.find(item => item.command === 'get_11_csu_volt')?.value || '-'} (Expected: ${EXPECTED_SENT_VOLTAGES[setVoltage] || '-'}V)`
-          : setTemperature != null
-          ? `Temperature: ${dataItems.find(item => item.command === 'get_11_csu_temp')?.value || '-'} (Expected: ${setTemperature?.toFixed(1) || '-'}°C)`
-          : 'No data'
+        details: voltageItem && expectedVoltage !== null && status !== 'N/A'
+          ? `Voltage: ${voltageItem.value} (Expected: ${expectedVoltage}V)`
+          : 'No expected voltage data'
       };
     });
     setCsu1Statuses(statuses);
@@ -346,7 +321,7 @@ const getSetTemperature = (cellId: number) => {
     if (hasCritical) {
       setCriticalState(true);
     }
-  }, [csu1ResponseData, instructions, setCsu1Statuses, setCriticalState]);
+  }, [csu1ResponseData, responseData, setCsu1Statuses, setCriticalState]);
 
   const handleCellClick = (cellId: number) => {
     setSelectedCell(selectedCell === cellId ? null : cellId);
@@ -371,9 +346,8 @@ const getSetTemperature = (cellId: number) => {
             <div key={rowIndex} className="grid grid-cols-3 gap-2">
               {row.map((cellId) => {
                 const dataItems = csu1ResponseData[cellId] || [];
-                const setVoltage = getSetVoltage(cellId);
-                const setTemperature = getSetTemperature(cellId);
-                const status = getCellStatus(dataItems, setVoltage, setTemperature);
+                const expectedVoltage = getExpectedVoltage(cellId);
+                const status = getCellStatus(dataItems, expectedVoltage);
                 const statusColors = {
                   normal: 'bg-green-100 text-green-800',
                   warning: 'bg-yellow-100 text-yellow-800',
@@ -381,7 +355,6 @@ const getSetTemperature = (cellId: number) => {
                   'N/A': 'bg-gray-100 text-gray-800',
                 };
                 const voltageItem = dataItems.find((item) => item.command === 'get_11_csu_volt');
-                const tempItem = dataItems.find((item) => item.command === 'get_11_csu_temp');
 
                 const cellRef = cellRefs.current[cellId];
                 const popupStyle: React.CSSProperties = cellRef
@@ -402,7 +375,7 @@ const getSetTemperature = (cellId: number) => {
                   >
                     <div className="text-xs">
                       <div className="flex justify-between">
-                        <span>V:</span>
+                        <span>C11.V:</span>
                         <span
                           className={
                             voltageItem &&
@@ -416,8 +389,10 @@ const getSetTemperature = (cellId: number) => {
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span>T:</span>
-                        <span>{tempItem ? tempItem.value : '-'}</span>
+                        <span>T.V:</span>
+                        <span>
+                          {expectedVoltage !== null ? `${expectedVoltage}V` : '-'}
+                        </span>
                       </div>
                       <div className={`mt-1 p-1 text-center rounded-sm ${statusColors[status]}`}>
                         <span className="text-xs font-light">{status.charAt(0).toUpperCase() + status.slice(1)}</span>
@@ -461,17 +436,9 @@ const getSetTemperature = (cellId: number) => {
                             </div>
                           ))}
                           <div className="flex justify-between items-center">
-                            <span className="text-xs font-medium">Sent Voltage Command:</span>
+                            <span className="text-xs font-medium">Tester Volt:</span>
                             <span className="text-xs font-semibold">
-                              {setVoltage != null ? setVoltage.toString() : 'N/A'}
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs font-medium">Expected Voltage:</span>
-                            <span className="text-xs font-semibold">
-                              {setVoltage != null && setVoltage in EXPECTED_SENT_VOLTAGES
-                                ? `${EXPECTED_SENT_VOLTAGES[setVoltage]}V`
-                                : 'N/A'}
+                              {expectedVoltage !== null ? `${expectedVoltage}V` : 'N/A'}
                             </span>
                           </div>
                         </div>

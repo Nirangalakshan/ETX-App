@@ -218,6 +218,7 @@ const DashBoard: React.FC = () => {
         </div>
       </div>
       <input
+        placeholder='Upload JSON file'
         type="file"
         accept=".json"
         ref={fileInputRef}

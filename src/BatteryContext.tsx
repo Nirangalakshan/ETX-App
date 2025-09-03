@@ -143,7 +143,7 @@
 
 
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { ResponseData } from './components/test';
 
 type CellStatus = 'normal' | 'warning' | 'critical' | 'N/A';
@@ -299,7 +299,9 @@ export const BatteryProvider = ({ children }: { children: ReactNode }) => {
   const [statuses, setStatuses] = useState<CellStatusData[]>([]);
    const [criticalState, setCriticalState] = useState<boolean>(false);
 
+  useEffect(() => {
   console.log("BatteryContext: Initialized with cellData:", cellData);
+}, []);
 
   return (
     <BatteryContext.Provider

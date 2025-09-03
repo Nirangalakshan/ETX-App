@@ -1847,55 +1847,24 @@ const handleRunTest = async () => {
 
   // ⬇️ Update the handleSaveCycleData function to include all voltage data
   const handleSaveCycleData = () => {
-    try {
-      if (cycleData.length === 0) {
-        const timestampLog = new Date().toLocaleTimeString();
-        setReceived((prev) => ({
-          ...prev,
-          Individual: [
-            ...prev.Individual,
-            `[${timestampLog}] No cycle data available to save. Run a test first.`,
-          ],
-        }));
-        return;
-      }
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const cycleDataJson = JSON.stringify({
+    timestamp,
+    csu1: csu1ResponseData,
+    csu2: csu2ResponseData,
+    daisyChain: daisyChainData,
+  }, null, 2);
 
-      const dataToSave: Record<string, any> = {};
-
-      cycleData.forEach((cycle, index) => {
-        if (Object.keys(cycle).length > 0) {
-          dataToSave[`cycle_${index + 1}`] = cycle;
-        }
-      });
-
-      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const filename = `cycle_voltage_data_${timestamp}.json`;
-
-      const jsonString = JSON.stringify(dataToSave, null, 2);
-      const blob = new Blob([jsonString], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      const logTime = new Date().toLocaleTimeString();
-      setReceived((prev) => ({
-        ...prev,
-        Individual: [
-          ...prev.Individual,
-          `[${logTime}] ✅ Cycle data saved to ${filename}`,
-          `[${logTime}] ✅ Total cycles: ${cycleData.length}`,
-        ],
-      }));
-    } catch (err: any) {
-      setError(`❌ Failed to save cycle data: ${err.message}`);
-    }
-  };
+  const blob = new Blob([cycleDataJson], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `cycle_data_${timestamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
 
   // const handleClearOutput = () => {
   //   setReceived({
@@ -2159,7 +2128,7 @@ const handleRunTest = async () => {
               />
             </svg>
           ) : null}
-          💾 Save Cycle Data
+          Save Cycle Data
         </button>
       </div>
 
@@ -2311,110 +2280,128 @@ const handleRunTest = async () => {
         </div>
       </div> */}
 
-      <div className="space-y-2">
-        <div className="flex justify-between items-center">
-          <label className="text-xs font-medium text-gray-700">
-            Cycle Data
-          </label>
-        </div>
-<div className="h-40 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50 font-mono text-xs shadow-inner">
-  {cycleData.length === 0 ? (
-    <p className="text-gray-400">
-      No cycle data stored yet. Run a test to store cycle data.
-    </p>
-  ) : (
-    cycleData.map((cycle, cycleIndex) => (
-      <div
-        key={cycleIndex}
-        className="mb-4 border-b border-gray-200 pb-2"
-      >
-        <div className="text-blue-800 font-semibold mb-1">
-          🔁 Cycle {cycleIndex + 1}
-        </div>
+<div className="space-y-2">
+  <div className="flex justify-between items-center">
+    <label className="text-xs font-medium text-gray-700">
+      Cycle Data
+    </label>
+  </div>
 
-        {/* ADD NULL CHECK HERE */}
-        {cycle && typeof cycle === 'object' ? (
-          Object.entries(cycle).map(
-            ([cellKey, cellValue]: [string, any]) => (
-              <div
-                key={cellKey}
-                className="mb-1 ml-2 border-b border-gray-100 pb-1"
-              >
-                <div className="font-semibold text-gray-800">
-                  {cellKey}
-                </div>
-                <div className="ml-4">
-                  {cellValue?.individual && (
-                    <div>
-                      <span className="font-medium">Individual:</span>
-                      {cellValue.individual.receivedVoltage !== null && (
-                        <span className="text-green-600">
-                          {" "}
-                          Received: {
-                            cellValue.individual.receivedVoltage
-                          }{" "}
-                          V
-                        </span>
-                      )}
+  <div className="h-40 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50 font-mono text-xs shadow-inner">
+    {cycleData.length === 0 ? (
+      <p className="text-gray-400">No cycle data stored yet. Run a test to store cycle data.</p>
+    ) : (
+      cycleData.map((cycle, cycleIndex) => {
+        // order cells numerically: cell_0, cell_1, ...
+        const sortedEntries = Object.entries(cycle).sort((a, b) => {
+          const ai = parseInt(a[0].split('_')[1], 10);
+          const bi = parseInt(b[0].split('_')[1], 10);
+          return ai - bi;
+        });
+
+        return (
+          <div key={cycleIndex} className="mb-4 border-b border-gray-200 pb-2">
+            <div className="text-blue-800 font-semibold mb-1">🔁 Cycle {cycleIndex + 1}</div>
+
+            {/* Individual - all 24 cells */}
+            <div className="mb-2">
+              <div className="font-semibold text-gray-800">Individual</div>
+              {sortedEntries.map(([cellKey, cellValue]) =>
+                cellValue?.individual ? (
+                  <div key={cellKey} className="mb-1 ml-2 border-b border-gray-100 pb-1">
+                    <div className="font-semibold text-gray-800">{cellKey}:</div>
+                    <div className="ml-4">
+                      <span className="text-green-600">Received: {cellValue.individual.receivedVoltage} V</span>
                       {cellValue.individual.expectedVoltage !== null && (
-                        <span className="text-blue-600">
-                          {" "}
-                          Expected: {
-                            cellValue.individual.expectedVoltage
-                          }{" "}
-                          V
-                        </span>
+                        <span className="text-blue-600"> Expected: {cellValue.individual.expectedVoltage} V</span>
                       )}
                     </div>
-                  )}
-                  {cellValue?.csu11 && (
-                    <div>
-                      <span className="font-medium">CSU11:</span>
-                      <span className="text-purple-600">
-                        {" "}
-                        Voltage: {cellValue.csu11.receivedVoltage} V
-                      </span>
+                  </div>
+                ) : null
+              )}
+            </div>
+
+            {/* CSU11 -> map individual 12..23 into cell_0..cell_11 */}
+            <div className="mb-2">
+              <div className="font-semibold text-gray-800">CSU11</div>
+              {sortedEntries.slice(12, 23).map(([cellKey, cellValue], idx) => {
+                // idx runs 0..11 here -> represents CSU11 cell_0..cell_11
+                const mappedIdx = idx; // 0..11
+                const received =
+                  cellValue?.individual?.receivedVoltage ??
+                  (cellValue?.csu11 ? cellValue.csu11.receivedVoltage : null) ??
+                  null;
+                return (
+                  <div key={`csu11-${cellKey}`} className="mb-1 ml-2 border-b border-gray-100 pb-1">
+                    <div className="font-semibold text-gray-800">cell_{mappedIdx}:</div>
+                    <div className="ml-4">
+                      <span className="text-purple-600">Voltage: {received ?? '-'} V</span>
+                      <span className="text-purple-600">Expected: {cellValue.individual.receivedVoltage} V</span>
                     </div>
-                  )}
-                  {cellValue?.csu12 && (
-                    <div>
-                      <span className="font-medium">CSU12:</span>
-                      <span className="text-orange-600">
-                        {" "}
-                        Voltage: {cellValue.csu12.receivedVoltage} V
-                      </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* CSU12 -> map individual 0..11 into cell_0..cell_11 */}
+            <div className="mb-2">
+              <div className="font-semibold text-gray-800">CSU12</div>
+              {sortedEntries.slice(0, 11).map(([cellKey, cellValue], idx) => {
+                // idx runs 0..11 here -> represents CSU12 cell_0..cell_11
+                const mappedIdx = idx; // 0..11
+                const received =
+                  cellValue?.individual?.receivedVoltage ??
+                  (cellValue?.csu12 ? cellValue.csu12.receivedVoltage : null) ??
+                  null;
+                return (
+                  <div key={`csu12-${cellKey}`} className="mb-1 ml-2 border-b border-gray-100 pb-1">
+                    <div className="font-semibold text-gray-800">cell_{mappedIdx}:</div>
+                    <div className="ml-4">
+                      <span className="text-orange-600">Voltage: {received ?? '-'} V</span>
+                      <span className="text-orange-600">Expected: {cellValue.individual.receivedVoltage} V</span>
                     </div>
-                  )}
-                  {cellValue?.dcCsu && (
-                    <div>
-                      <span className="font-medium">DC CSU:</span>
-                      <span className="text-red-600">
-                        {" "}
-                        Voltage: {cellValue.dcCsu.receivedVoltage} V
-                      </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* DC CSU (unchanged) */}
+            <div className="mb-2">
+              <div className="font-semibold text-gray-800">DC CSU</div>
+              {sortedEntries.map(([cellKey, cellValue]) =>
+                cellValue?.dcCsu ? (
+                  <div key={`dc-${cellKey}`} className="mb-1 ml-2 border-b border-gray-100 pb-1">
+                    <div className="font-semibold text-gray-800">{cellKey}:</div>
+                    <div className="ml-4">
+                      
+                      <span className="text-red-600">Voltage: {cellValue.dcCsu.receivedVoltage} V</span>
                     </div>
-                  )}
-                  {cellValue?.daisyChain && (
-                    <div>
-                      <span className="font-medium">Daisy Chain:</span>
-                      <span className="text-gray-600">
-                        {" "}
-                        {cellValue.daisyChain.status}
-                      </span>
+                  </div>
+                ) : null
+              )}
+            </div>
+
+            {/* Daisy Chain (unchanged) */}
+            <div>
+              <div className="font-semibold text-gray-800">Daisy Chain</div>
+              {sortedEntries.map(([cellKey, cellValue]) =>
+                cellValue?.daisyChain ? (
+                  <div key={`daisy-${cellKey}`} className="mb-1 ml-2 border-b border-gray-100 pb-1">
+                    <div className="font-semibold text-gray-800">{cellKey}:</div>
+                    <div className="ml-4">
+                      <span className="text-gray-600">{cellValue.daisyChain.status}</span>
                     </div>
-                  )}
-                </div>
-              </div>
-            )
-          )
-        ) : (
-          <p className="text-gray-400 text-sm">No data available for this cycle</p>
-        )}
-      </div>
-    ))
-  )}
+                  </div>
+                ) : null
+              )}
+            </div>
+          </div>
+        );
+      })
+    )}
+  </div>
 </div>
-      </div>
+
 
       <div className="space-y-2">
         <label className="text-xs font-medium text-gray-700">
