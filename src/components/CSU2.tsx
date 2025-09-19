@@ -450,7 +450,7 @@ const CSU2: React.FC = () => {
   const rows = [cellIds.slice(0, 3), cellIds.slice(3, 6), cellIds.slice(6, 9), cellIds.slice(9, 12)];
 
   return (
-    <div className="p-3 bg-gray-50 h-120 w-70 shadow-md flex justify-center border border-gray-200 rounded-md">
+    <div className="p-3 bg-gray-50 h-120 w-70 shadow-md flex justify-center border border-cyan-100 rounded-md">
       <div className="w-full max-w-6xl relative">
         <h2 className="text-lg font-inter text-gray-800 mb-3 text-center font-semibold py-1 rounded-md shadow-md">
           CSU12
@@ -489,7 +489,7 @@ const CSU2: React.FC = () => {
                   >
                     <div className="text-xs">
                       <div className="flex justify-between">
-                        <span>C12.V:</span>
+                        <span>V:</span>
                         <span
                           className={
                             actualVoltage &&

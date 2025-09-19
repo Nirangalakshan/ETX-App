@@ -206,8 +206,8 @@ let win: BrowserWindow | null;
 
 function createWindow() {
   win = new BrowserWindow({
-    width: 1920,
-    height: 1080,
+    width: 2560,
+    height: 1440,
     resizable: false,
     center: true,
     frame: false,

@@ -324,7 +324,7 @@ const ErrorWarningPanel: React.FC = () => {
   ];
 
   return (
-    <div className="w-full bg-white border border-gray-200 rounded-xl p-5 shadow-lg mt-4 space-y-4 overflow-y-auto" style={{ height: 'calc(37vh - 20px)' }}>
+    <div className="w-full bg-white border border-gray-500 rounded-xl p-5 shadow-lg mt-4 space-y-4 overflow-y-auto" style={{ height: 'calc(37vh - 20px)' }}>
       <h2 className="text-xl font-bold text-gray-800">Cell Status</h2>
 
       {errors.length > 0 && (

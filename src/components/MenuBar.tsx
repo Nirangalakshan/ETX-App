@@ -7,7 +7,8 @@ import Swal from "sweetalert2";
 import { useEffect, useState } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import "sweetalert2/src/sweetalert2.scss";
-import icon from "../../public/icon.svg";
+// import icon from "../../public/icon.svg";
+import vega from "../../public/vega.png"
 
 declare global {
   interface Window {
@@ -85,14 +86,14 @@ export default function CustomTitleBar() {
   return (
     <>
       <div
-        className="h-12 px-4 flex items-center justify-between backdrop-blur-md bg-gray-200 border-b border-gray-300 text-gray-800 font-inter"
+        className="h-12 px-4 flex items-center justify-between backdrop-blur-md bg-gray-700/10 border-b border-cyan-300 text-gray-800 font-inter"
         style={{ WebkitAppRegion: "drag" } as any}
       >
         {/* Left: Logo + Title */}
         <div className="flex items-center gap-3">
-          <img src={icon} alt="Logo" className="w-8 h-8 rounded-2xl" />
+          <img src={vega} alt="Logo" className="w-8 h-8 rounded-xl" />
           <span className="text-lg tracking-wide font-extrabold">
-            ETX BATTERY TESTER <span className="text-xs">@V 1.0.0</span>
+            BMS TEST BENCH <span className="text-xs">@V 1.0.0</span>
           </span>
         </div>
 
@@ -191,7 +192,7 @@ export default function CustomTitleBar() {
             <button
               onClick={handleClose}
               title="Close"
-              // className="w-3.5 h-3.5 bg-red-500 hover:bg-red-400 rounded-full transition-all"
+            
             >
               🗙
               <span className="sr-only">Close</span>

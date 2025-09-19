@@ -48,7 +48,7 @@ const BatteryCellComponent: React.FC<{
 }> = ({ cell, onClick }) => {
   let statusColor = 'bg-white/20 shadow-sm border-gray-300';
   if (cell.status === 'warning') statusColor = 'bg-yellow-300/20 border-yellow-400';
-  else if (cell.status === 'critical') statusColor = 'bg-red-300/20 border-red-400';
+  else if (cell.status === 'critical') statusColor = 'bg-red-300/20 border-red-400 ';
   else if (cell.status === 'normal') statusColor = 'bg-green-300/20 border-green-400';
   else if (cell.status === 'no-data') statusColor = 'bg-gray-300/20 border-gray-300';
 
@@ -239,12 +239,12 @@ const Battery: React.FC = () => {
   };
 
   return (
-    <div className="relative w-64">
+    <div className="relative w-64 ">
       <h2 className="text-lg font-inter text-gray-800 mb-3 text-center font-semibold py-1 rounded-md shadow-md">
         TESTER READINGS
       </h2>
       <div
-        className="grid grid-cols-2 gap-2 bg-white/60 border-2 border-gray-300 p-3 rounded-lg shadow-lg backdrop-blur-sm"
+        className="grid grid-cols-2 gap-2 bg-white/60 border border-cyan-100 p-3 rounded-lg shadow-lg backdrop-blur-sm"
         style={{
           height: 'calc(109vh - 80px)',
           overflow: 'hidden',
@@ -337,15 +337,20 @@ const Battery: React.FC = () => {
 
 {showCriticalAlert && (
   <div
+    
     className="fixed z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-red-500/80 text-white rounded-lg shadow-2xl p-6 backdrop-blur-sm"
     style={{ minWidth: 300 }}
   >
+    {/* <span class="relative flex size-3">
+  <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-90"></span>
+  <span class="relative inline-flex size-3 rounded-full bg-sky-500"></span>
+</span> */}
     <h3 className="text-lg font-semibold mb-3">Error</h3>
     <p className="text-base">Tester board failed due to critical cell status!</p>
     <p className="text-sm">Please check the following cells:</p>
     <div className="mt-3">
       <strong>Critical Cells:</strong>
-      <ul className="list-disc pl-5 mt-1 text-sm">
+      <ul className="list-disc pl-5 mt-1 text-sm ">
         {cells
           .filter((cell) => cell.status === 'critical')
           .map((cell) => (

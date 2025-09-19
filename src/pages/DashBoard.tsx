@@ -183,7 +183,7 @@ const DashBoard: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col max-h-full max-w-full bg-zinc-100">
+    <div className="flex flex-col max-h-full max-w-full ">
       <MenuBar />
       <div className="flex-1 p-4">
         <div className="flex flex-row gap-4 items-start">
@@ -193,16 +193,16 @@ const DashBoard: React.FC = () => {
           <div className="flex flex-col gap-1 ml-0.5 h-180">
             <div className="flex flex-row gap-2">
               <div className="flex flex-col gap-1">
-                <CSU1 />
+                <CSU2 />
               </div>
               <div className="flex flex-col gap-1">
-                <CSU2 />
+                <CSU1 />
               </div>
               <div className="flex flex-col gap-1">
                 <Daicy />
               </div>
             </div>
-            <div className="bg-white rounded-md shadow p-4 min-w-[510px] mt-10">
+            <div className="bg-white rounded-md shadow p-4 min-w-[510px] mt-10 border border-cyan-100">
               <ErrorWarningPanel />
             </div>
           </div>
