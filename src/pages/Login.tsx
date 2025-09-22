@@ -182,7 +182,7 @@ import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 // import icon from "../../public/icon.svg";
-import vegalogo from "../../public/vegalogo.png"
+import vegalogo2 from "../../public/vegalogo2.png"
 import vega from "../../public/vega.png"
 
 // Remove old login state
@@ -210,13 +210,14 @@ const Login: React.FC = () => {
     }
 
     setIsLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     setError(null);
 
     try {
       // Hardcoded credentials
       if (username === "vega" && password === "vega123") {
         localStorage.setItem("isLoggedIn", "true");
-        toast.success("Login successful! Redirecting...", {
+        toast.success("Hey! Welcome back, you’re in! 😎", {
           position: "top-center",
           autoClose: 2000,
         });
@@ -224,7 +225,7 @@ const Login: React.FC = () => {
           navigate("/dashboard");
         }, 2000);
       } else {
-        const message = "Invalid credentials";
+        const message = "Login failed, check your credentials! 😕";
         setError(message);
         toast.warning(message, { position: "top-center" });
       }
@@ -266,12 +267,12 @@ const Login: React.FC = () => {
     <div className="relative z-10 w-full max-w-sm sm:max-w-md p-8 bg-white/90 backdrop-blur-lg border border-cyan-400/30 rounded-2xl shadow-xl hover:shadow-cyan-400/30 transition-transform duration-500 ">
       <div className="flex flex-col items-center mb-4">
         <img
-          src={vegalogo}
+          src={vegalogo2}
           alt="Logo"
-          className="w-40 h-20 sm:w-48 sm:h-24 mb-4"
+          className="w-40 h-20 sm:w-58 sm:h-55 mb-4"
         />
         <h1 className="text-3xl font-bold text-cyan-600 text-center mb-1 tracking-wide font-inter">
-          BMS TEST BENCH
+          Welcome Back
         </h1>
         <p className="text-sm font-bold text-gray-600 text-center opacity-90">
           Admin Login
@@ -337,7 +338,7 @@ const Login: React.FC = () => {
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 ></path>
               </svg>
-              Logging in...
+              Checking credentials...
             </span>
           ) : (
             "Log In"

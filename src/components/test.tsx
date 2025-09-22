@@ -4560,7 +4560,7 @@ const handleSaveCycleData = () => {
       </div>
 
       <div className="space-y-4">
-        <div className="flex items-end gap-2">
+        <div className="flex items-end gap-2 ">
           <div className="flex flex-col tablet:flex-1">
             <label className="text-xs font-medium text-gray-700">
               Serial Port
@@ -4570,7 +4570,7 @@ const handleSaveCycleData = () => {
               value={selectedPort}
               onChange={(e) => setSelectedPort(e.target.value)}
               disabled={connectedPorts.includes(selectedPort) || isLoading}
-              className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 transition-colors"
+              className="w-50 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 transition-colors"
             >
               {availablePorts.length === 0 && connectedPorts.length === 0 ? (
                 <option value="">No ports available</option>

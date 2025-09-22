@@ -73,7 +73,8 @@
 //     Object.values(uploadedData).forEach((cycleData: any) => {
 //       const csu11Cells = cycleData.csu11 || [];
 //       const csu12Cells = cycleData.csu12 || [];
-//       [...csu11Cells, ...csu12Cells].forEach((cell: any) => {
+//       const dcCsuCells = cycleData.dcCsu || [];
+//       [...csu11Cells, ...csu12Cells, ...dcCsuCells].forEach((cell: any) => {
 //         const id = parseInt(cell.cell.replace("cell_", ""));
 //         ids.add(id);
 //       });
@@ -147,10 +148,12 @@
 //     const cycleData = uploadedData[cycle] || {};
 //     const csu11Cells = cycleData.csu11 || [];
 //     const csu12Cells = cycleData.csu12 || [];
+//     const dcCsuCells = cycleData.dcCsu || [];
 
 //     // Create a map for easier lookup
 //     const csu11Map = new Map(csu11Cells.map((cell: any) => [cell.cell, cell]));
 //     const csu12Map = new Map(csu12Cells.map((cell: any) => [cell.cell, cell]));
+//     const dcCsuMap = new Map(dcCsuCells.map((cell: any) => [cell.cell, cell]));
 
 //     // Process all possible cell IDs (up to 24)
 //     const maxCells = 24;
@@ -158,30 +161,34 @@
 //       const cellKey = `cell_${id}`;
 //       const csu11Data = csu11Map.get(cellKey);
 //       const csu12Data = csu12Map.get(cellKey);
+//       const dcCsuData = dcCsuMap.get(cellKey);
 
 //       const csu11Voltage = csu11Data ? csu11Data.csu11Voltage : null;
 //       const csu12Voltage = csu12Data ? csu12Data.csu12Voltage : null;
+//       const dcCsuVoltage = dcCsuData ? dcCsuData.dcCsuVoltage : null;
+
 //       // Use testerVoltage1 for csu11, testerVoltage2 for csu12
-//       const expectedVoltage = selectedVoltageSource === "csu11" && csu11Data
-//         ? csu11Data.testerVoltage1
-//         : selectedVoltageSource === "csu12" && csu12Data
-//         ? csu12Data.testerVoltage2
-//         : null;
+//       const expectedVoltage = 
+//       selectedVoltageSource === "csu11" && csu11Data ? csu11Data.testerVoltage1 :
+//       selectedVoltageSource === "csu12" && csu12Data ? csu12Data.testerVoltage2 :
+//       selectedVoltageSource === "dcCsu" && dcCsuData ? dcCsuData.testerVoltage :
+//       null;
 
 //       // Determine actual voltage based on selected source
-//       const actualVoltage =
-//         selectedVoltageSource === "csu11" ? csu11Voltage :
-//         selectedVoltageSource === "csu12" ? csu12Voltage :
-//         null;
+//     const actualVoltage =
+//       selectedVoltageSource === "csu11" ? csu11Voltage :
+//       selectedVoltageSource === "csu12" ? csu12Voltage :
+//       selectedVoltageSource === "dcCsu" ? dcCsuVoltage :
+//       null;
 
 //       cellData.push({
 //         id,
 //         cycle,
-//         individualVoltage: null, // Not available in ado1.json
+//         individualVoltage: null, // Not available in json
 //         expectedVoltage,
 //         csu11Voltage,
 //         csu12Voltage,
-//         dcCsuVoltage: null, // Not available in ado1.json
+//         dcCsuVoltage, // Not available in json
 //         status: calculateStatus(actualVoltage, expectedVoltage),
 //       });
 //     }
@@ -203,6 +210,7 @@
 //         const details = [
 //           `CSU11 Voltage: ${cell.csu11Voltage !== null ? cell.csu11Voltage.toFixed(2) + " V" : "N/A"}`,
 //           `CSU12 Voltage: ${cell.csu12Voltage !== null ? cell.csu12Voltage.toFixed(2) + " V" : "N/A"}`,
+//           `DC CSU Voltage: ${cell.dcCsuVoltage !== null ? cell.dcCsuVoltage.toFixed(2) + " V" : "N/A"}`,
 //           `Expected Voltage: ${cell.expectedVoltage !== null ? cell.expectedVoltage.toFixed(2) + " V" : "N/A"}`,
 //         ].filter(d => !d.includes("N/A")).join(", ");
 //         issuesList.push({
@@ -250,6 +258,7 @@
 //       actualVoltage:
 //         selectedVoltageSource === "csu11" ? cell.csu11Voltage :
 //         selectedVoltageSource === "csu12" ? cell.csu12Voltage :
+//         selectedVoltageSource === "dcCsu" ? cell.dcCsuVoltage :
 //         null,
 //       setVoltage: cell.expectedVoltage,
 //       status: cell.status,
@@ -264,15 +273,21 @@
 //       const cycleData = uploadedData[cycle] || {};
 //       const csu11Cells = cycleData.csu11 || [];
 //       const csu12Cells = cycleData.csu12 || [];
+//       const dcCsuCells = cycleData.dcCsu || [];
+      
 //       const csu11Data = csu11Cells.find((c: any) => c.cell === `cell_${selectedCell}`);
 //       const csu12Data = csu12Cells.find((c: any) => c.cell === `cell_${selectedCell}`);
+//       const dcCsuData = dcCsuCells.find((c: any) => c.cell === `cell_${selectedCell}`);
+
 //       const actualVoltage =
 //         selectedVoltageSource === "csu11" ? (csu11Data ? csu11Data.csu11Voltage : null) :
 //         selectedVoltageSource === "csu12" ? (csu12Data ? csu12Data.csu12Voltage : null) :
+//         selectedVoltageSource === "dcCsu" ? (dcCsuData ? dcCsuData.dcCsuVoltage : null) :
 //         null;
 //       const expectedVoltage =
 //         selectedVoltageSource === "csu11" ? (csu11Data ? csu11Data.testerVoltage1 : null) :
 //         selectedVoltageSource === "csu12" ? (csu12Data ? csu12Data.testerVoltage2 : null) :
+//         selectedVoltageSource === "dcCsu" ? (dcCsuData ? dcCsuData.testerVoltage : null) :
 //         null;
 //       return {
 //         cycle,
@@ -562,8 +577,12 @@
 //       const cycleData = uploadedData[cycle] || {};
 //       const csu11Cells = cycleData.csu11 || [];
 //       const csu12Cells = cycleData.csu12 || [];
+//       const dcCsuCells = cycleData.dcCsu || [];
+
+//       // Create maps for easier lookup
 //       const csu11Map = new Map(csu11Cells.map((cell: any) => [cell.cell, cell]));
 //       const csu12Map = new Map(csu12Cells.map((cell: any) => [cell.cell, cell]));
+//       const dcCsuMap = new Map(dcCsuCells.map((cell: any) => [cell.cell, cell]));
 
 //       // Add cycle header
 //       doc.setFontSize(14);
@@ -633,7 +652,41 @@
 //         });
 //         finalY = (doc as any).lastAutoTable.finalY + 10;
 //       }
+
+//           const dcCsuValidCells = dcCsuCells.filter((cell: any) => 
+//       cell.dcCsuVoltage !== null && cell.testerVoltage !== null
+//     );
+//     if (dcCsuValidCells.length > 0) {
+//       doc.setFontSize(12);
+//       doc.text("DC CSU Cells", 20, finalY + 10);
+//       autoTable(doc, {
+//         startY: finalY + 15,
+//         head: [["Cell ID", "Voltage (V)", "Expected Voltage (V)", "Variance (V)", "Status"]],
+//         body: dcCsuValidCells.map((cell: any) => {
+//           const actualVoltage = cell.dcCsuVoltage;
+//           const expectedVoltage = cell.testerVoltage;
+//           const variance = actualVoltage !== null && expectedVoltage !== null 
+//             ? Math.abs(actualVoltage - expectedVoltage).toFixed(2) 
+//             : "N/A";
+//           const status = calculateStatus(actualVoltage, expectedVoltage);
+//           return [
+//             parseInt(cell.cell.replace("cell_", "")),
+//             actualVoltage !== null ? actualVoltage.toFixed(2) : "N/A",
+//             expectedVoltage !== null ? expectedVoltage.toFixed(2) : "N/A",
+//             variance,
+//             status.charAt(0).toUpperCase() + status.slice(1),
+//           ];
+//         }),
+//         styles: { fontSize: 8 },
+//         headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0] },
+//         alternateRowStyles: { fillColor: [240, 240, 240] },
+//       });
+//       finalY = (doc as any).lastAutoTable.finalY + 10;
+//     }
 //     });
+
+
+    
 
 //     doc.save(`BMS_Report_All_Cycles_${csuCardNumber || 'N/A'}_${new Date().toISOString().replace(/[:.]/g, "-")}.pdf`);
 //   };
@@ -810,6 +863,7 @@
 //                 >
 //                   <option value="csu11">CSU11</option>
 //                   <option value="csu12">CSU12</option>
+//                   <option value="dcCsu">DC CSU</option>
 //                 </select>
 //               </div>
 //               <div style={{ display: hasVoltageData ? "block" : "none" }}>
@@ -847,6 +901,7 @@
 //                   >
 //                     <option value="csu11">CSU11</option>
 //                     <option value="csu12">CSU12</option>
+//                     <option value="dcCsu">DC CSU</option>
 //                   </select>
 //                 </div>
 //               </div>
@@ -1068,7 +1123,7 @@ const Report: React.FC = () => {
           if (Object.keys(jsonData).length > 0) {
             setSelectedCycle(Object.keys(jsonData)[0]);
             const firstCycleData = jsonData[Object.keys(jsonData)[0]];
-            const cells = firstCycleData.csu11 || firstCycleData.csu12 || [];
+            const cells = firstCycleData.csu11 || firstCycleData.csu12 || firstCycleData.dcCsu || [];
             if (cells.length > 0) {
               setSelectedCell(cells[0].cell.replace("cell_", ""));
             }
@@ -1114,7 +1169,7 @@ const Report: React.FC = () => {
     return "normal";
   };
 
-  // Process cells for a given cycle
+  // Process cells for a given cycle - FIXED DC CSU VOLTAGE
   const getCellsForCycle = (cycle: string) => {
     if (!uploadedData) return [];
 
@@ -1139,30 +1194,30 @@ const Report: React.FC = () => {
 
       const csu11Voltage = csu11Data ? csu11Data.csu11Voltage : null;
       const csu12Voltage = csu12Data ? csu12Data.csu12Voltage : null;
-      const dcCsuVoltage = dcCsuData ? dcCsuData.dcCsuVoltage : null;
+      const dcCsuVoltage = dcCsuData ? dcCsuData.dcCsuVoltage : null; // FIXED: Use actual DC CSU voltage
 
-      // Use testerVoltage1 for csu11, testerVoltage2 for csu12
+      // Use testerVoltage1 for csu11, testerVoltage2 for csu12, testerVoltage for dcCsu
       const expectedVoltage = 
-      selectedVoltageSource === "csu11" && csu11Data ? csu11Data.testerVoltage1 :
-      selectedVoltageSource === "csu12" && csu12Data ? csu12Data.testerVoltage2 :
-      selectedVoltageSource === "dcCsu" && dcCsuData ? dcCsuData.testerVoltage :
-      null;
+        selectedVoltageSource === "csu11" && csu11Data ? csu11Data.testerVoltage1 :
+        selectedVoltageSource === "csu12" && csu12Data ? csu12Data.testerVoltage2 :
+        selectedVoltageSource === "dcCsu" && dcCsuData ? dcCsuData.testerVoltage :
+        null;
 
       // Determine actual voltage based on selected source
-    const actualVoltage =
-      selectedVoltageSource === "csu11" ? csu11Voltage :
-      selectedVoltageSource === "csu12" ? csu12Voltage :
-      selectedVoltageSource === "dcCsu" ? dcCsuVoltage :
-      null;
+      const actualVoltage =
+        selectedVoltageSource === "csu11" ? csu11Voltage :
+        selectedVoltageSource === "csu12" ? csu12Voltage :
+        selectedVoltageSource === "dcCsu" ? dcCsuVoltage :
+        null;
 
       cellData.push({
         id,
         cycle,
-        individualVoltage: null, // Not available in ado1.json
+        individualVoltage: null,
         expectedVoltage,
         csu11Voltage,
         csu12Voltage,
-        dcCsuVoltage, // Not available in ado1.json
+        dcCsuVoltage, // FIXED: Use actual DC CSU voltage instead of null
         status: calculateStatus(actualVoltage, expectedVoltage),
       });
     }
@@ -1182,10 +1237,10 @@ const Report: React.FC = () => {
     cells.forEach((cell) => {
       if (cell.status !== "N/A") {
         const details = [
-          `CSU11 Voltage: ${cell.csu11Voltage !== null ? cell.csu11Voltage.toFixed(2) + " V" : "N/A"}`,
-          `CSU12 Voltage: ${cell.csu12Voltage !== null ? cell.csu12Voltage.toFixed(2) + " V" : "N/A"}`,
-          `DC CSU Voltage: ${cell.dcCsuVoltage !== null ? cell.dcCsuVoltage.toFixed(2) + " V" : "N/A"}`,
-          `Expected Voltage: ${cell.expectedVoltage !== null ? cell.expectedVoltage.toFixed(2) + " V" : "N/A"}`,
+          `CSU11 Voltage: ${cell.csu11Voltage !== null ? cell.csu11Voltage.toFixed(3) + " V" : "N/A"}`,
+          `CSU12 Voltage: ${cell.csu12Voltage !== null ? cell.csu12Voltage.toFixed(3) + " V" : "N/A"}`,
+          `DC CSU Voltage: ${cell.dcCsuVoltage !== null ? cell.dcCsuVoltage.toFixed(3) + " V" : "N/A"}`,
+          `Expected Voltage: ${cell.expectedVoltage !== null ? cell.expectedVoltage.toFixed(3) + " V" : "N/A"}`,
         ].filter(d => !d.includes("N/A")).join(", ");
         issuesList.push({
           type: selectedVoltageSource.charAt(0).toUpperCase() + selectedVoltageSource.slice(1),
@@ -1283,7 +1338,7 @@ const Report: React.FC = () => {
           const datasets = [
             {
               label: `${selectedVoltageSource.charAt(0).toUpperCase() + selectedVoltageSource.slice(1)} Voltage (V)`,
-              data: voltageData.map((d) => d.actualVoltage !== null ? parseFloat(d.actualVoltage.toFixed(2)) : null),
+              data: voltageData.map((d) => d.actualVoltage !== null ? parseFloat(d.actualVoltage.toFixed(3)) : null),
               borderColor: "rgba(75, 192, 192, 1)",
               backgroundColor: "rgba(75, 192, 192, 0.2)",
               fill: true,
@@ -1295,7 +1350,7 @@ const Report: React.FC = () => {
             },
             {
               label: "Expected Voltage (V)",
-              data: voltageData.map((d) => d.setVoltage !== null ? parseFloat(d.setVoltage.toFixed(2)) : null),
+              data: voltageData.map((d) => d.setVoltage !== null ? parseFloat(d.setVoltage.toFixed(3)) : null),
               borderColor: "rgba(255, 99, 132, 1)",
               backgroundColor: "rgba(255, 99, 132, 0.2)",
               fill: true,
@@ -1532,8 +1587,7 @@ const Report: React.FC = () => {
     };
   }, [voltageData, cellVoltageData, issues, selectedCycle, selectedVoltageSource, selectedCell, cycleNumbers]);
 
-  // Generate PDF report with Cell Data for all cycles, split by type
-// Generate PDF report with Cell Data for all cycles, including both CSU11 and CSU12 if data exists
+  // Generate PDF report with Cell Data for all cycles
   const generatePDF = () => {
     if (!uploadedData) {
       alert("Please upload a JSON file.");
@@ -1552,11 +1606,6 @@ const Report: React.FC = () => {
       const csu11Cells = cycleData.csu11 || [];
       const csu12Cells = cycleData.csu12 || [];
       const dcCsuCells = cycleData.dcCsu || [];
-
-      // Create maps for easier lookup
-      const csu11Map = new Map(csu11Cells.map((cell: any) => [cell.cell, cell]));
-      const csu12Map = new Map(csu12Cells.map((cell: any) => [cell.cell, cell]));
-      const dcCsuMap = new Map(dcCsuCells.map((cell: any) => [cell.cell, cell]));
 
       // Add cycle header
       doc.setFontSize(14);
@@ -1577,13 +1626,13 @@ const Report: React.FC = () => {
             const actualVoltage = cell.csu11Voltage;
             const expectedVoltage = cell.testerVoltage1;
             const variance = actualVoltage !== null && expectedVoltage !== null 
-              ? Math.abs(actualVoltage - expectedVoltage).toFixed(2) 
+              ? Math.abs(actualVoltage - expectedVoltage).toFixed(3) 
               : "N/A";
             const status = calculateStatus(actualVoltage, expectedVoltage);
             return [
               parseInt(cell.cell.replace("cell_", "")),
-              actualVoltage !== null ? actualVoltage.toFixed(2) : "N/A",
-              expectedVoltage !== null ? expectedVoltage.toFixed(2) : "N/A",
+              actualVoltage !== null ? actualVoltage.toFixed(3) : "N/A",
+              expectedVoltage !== null ? expectedVoltage.toFixed(3) : "N/A",
               variance,
               status.charAt(0).toUpperCase() + status.slice(1),
             ];
@@ -1609,13 +1658,13 @@ const Report: React.FC = () => {
             const actualVoltage = cell.csu12Voltage;
             const expectedVoltage = cell.testerVoltage2;
             const variance = actualVoltage !== null && expectedVoltage !== null 
-              ? Math.abs(actualVoltage - expectedVoltage).toFixed(2) 
+              ? Math.abs(actualVoltage - expectedVoltage).toFixed(3) 
               : "N/A";
             const status = calculateStatus(actualVoltage, expectedVoltage);
             return [
               parseInt(cell.cell.replace("cell_", "")),
-              actualVoltage !== null ? actualVoltage.toFixed(2) : "N/A",
-              expectedVoltage !== null ? expectedVoltage.toFixed(2) : "N/A",
+              actualVoltage !== null ? actualVoltage.toFixed(3) : "N/A",
+              expectedVoltage !== null ? expectedVoltage.toFixed(3) : "N/A",
               variance,
               status.charAt(0).toUpperCase() + status.slice(1),
             ];
@@ -1627,45 +1676,43 @@ const Report: React.FC = () => {
         finalY = (doc as any).lastAutoTable.finalY + 10;
       }
 
-          const dcCsuValidCells = dcCsuCells.filter((cell: any) => 
-      cell.dcCsuVoltage !== null && cell.testerVoltage !== null
-    );
-    if (dcCsuValidCells.length > 0) {
-      doc.setFontSize(12);
-      doc.text("DC CSU Cells", 20, finalY + 10);
-      autoTable(doc, {
-        startY: finalY + 15,
-        head: [["Cell ID", "Voltage (V)", "Expected Voltage (V)", "Variance (V)", "Status"]],
-        body: dcCsuValidCells.map((cell: any) => {
-          const actualVoltage = cell.dcCsuVoltage;
-          const expectedVoltage = cell.testerVoltage;
-          const variance = actualVoltage !== null && expectedVoltage !== null 
-            ? Math.abs(actualVoltage - expectedVoltage).toFixed(2) 
-            : "N/A";
-          const status = calculateStatus(actualVoltage, expectedVoltage);
-          return [
-            parseInt(cell.cell.replace("cell_", "")),
-            actualVoltage !== null ? actualVoltage.toFixed(2) : "N/A",
-            expectedVoltage !== null ? expectedVoltage.toFixed(2) : "N/A",
-            variance,
-            status.charAt(0).toUpperCase() + status.slice(1),
-          ];
-        }),
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0] },
-        alternateRowStyles: { fillColor: [240, 240, 240] },
-      });
-      finalY = (doc as any).lastAutoTable.finalY + 10;
-    }
+      // DC CSU Cells Table
+      const dcCsuValidCells = dcCsuCells.filter((cell: any) => 
+        cell.dcCsuVoltage !== null && cell.testerVoltage !== null
+      );
+      if (dcCsuValidCells.length > 0) {
+        doc.setFontSize(12);
+        doc.text("DC CSU Cells", 20, finalY + 10);
+        autoTable(doc, {
+          startY: finalY + 15,
+          head: [["Cell ID", "Voltage (V)", "Expected Voltage (V)", "Variance (V)", "Status"]],
+          body: dcCsuValidCells.map((cell: any) => {
+            const actualVoltage = cell.dcCsuVoltage;
+            const expectedVoltage = cell.testerVoltage;
+            const variance = actualVoltage !== null && expectedVoltage !== null 
+              ? Math.abs(actualVoltage - expectedVoltage).toFixed(3) 
+              : "N/A";
+            const status = calculateStatus(actualVoltage, expectedVoltage);
+            return [
+              parseInt(cell.cell.replace("cell_", "")),
+              actualVoltage !== null ? actualVoltage.toFixed(3) : "N/A",
+              expectedVoltage !== null ? expectedVoltage.toFixed(3) : "N/A",
+              variance,
+              status.charAt(0).toUpperCase() + status.slice(1),
+            ];
+          }),
+          styles: { fontSize: 8 },
+          headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0] },
+          alternateRowStyles: { fillColor: [240, 240, 240] },
+        });
+        finalY = (doc as any).lastAutoTable.finalY + 10;
+      }
     });
-
-
-    
 
     doc.save(`BMS_Report_All_Cycles_${csuCardNumber || 'N/A'}_${new Date().toISOString().replace(/[:.]/g, "-")}.pdf`);
   };
 
-  // Generate Excel report with Cell Data for all cycles, including both CSU11 and CSU12 if data exists
+  // Generate Excel report with Cell Data for all cycles
   const generateExcel = () => {
     if (!uploadedData) {
       alert("Please upload a JSON file.");
@@ -1678,6 +1725,7 @@ const Report: React.FC = () => {
       const cycleData = uploadedData[cycle] || {};
       const csu11Cells = cycleData.csu11 || [];
       const csu12Cells = cycleData.csu12 || [];
+      const dcCsuCells = cycleData.dcCsu || [];
 
       // CSU11 Cells Sheet
       const csu11ValidCells = csu11Cells.filter((cell: any) => 
@@ -1693,13 +1741,13 @@ const Report: React.FC = () => {
             const actualVoltage = cell.csu11Voltage;
             const expectedVoltage = cell.testerVoltage1;
             const variance = actualVoltage !== null && expectedVoltage !== null 
-              ? Math.abs(actualVoltage - expectedVoltage).toFixed(2) 
+              ? Math.abs(actualVoltage - expectedVoltage).toFixed(3) 
               : "N/A";
             const status = calculateStatus(actualVoltage, expectedVoltage);
             return [
               parseInt(cell.cell.replace("cell_", "")),
-              actualVoltage !== null ? actualVoltage.toFixed(2) : "N/A",
-              expectedVoltage !== null ? expectedVoltage.toFixed(2) : "N/A",
+              actualVoltage !== null ? actualVoltage.toFixed(3) : "N/A",
+              expectedVoltage !== null ? expectedVoltage.toFixed(3) : "N/A",
               variance,
               status.charAt(0).toUpperCase() + status.slice(1),
             ];
@@ -1723,13 +1771,13 @@ const Report: React.FC = () => {
             const actualVoltage = cell.csu12Voltage;
             const expectedVoltage = cell.testerVoltage2;
             const variance = actualVoltage !== null && expectedVoltage !== null 
-              ? Math.abs(actualVoltage - expectedVoltage).toFixed(2) 
+              ? Math.abs(actualVoltage - expectedVoltage).toFixed(3) 
               : "N/A";
             const status = calculateStatus(actualVoltage, expectedVoltage);
             return [
               parseInt(cell.cell.replace("cell_", "")),
-              actualVoltage !== null ? actualVoltage.toFixed(2) : "N/A",
-              expectedVoltage !== null ? expectedVoltage.toFixed(2) : "N/A",
+              actualVoltage !== null ? actualVoltage.toFixed(3) : "N/A",
+              expectedVoltage !== null ? expectedVoltage.toFixed(3) : "N/A",
               variance,
               status.charAt(0).toUpperCase() + status.slice(1),
             ];
@@ -1738,11 +1786,40 @@ const Report: React.FC = () => {
         const ws = XLSX.utils.aoa_to_sheet(wsData);
         XLSX.utils.book_append_sheet(wb, ws, `Cycle_${cycle}_CSU12`);
       }
+
+      // DC CSU Cells Sheet
+      const dcCsuValidCells = dcCsuCells.filter((cell: any) => 
+        cell.dcCsuVoltage !== null && cell.testerVoltage !== null
+      );
+      if (dcCsuValidCells.length > 0) {
+        const wsData = [
+          [`CSU Card Number: ${csuCardNumber || 'N/A'}`],
+          [],
+          ["DC CSU Cells - Cycle " + cycle],
+          ["Cell ID", "Voltage (V)", "Expected Voltage (V)", "Variance (V)", "Status"],
+          ...dcCsuValidCells.map((cell: any) => {
+            const actualVoltage = cell.dcCsuVoltage;
+            const expectedVoltage = cell.testerVoltage;
+            const variance = actualVoltage !== null && expectedVoltage !== null 
+              ? Math.abs(actualVoltage - expectedVoltage).toFixed(3) 
+              : "N/A";
+            const status = calculateStatus(actualVoltage, expectedVoltage);
+            return [
+              parseInt(cell.cell.replace("cell_", "")),
+              actualVoltage !== null ? actualVoltage.toFixed(3) : "N/A",
+              expectedVoltage !== null ? expectedVoltage.toFixed(3) : "N/A",
+              variance,
+              status.charAt(0).toUpperCase() + status.slice(1),
+            ];
+          }),
+        ];
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        XLSX.utils.book_append_sheet(wb, ws, `Cycle_${cycle}_DC_CSU`);
+      }
     });
 
     XLSX.writeFile(wb, `BMS_Report_All_Cycles_${csuCardNumber || 'N/A'}_${new Date().toISOString().replace(/[:.]/g, "-")}.xlsx`);
   };
-
 
   // Check chart visibility
   const hasVoltageData = useMemo(() => {
@@ -1764,7 +1841,6 @@ const Report: React.FC = () => {
             TEST SUMMARY
           </h1>
           <div className="flex gap-2 items-center">
-           
             <input
               placeholder="Upload JSON"
               type="file"
@@ -1802,13 +1878,13 @@ const Report: React.FC = () => {
               📄 Generate Excel
             </button>
           </div>
-           <input
-              placeholder="Enter CSU Card Number"
-              type="text"
-              value={csuCardNumber}
-              onChange={handleCsuCardNumberChange}
-              className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg shadow-sm text-sm transition-colors"
-            />
+          <input
+            placeholder="Enter CSU Card Number"
+            type="text"
+            value={csuCardNumber}
+            onChange={handleCsuCardNumberChange}
+            className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg shadow-sm text-sm transition-colors"
+          />
         </div>
 
         {!uploadedData && (
@@ -1901,59 +1977,64 @@ const Report: React.FC = () => {
                 </div>
               )}
             </div>
-{/* Cell Data */}
-  {cells.some((cell) => cell.status !== "N/A") && (
-    <div>
-      <h2 className="text-xl font-inter font-semibold text-gray-700 mb-4 flex items-center gap-2">
-        Cell Data Status ({selectedVoltageSource.toUpperCase()})
-        <span className="text-sm bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-          {cells.filter((cell) => cell.status !== "N/A").length}
-        </span>
-      </h2>
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-x-auto">
-        <table className="w-full text-sm text-gray-800">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="px-4 py-2 text-left font-semibold">Cell ID</th>
-              <th className="px-4 py-2 text-left font-semibold">Voltage (V)</th>
-              <th className="px-4 py-2 text-left font-semibold">Expected Voltage (V)</th>
-              <th className="px-4 py-2 text-left font-semibold">Variance (V)</th>
-              <th className="px-4 py-2 text-left font-semibold">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {cells.map((cell) => {
-              const actualVoltage = selectedVoltageSource === "csu11" ? cell.csu11Voltage : cell.csu12Voltage;
-              const expectedVoltage = cell.expectedVoltage;
-              const variance = actualVoltage !== null && expectedVoltage !== null ? Math.abs(actualVoltage - expectedVoltage).toFixed(2) : "N/A";
-              const status = calculateStatus(actualVoltage, expectedVoltage);
 
-              if (status === "N/A") return null;
+            {/* Cell Data */}
+            {cells.some((cell) => cell.status !== "N/A") && (
+              <div>
+                <h2 className="text-xl font-inter font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                  Cell Data Status ({selectedVoltageSource.toUpperCase()})
+                  <span className="text-sm bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                    {cells.filter((cell) => cell.status !== "N/A").length}
+                  </span>
+                </h2>
+                <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-x-auto">
+                  <table className="w-full text-sm text-gray-800">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="px-4 py-2 text-left font-semibold">Cell ID</th>
+                        <th className="px-4 py-2 text-left font-semibold">Voltage (V)</th>
+                        <th className="px-4 py-2 text-left font-semibold">Expected Voltage (V)</th>
+                        <th className="px-4 py-2 text-left font-semibold">Variance (V)</th>
+                        <th className="px-4 py-2 text-left font-semibold">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cells.map((cell) => {
+                        const actualVoltage = 
+                          selectedVoltageSource === "csu11" ? cell.csu11Voltage :
+                          selectedVoltageSource === "csu12" ? cell.csu12Voltage :
+                          selectedVoltageSource === "dcCsu" ? cell.dcCsuVoltage :
+                          null;
+                        const expectedVoltage = cell.expectedVoltage;
+                        const variance = actualVoltage !== null && expectedVoltage !== null ? Math.abs(actualVoltage - expectedVoltage).toFixed(3) : "N/A";
+                        const status = calculateStatus(actualVoltage, expectedVoltage);
 
-              return (
-                <tr
-                  key={`cell-${cell.id}`}
-                  className={`border-t ${
-                    status === "critical"
-                      ? "bg-red-50 text-red-800"
-                      : status === "warning"
-                      ? "bg-yellow-50 text-yellow-800"
-                      : "bg-green-50 text-green-800"
-                  }`}
-                >
-                  <td className="px-4 py-2">Cell {cell.id}</td>
-                  <td className="px-4 py-2">{actualVoltage !== null ? actualVoltage.toFixed(2) : "N/A"}</td>
-                  <td className="px-4 py-2">{expectedVoltage !== null ? expectedVoltage.toFixed(2) : "N/A"}</td>
-                  <td className="px-4 py-2">{variance}</td>
-                  <td className="px-4 py-2">{status.charAt(0).toUpperCase() + status.slice(1)}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )}
+                        if (status === "N/A") return null;
+
+                        return (
+                          <tr
+                            key={`cell-${cell.id}`}
+                            className={`border-t ${
+                              status === "critical"
+                                ? "bg-red-50 text-red-800"
+                                : status === "warning"
+                                ? "bg-yellow-50 text-yellow-800"
+                                : "bg-green-50 text-green-800"
+                            }`}
+                          >
+                            <td className="px-4 py-2">Cell {cell.id}</td>
+                            <td className="px-4 py-2">{actualVoltage !== null ? actualVoltage.toFixed(3) : "N/A"}</td>
+                            <td className="px-4 py-2">{expectedVoltage !== null ? expectedVoltage.toFixed(3) : "N/A"}</td>
+                            <td className="px-4 py-2">{variance}</td>
+                            <td className="px-4 py-2">{status.charAt(0).toUpperCase() + status.slice(1)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
             {/* Instructions Sent */}
             {[
