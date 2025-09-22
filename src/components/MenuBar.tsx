@@ -231,7 +231,7 @@ import Swal from "sweetalert2";
 import { useEffect, useState } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import "sweetalert2/src/sweetalert2.scss";
-import vegalogo2 from "../../public/vegalogo2.png";
+import vegalogo1 from "../../public/vegalogo1.png";
 
 declare global {
   interface Window {
@@ -307,7 +307,7 @@ export default function CustomTitleBar() {
     Swal.fire({
       title: "Are you sure?",
       text: "You will be logged out of the app!",
-      imageUrl: vegalogo2,
+      imageUrl: vegalogo1,
       showCancelButton: true,
       confirmButtonColor: "#d33",
       cancelButtonColor: "#3085d6",
@@ -346,7 +346,7 @@ export default function CustomTitleBar() {
       >
         {/* Left: Logo + Title */}
         <div className="flex items-center gap-3">
-          <img src={vegalogo2} alt="Logo" className="w-10 h-10 rounded-lg shadow" />
+          <img src={vegalogo1} alt="Logo" className="w-10 h-10 rounded-lg shadow" />
           <span className="text-lg tracking-wide font-extrabold">
             BMS TEST BENCH{" "}
             <span className="text-xs text-gray-500">@ V1.0.0</span>

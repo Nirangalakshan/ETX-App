@@ -165,12 +165,11 @@ function createWindow() {
     center: true,
     frame: false,
     autoHideMenuBar: true,
-    icon: path.join(__dirname, "public/icon.ico"),
+    icon: path.join(__dirname, "public/vega.ico"),
     webPreferences: {
       preload: path.join(__dirname, "preload.mjs")
     }
   });
-  win.webContents.openDevTools();
   win.webContents.on("did-finish-load", () => {
     if (win && !win.isDestroyed()) {
       win.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());

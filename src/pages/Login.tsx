@@ -182,7 +182,7 @@ import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 // import icon from "../../public/icon.svg";
-import vegalogo2 from "../../public/vegalogo2.png"
+import vegalogo1 from "../../public/vegalogo1.png"
 import vega from "../../public/vega.png"
 
 // Remove old login state
@@ -254,7 +254,9 @@ const Login: React.FC = () => {
       </span>
     </div>
     <div className="flex space-x-4">
-      <button className="text-gray-700 hover:text-cyan-500 transition-colors duration-200">
+      <button 
+      title="nirangaj@vega.lk"
+      className="text-gray-700 hover:text-cyan-500 transition-colors duration-200">
         Support
       </button>
     </div>
@@ -267,9 +269,9 @@ const Login: React.FC = () => {
     <div className="relative z-10 w-full max-w-sm sm:max-w-md p-8 bg-white/90 backdrop-blur-lg border border-cyan-400/30 rounded-2xl shadow-xl hover:shadow-cyan-400/30 transition-transform duration-500 ">
       <div className="flex flex-col items-center mb-4">
         <img
-          src={vegalogo2}
+          src={vegalogo1}
           alt="Logo"
-          className="w-40 h-20 sm:w-58 sm:h-55 mb-4"
+          className="w-40 h-20 sm:w-60 sm:h-65 mb-1"
         />
         <h1 className="text-3xl font-bold text-cyan-600 text-center mb-1 tracking-wide font-inter">
           Welcome Back
