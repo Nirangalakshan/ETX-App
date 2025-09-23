@@ -217,7 +217,7 @@ function createWindow() {
       preload: path.join(__dirname, "preload.mjs"),
     },
   });
-  // win.webContents.openDevTools();
+  win.webContents.openDevTools();
 
   win.webContents.on("did-finish-load", () => {
     if (win && !win.isDestroyed()) {
