@@ -157,7 +157,7 @@ const Settings: React.FC = () => {
                     : item.command === "get_11_csu_volt" ||
                       item.command === "get_12_csu_volt"
                     ? 11
-                    : 22)
+                    : 23)
                   ? item.cellNo
                   : "";
               const value =

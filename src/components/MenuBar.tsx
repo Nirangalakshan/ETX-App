@@ -273,7 +273,29 @@ export default function CustomTitleBar() {
   };
 
   const handleClose = () => {
-    window.electronAPI?.close();
+
+    Swal.fire({
+      text: "Are you sure you want to close the app?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#0ea5e9",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Yes, close",
+      width: 400,
+      padding: "2rem",
+      background: "#f9fafb",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        toast.info("Closing app...", {
+          position: "top-right",
+          autoClose: 1000,
+          theme: "light",
+        });
+        setTimeout(() => {
+          window.electronAPI?.close();
+        }, 1000);
+      }
+    });
   };
 
   const handleRefresh = () => {
@@ -315,8 +337,8 @@ export default function CustomTitleBar() {
       width: 400,
       padding: "2rem",
       background: "#f0f8ff",
-      imageHeight: 120,
-      imageWidth: 120,
+      imageHeight: 200,
+      imageWidth: 200,
       focusConfirm: true,
     }).then((result) => {
       if (result.isConfirmed) {
