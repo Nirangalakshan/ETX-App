@@ -182,8 +182,8 @@ import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 // import icon from "../../public/icon.svg";
-import vegalogo1 from "../../public/vegalogo1.png"
-import vega from "../../public/vega.png"
+import vegalogo1 from "/vegalogo1.png"
+import vega from "/vega.png"
 
 // Remove old login state
 localStorage.removeItem("IsLoggedIn");
@@ -246,21 +246,34 @@ const Login: React.FC = () => {
   ></canvas>
 
   {/* Custom Menubar */}
-  <nav className="relative z-10 w-full py-4 px-6 flex justify-between items-center bg-white/70 backdrop-blur-md border-b border-cyan-400/30 shadow-md">
-    <div className="flex items-center space-x-3">
-      <img src={vega} alt="Logo" className="w-12 h-12 rounded-xl" />
-      <span className="text-cyan-600 font-semibold text-lg tracking-wide">
-        VegaTech
-      </span>
-    </div>
-    <div className="flex space-x-4">
-      <button 
-      title="nirangaj@vega.lk"
-      className="text-gray-700 hover:text-cyan-500 transition-colors duration-200">
-        Support
-      </button>
-    </div>
-  </nav>
+<nav className="relative z-10 w-full py-4 px-6 flex justify-between items-center bg-white/70 backdrop-blur-md border-b border-cyan-400/30 shadow-md">
+  <div className="flex items-center space-x-3">
+    <img src={vega} alt="Logo" className="w-12 h-12 rounded-xl" />
+    <span className="text-cyan-600 font-semibold text-lg tracking-wide">
+      VegaTech
+    </span>
+  </div>
+
+  <div className="flex items-center space-x-4">
+    <button
+      style={{ height: "24px", width: "24px", fontSize: "18px", lineHeight: "18px" }}
+      title="Minimize"
+      onClick={() => window.electronAPI?.minimize()}
+      className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-yellow-100 transition"
+    >
+      ─
+    </button>
+    <button
+      style={{ height: "24px", width: "24px", fontSize: "18px", lineHeight: "18px" }}
+      title="Close"
+      onClick={() => window.electronAPI?.close()}
+      className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-100 transition"
+    >
+      🗙
+    </button>
+  </div>
+</nav>
+
 
   <ToastContainer />
 

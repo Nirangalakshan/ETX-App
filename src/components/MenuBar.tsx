@@ -231,7 +231,7 @@ import Swal from "sweetalert2";
 import { useEffect, useState } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import "sweetalert2/src/sweetalert2.scss";
-import vegalogo1 from "../../public/vegalogo1.png";
+import vegalogo1 from "/vegalogo1.png";
 
 declare global {
   interface Window {
@@ -427,9 +427,9 @@ export default function CustomTitleBar() {
               👤 <span className="font-semibold">{user}</span>
             </span>
             <span className="text-gray-400">|</span>
-            <span className="flex items-center gap-1">
+            {/* <span className="flex items-center gap-1">
               🕒 <span>{currentTime}</span>
-            </span>
+            </span> */}
           </div>
 
           {/* Refresh + Window Controls */}

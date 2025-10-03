@@ -213,6 +213,7 @@ const DashBoard: React.FC = () => {
               dcCsuResponseData={dcCsuResponseData}
               setDcCsuResponseData={setDcCsuResponseData}
               updateCellVoltage={updateCellVoltage}
+              
             />
           </div>
         </div>
