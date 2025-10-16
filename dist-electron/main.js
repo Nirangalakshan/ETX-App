@@ -2,6 +2,7 @@ import { ipcMain, app, BrowserWindow } from "electron";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import fs from "fs/promises";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require2 = createRequire(import.meta.url);
 const { SerialPort } = require2("serialport");
@@ -151,6 +152,104 @@ ipcMain.handle("close-port", async () => {
     throw error;
   }
 });
+ipcMain.handle("update-cell-states-file", async (_event, data) => {
+  try {
+    const testRunDir = path.join(app.getPath("desktop"), "BMS TESTER");
+    const testId = data.testId || `test_${(/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-")}`;
+    const filename = `cell_states_${testId}.json`;
+    const filePath2 = path.join(testRunDir, filename);
+    console.log(`Appending to cell states file at: ${filePath2}`);
+    await fs.mkdir(testRunDir, { recursive: true });
+    let existingData = [];
+    try {
+      const fileContent = await fs.readFile(filePath2, "utf-8");
+      existingData = JSON.parse(fileContent);
+      if (!Array.isArray(existingData)) {
+        console.warn(`Existing ${filename} is not an array, initializing as empty array`);
+        existingData = [];
+      }
+    } catch (error) {
+      console.log(`Creating new ${filename} at:`, filePath2);
+    }
+    if (!["csu11", "csu12", "dccsu", "individual"].includes(data.type)) {
+      console.error(`Invalid type: ${data.type}`);
+      return { success: false, error: `Invalid type: ${data.type}. Must be one of 'csu11', 'csu12', 'dccsu', 'individual'` };
+    }
+    if (typeof data.cycleNo !== "number" || data.cycleNo < 1) {
+      console.error(`Invalid cycleNo: ${data.cycleNo}`);
+      return { success: false, error: `Invalid cycleNo: ${data.cycleNo}. Must be a positive number` };
+    }
+    if (typeof data.cellNo !== "number" || data.cellNo < 0 || data.cellNo > 23) {
+      console.error(`Invalid cellNo: ${data.cellNo}`);
+      return { success: false, error: `Invalid cellNo: ${data.cellNo}. Must be between 0 and 23` };
+    }
+    if (typeof data.setVoltage !== "number") {
+      console.error(`Invalid setVoltage: ${data.setVoltage}`);
+      return { success: false, error: `Invalid setVoltage: ${data.setVoltage}. Must be a number` };
+    }
+    if (typeof data.testerVoltage !== "number") {
+      console.error(`Invalid testerVoltage: ${data.testerVoltage}`);
+      return { success: false, error: `Invalid testerVoltage: ${data.testerVoltage}. Must be a number` };
+    }
+    if (typeof data.actualVoltage !== "number") {
+      console.error(`Invalid actualVoltage: ${data.actualVoltage}`);
+      return { success: false, error: `Invalid actualVoltage: ${data.actualVoltage}. Must be a number` };
+    }
+    const newEntry = {
+      cycleNo: data.cycleNo,
+      type: data.type,
+      cellNo: data.cellNo,
+      setVoltage: data.setVoltage,
+      testerVoltage: data.testerVoltage,
+      actualVoltage: data.actualVoltage,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      testId
+    };
+    existingData.push(newEntry);
+    await fs.writeFile(filePath2, JSON.stringify(existingData, null, 2));
+    console.log(`Appended data to ${filePath2}:`, newEntry);
+    return { success: true, path: filePath2, testId };
+  } catch (error) {
+    console.error(`Error appending to ${filePath}:`, error.message);
+    return { success: false, error: `Failed to append to cell states file: ${error.message}` };
+  }
+});
+ipcMain.handle("get-cell-states", async (_event, testId) => {
+  try {
+    const testRunDir = path.join(app.getPath("desktop"), "BMS TESTER");
+    const filename = `cell_states_${testId}.json`;
+    const filePath2 = path.join(testRunDir, filename);
+    console.log(`Reading cell states file from: ${filePath2}`);
+    try {
+      const fileContent = await fs.readFile(filePath2, "utf-8");
+      const data = JSON.parse(fileContent);
+      console.log("Successfully read cell states file:", filePath2);
+      return { success: true, data };
+    } catch (error) {
+      console.log("No cell states file found or invalid JSON:", filePath2);
+      return { success: true, data: [] };
+    }
+  } catch (error) {
+    console.error("Error reading cell states file:", error.message);
+    return { success: false, error: `Failed to read cell states file: ${error.message}` };
+  }
+});
+ipcMain.handle("reset-cell-states", async (_event, testId) => {
+  try {
+    const testRunDir = path.join(app.getPath("desktop"), "BMS TESTER");
+    const filename = `cell_states_${testId}.json`;
+    const filePath2 = path.join(testRunDir, filename);
+    console.log(`Resetting cell states file at: ${filePath2}`);
+    await fs.mkdir(testRunDir, { recursive: true });
+    const initialData = [];
+    await fs.writeFile(filePath2, JSON.stringify(initialData, null, 2));
+    console.log(`Cell states file reset: ${filePath2}`);
+    return { success: true, path: filePath2 };
+  } catch (error) {
+    console.error("Error resetting cell states file:", error.message);
+    return { success: false, error: `Failed to reset cell states file: ${error.message}` };
+  }
+});
 process.env.APP_ROOT = __dirname;
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
 const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
@@ -179,9 +278,9 @@ function createWindow() {
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);
   } else {
-    const filePath = path.join(RENDERER_DIST, "index.html");
-    console.log("Loading file:", filePath);
-    win.loadFile(filePath);
+    const filePath2 = path.join(RENDERER_DIST, "index.html");
+    console.log("Loading file:", filePath2);
+    win.loadFile(filePath2);
     win.setTitle("Electron Vite App");
   }
   ipcMain.on("minimize-window", () => {

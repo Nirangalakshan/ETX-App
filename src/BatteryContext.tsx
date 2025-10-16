@@ -1,4 +1,3 @@
-// //correct one for adding reset for error panel
 // import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 // import { ResponseData } from './components/test';
 
@@ -92,7 +91,13 @@
 //   setStatuses: (data: CellStatusData[]) => void;
 //   criticalState: boolean;
 //   setCriticalState: (state: boolean) => void;
-//   resetStatus: () => void;   // 🔥 add this
+//   resetStatus: () => void;
+//   csu1TesterVoltages: (number | null)[];
+//   setCsu1TesterVoltages: React.Dispatch<React.SetStateAction<(number | null)[]>>;
+//   csu2TesterVoltages: (number | null)[];
+//   setCsu2TesterVoltages: React.Dispatch<React.SetStateAction<(number | null)[]>>;
+//   testerVoltages: (number | null)[];
+//   setTesterVoltages: React.Dispatch<React.SetStateAction<(number | null)[]>>;
 // }
 
 // const BatteryContext = createContext<BatteryContextType | undefined>(undefined);
@@ -148,8 +153,10 @@
 //   const [daisyStatuses, setDaisyStatuses] = useState<CellStatusData[]>([]);
 //   const [statuses, setStatuses] = useState<CellStatusData[]>([]);
 //   const [criticalState, setCriticalState] = useState<boolean>(false);
+//   const [csu1TesterVoltages, setCsu1TesterVoltages] = useState<(number | null)[]>(Array(12).fill(null));
+//   const [csu2TesterVoltages, setCsu2TesterVoltages] = useState<(number | null)[]>(Array(12).fill(null));
+//   const [testerVoltages, setTesterVoltages] = useState<(number | null)[]>(Array(24).fill(null));
 
-//   // 🔥 resetStatus function (same logic you used in Battery.tsx)
 //   const resetStatus = () => {
 //     setStatuses([]);
 //     setCsu1Statuses([]);
@@ -158,9 +165,34 @@
 //     setCriticalState(false);
 //   };
 
+// //     const EXPECTED_SENT_VOLTAGES: Record<number, number> = {
+// //   1: 2.0,
+// //   2: 2.5,
+// //   3: 2.8,
+// //   4: 3.0,
+// //   5: 3.3,
+// //   6: 3.6,
+// //   7: 3.9,   // ✅ updated here
+// //   8: 4.2,
+// // };
+
+// // useEffect(() => {
+// //   setCellData(prevCells =>
+// //     prevCells.map(cell => ({
+// //       ...cell,
+// //       expectedVoltage: cell.setVoltage
+// //         ? EXPECTED_SENT_VOLTAGES[cell.setVoltage] ?? null
+// //         : null,
+// //     }))
+// //   );
+// // }, [instructions]); // or [cellData] if expectedVoltage must refresh when cellData updates
+
+
 //   useEffect(() => {
 //     console.log("BatteryContext: Initialized with cellData:", cellData);
 //   }, []);
+
+  
 
 //   return (
 //     <BatteryContext.Provider
@@ -197,7 +229,13 @@
 //         setStatuses,
 //         criticalState,
 //         setCriticalState,
-//         resetStatus,   // ✅ provide it here
+//         resetStatus,
+//         csu1TesterVoltages,
+//         setCsu1TesterVoltages,
+//         csu2TesterVoltages,
+//         setCsu2TesterVoltages,
+//         testerVoltages,
+//         setTesterVoltages
 //       }}
 //     >
 //       {children}
@@ -212,6 +250,8 @@
 //   }
 //   return context;
 // };
+
+
 
 
 
@@ -318,6 +358,8 @@ interface BatteryContextType {
   resetStatus: () => void;
   csu1TesterVoltages: (number | null)[];
   setCsu1TesterVoltages: React.Dispatch<React.SetStateAction<(number | null)[]>>;
+  csu2TesterVoltages: (number | null)[];
+  setCsu2TesterVoltages: React.Dispatch<React.SetStateAction<(number | null)[]>>;
   testerVoltages: (number | null)[];
   setTesterVoltages: React.Dispatch<React.SetStateAction<(number | null)[]>>;
 }
@@ -376,6 +418,7 @@ export const BatteryProvider = ({ children }: { children: ReactNode }) => {
   const [statuses, setStatuses] = useState<CellStatusData[]>([]);
   const [criticalState, setCriticalState] = useState<boolean>(false);
   const [csu1TesterVoltages, setCsu1TesterVoltages] = useState<(number | null)[]>(Array(12).fill(null));
+  const [csu2TesterVoltages, setCsu2TesterVoltages] = useState<(number | null)[]>(Array(12).fill(null));
   const [testerVoltages, setTesterVoltages] = useState<(number | null)[]>(Array(24).fill(null));
 
   const resetStatus = () => {
@@ -453,6 +496,8 @@ export const BatteryProvider = ({ children }: { children: ReactNode }) => {
         resetStatus,
         csu1TesterVoltages,
         setCsu1TesterVoltages,
+        csu2TesterVoltages,
+        setCsu2TesterVoltages,
         testerVoltages,
         setTesterVoltages
       }}

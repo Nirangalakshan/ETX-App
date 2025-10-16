@@ -779,7 +779,7 @@ const MAX_DAISY_ICS = 2; // Exactly 2 ICs (0 and 1)
 const CELLS_PER_IC = 12;
 
 const Daicy: React.FC = () => {
-  const { dcCsuResponseData, responseData, setDaisyStatuses, setCriticalState, csu1TesterVoltages, setCsu1TesterVoltages } = useBatteryContext();
+  const { dcCsuResponseData, responseData, setDaisyStatuses, setCriticalState, csu1TesterVoltages, setCsu1TesterVoltages, csu2TesterVoltages, setCsu2TesterVoltages } = useBatteryContext();
   const [selectedCell, setSelectedCell] = useState<{ dcIc: number; cellNo: number } | null>(null);
   const [popupPosition, setPopupPosition] = useState<{ top: number; left: number } | null>(null);
   const dcIcs = [0, 1]; // Fixed ICs: 0 and 1
@@ -937,6 +937,7 @@ const Daicy: React.FC = () => {
       const newExpected = { ...cachedData.expectedVoltages };
       const newActual = { ...cachedData.actualVoltages };
       const newCsu1TesterVoltages = [...csu1TesterVoltages];
+      const newCsu2TesterVoltages = [...csu2TesterVoltages];
       const statuses: { label: string; status: string; details?: string }[] = [];
       const currentTime = Date.now();
 
@@ -956,9 +957,12 @@ const Daicy: React.FC = () => {
             newExpected[cellKey] = null;
             lastResetTimestamps.current[cellKey] = currentTime;
             actualVoltageTimestamps.current[cellKey] = currentTime; // Track actual voltage update time
-            if (dcIc === 0) {
-              newCsu1TesterVoltages[cellNo] = null;
-            }
+            // if (dcIc === 1) {
+            //   newCsu1TesterVoltages[cellNo] = null;
+            // }
+            // if (dcIc === 0) {
+            //   newCsu2TesterVoltages[cellNo] = null;
+            // }
           } else {
             newExpected[cellKey] = expected;
           }
@@ -975,8 +979,11 @@ const Daicy: React.FC = () => {
       });
 
       setCachedData({ expectedVoltages: newExpected, actualVoltages: newActual });
-      
+      setCsu2TesterVoltages(newCsu2TesterVoltages);
       setCsu1TesterVoltages(newCsu1TesterVoltages);
+
+      
+
       setDaisyStatuses(statuses);
 
       if (statuses.some((s) => s.status === 'critical')) {
@@ -985,7 +992,7 @@ const Daicy: React.FC = () => {
     }, 10);
 
     return () => clearTimeout(debounce);
-  }, [dcCsuResponseData, responseData, getCellStatus, getExpectedVoltage, getActualVoltage, setDaisyStatuses, setCriticalState, csu1TesterVoltages, setCsu1TesterVoltages, cachedData.actualVoltages]);
+  }, [dcCsuResponseData, responseData, getCellStatus, getExpectedVoltage, getActualVoltage, setDaisyStatuses, setCriticalState, csu1TesterVoltages, setCsu1TesterVoltages, csu2TesterVoltages, setCsu2TesterVoltages, cachedData.actualVoltages]);
 
   const handleCellClick = (dcIc: number, cellNo: number) => {
     const cellKey = `${dcIc}-${cellNo}`;

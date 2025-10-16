@@ -183,16 +183,16 @@ const DashBoard: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col max-h-full max-w-full ">
+    <div className="flex flex-col max-h-1440 max-w-full  ">
       <MenuBar />
       <div className="flex-1 p-4">
-        <div className="flex flex-row gap-4 items-start">
+        <div className="flex flex-row gap-6 items-start">
           <div className="w-100">
             <Battery />
           </div>
           <div className="flex flex-col gap-1 ml-0.5 h-180">
             <div className="flex flex-row gap-2">
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col">
                 <CSU2 />
               </div>
               <div className="flex flex-col gap-1">
@@ -206,7 +206,7 @@ const DashBoard: React.FC = () => {
               <ErrorWarningPanel />
             </div>
           </div>
-          <div>
+          <div className=''>
             <SerialTerminal
               responseData={responseData}
               setResponseData={setResponseData}

@@ -29,6 +29,11 @@ electron.contextBridge.exposeInMainWorld("authAPI", {
 electron.contextBridge.exposeInMainWorld("config", {
   OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY
 });
+electron.contextBridge.exposeInMainWorld("fileAPI", {
+  updateCellStatesFile: (data, filename) => electron.ipcRenderer.invoke("update-cell-states-file", data, filename),
+  getCellStates: (filename) => electron.ipcRenderer.invoke("get-cell-states", filename),
+  resetCellStates: (filename) => electron.ipcRenderer.invoke("reset-cell-states", filename)
+});
 electron.contextBridge.exposeInMainWorld("serialAPI", {
   writePortRaw: (data) => electron.ipcRenderer.invoke("write-port-raw", data),
   listPorts: () => electron.ipcRenderer.invoke("list-ports"),
