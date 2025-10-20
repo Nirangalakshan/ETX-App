@@ -1633,7 +1633,7 @@ useEffect(() => {
     setIsRunning(false);
     setIsLoading(false);
     setCurrentCycle(0);
-    stopAutoSave();
+    // stopAutoSave();
     setReceived((prev) => ({
       ...prev,
       Individual: [

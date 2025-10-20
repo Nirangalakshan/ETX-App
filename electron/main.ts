@@ -664,9 +664,9 @@ let win: BrowserWindow | null;
 
 function createWindow() {
   win = new BrowserWindow({
-    width: 2560,
-    height: 1440,
-    resizable: false,
+    width: 1920,
+    height: 1080,
+    resizable: true,
     center: true,
     frame: false,
     autoHideMenuBar: true,
@@ -675,7 +675,7 @@ function createWindow() {
       preload: path.join(__dirname, "preload.mjs"),
     },
   });
-  win.webContents.openDevTools();
+  // win.webContents.openDevTools();
   win.webContents.on("did-finish-load", () => {
     if (win && !win.isDestroyed()) {
       win.webContents.send("main-process-message", new Date().toLocaleString());

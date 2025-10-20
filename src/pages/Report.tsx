@@ -1747,7 +1747,7 @@ const Report: React.FC = () => {
   doc.setFillColor(0, 102, 204); // Corporate blue
   doc.rect(0, 0, pageWidth, 30, "F");
   doc.setTextColor(255, 255, 255); // White text
-  doc.addImage("/vegalogo1.png", "PNG", pageWidth - 10 - margin, 5, 30, 30); // Adjust logo position and size as needed
+  doc.addImage("vegalogo1.png", "PNG", pageWidth - 10 - margin, 5, 30, 30); // Adjust logo position and size as needed
   doc.setFontSize(15);
   doc.text("Battery Management System Report", margin, 20);
   doc.setFontSize(12);
