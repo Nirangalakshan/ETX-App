@@ -269,6 +269,7 @@ function createWindow() {
       preload: path.join(__dirname, "preload.mjs")
     }
   });
+  win.webContents.openDevTools();
   win.webContents.on("did-finish-load", () => {
     if (win && !win.isDestroyed()) {
       win.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
