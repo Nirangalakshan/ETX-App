@@ -651,6 +651,17 @@ ipcMain.handle('reset-cell-states', async (_event, testId: string) => {
   }
 });
 
+
+
+
+
+app.commandLine.appendSwitch('enable-direct-write', 'true');
+app.commandLine.appendSwitch('high-dpi-support', '1');
+app.commandLine.appendSwitch('force-device-scale-factor', '1');
+app.commandLine.appendSwitch('disable-gpu');
+app.disableHardwareAcceleration();
+
+
 // Existing window creation and app lifecycle (unchanged)
 process.env.APP_ROOT = __dirname;
 export const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];

@@ -192,9 +192,9 @@ const DashBoard: React.FC = () => {
   return (
     <div className="flex flex-col max-w-full  ">
       <MenuBar />
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-2 sm:p-3 md:p-4 lg:p-6 xl:p-8  max-w-full ">
         <div className="relative w-full flex flex-row  items-start">
-          <div className="w-1/5">
+          <div className="w-1/6">
             <Battery />
           </div>
           {/* <div className=" relative flex-1 flex-col gap-1vh ">
@@ -232,8 +232,8 @@ const DashBoard: React.FC = () => {
             </div>
           </div> */}
 
-          <div className="relative flex-1 flex flex-col p-2 sm:p-2 justify-center items-center">
-            <div className="flex flex-col md:flex-row gap-[4%] w-full justify-center items-stretch">
+          <div className="relative flex-1 flex flex-col  sm:p-2 justify-center items-center">
+            <div className="flex flex-col md:flex-row gap-[3%] w-full justify-center items-stretch ">
               <div className="flex-1 max-w-[95%] sm:max-w-[90%] md:max-w-[32%] lg:max-w-[30%] xl:max-w-[28%] transition-all duration-300">
                 <CSU2 />
               </div>
@@ -245,12 +245,12 @@ const DashBoard: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-md shadow p-6 sm:p-4  mt-4 border border-cyan-100 transition-all duration-300">
+            <div className="bg-white rounded-md shadow p-6 sm:p-4  mt-4 border border-cyan-100 transition-all duration-300 ml-0 md:ml-2 lg:ml-4 xl:ml-6 w-full">
               <ErrorWarningPanel />
             </div>
           </div>
 
-          <div className="w-1.5/5 relative">
+          <div className="lg:max-w-[40%] relative">
             <SerialTerminal
               responseData={responseData}
               setResponseData={setResponseData}

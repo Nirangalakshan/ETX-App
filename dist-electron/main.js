@@ -250,6 +250,11 @@ ipcMain.handle("reset-cell-states", async (_event, testId) => {
     return { success: false, error: `Failed to reset cell states file: ${error.message}` };
   }
 });
+app.commandLine.appendSwitch("enable-direct-write", "true");
+app.commandLine.appendSwitch("high-dpi-support", "1");
+app.commandLine.appendSwitch("force-device-scale-factor", "1");
+app.commandLine.appendSwitch("disable-gpu");
+app.disableHardwareAcceleration();
 process.env.APP_ROOT = __dirname;
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
 const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");

@@ -653,7 +653,7 @@ const ErrorWarningPanel: React.FC = () => {
   return (
     <div
       className="
-        relative w-full max-w-5xl lg:min-w-[55vw] mx-auto
+        relative w-full max-w-5xl lg:min-w-[53vw]  mx-auto
         bg-white border border-gray-300 rounded-xl
       
         p-3 sm:p-6 md:p-6 lg:p-8

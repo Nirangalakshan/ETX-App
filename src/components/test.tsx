@@ -4694,6 +4694,10 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
   //   }
   // };
 
+
+
+
+
   const handleRunTest = async () => {
     console.log("handleRunTest called");
     setError(null);
@@ -5050,7 +5054,7 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
 
   return (
     <div
-      className="flex flex-col lg:flex-row justify-center items-start p-1 min-w-full h-full max-w-6xl mx-auto max-h-[100vh] overflow-y-auto"
+      className="flex flex-col lg:flex-row justify-center items-start p-2 min-w-full h-full max-w-6xl mx-auto max-h-[100vh] overflow-y-auto"
 
       // onKeyDown={(e) => {
       //   // Prevent form submission on Enter key
@@ -5065,7 +5069,7 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
       //   e.stopPropagation();
       // }}
     >
-      <div className="relative w-full lg:min-h-[92vh] mx-2 p-5 bg-white shadow-lg rounded-xl space-y-4 border border-cyan-100  overflow-y-auto">
+      <div className="relative w-full lg:min-h-[92vh] lg:max-w-[24vw] mx-2 p-2 bg-white shadow-lg rounded-xl space-y-4 border border-cyan-100  overflow-y-auto">
         <h2 className="text-base sm:text-lg md:text-xl  font-bold text-gray-900 text-center font-inter">
           BMS TEST RUN
         </h2>
@@ -5406,7 +5410,7 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
             </label>
           </div>
 
-          <div className="max-h-[20vh] overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50 font-mono text-xs shadow-inner">
+          <div className="max-h-[15vh] overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50 font-mono text-xs shadow-inner">
             {cycleData.length === 0 ? (
               <p className="text-gray-400">
                 No cycle data stored yet. Run a test to store cycle data.
@@ -5564,7 +5568,7 @@ const SerialTerminal: React.FC<SerialTerminalProps> = ({
           <label className="text-xs font-medium text-gray-700">
             Serial Output
           </label>
-          <div className="max-h-[20vh] overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50 font-mono text-xs shadow-inner">
+          <div className="max-h-[15vh] overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50 font-mono text-xs shadow-inner">
             {Object.entries(received).map(([category, logs]) =>
               logs.length > 0 ? (
                 <div key={category} className="mb-2">

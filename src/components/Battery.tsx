@@ -449,7 +449,7 @@ const Battery: React.FC = () => {
   };
 
   return (
-    <div className="relative w-full max-w-md mx-auto p-2 h-full ">
+    <div className="relative w-full max-w-md mx-auto p-2 h-full lg:min-w-[17vw] ">
       <h2 className="text-lg font-inter text-gray-800 mb-3 text-center font-semibold py-1 rounded-md shadow-md">
         TESTER READINGS
       </h2>

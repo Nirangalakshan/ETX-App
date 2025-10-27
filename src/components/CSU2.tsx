@@ -925,7 +925,7 @@ const CSU2: React.FC = () => {
           {rows.map((row, rowIndex) => (
             <div
               key={rowIndex}
-              className="grid grid-cols-2 sm:grid-cols-3 gap-2"
+              className="grid grid-cols-2 sm:grid-cols-3  gap-2"
             >
               {row.map((cellId) => {
                 const dataItems = csu2ResponseData[cellId] || [];
